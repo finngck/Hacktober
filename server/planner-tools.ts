@@ -64,6 +64,21 @@ const toolDefinitions = {
       'Edit an existing flexible future task explicitly identified by the user, preserving its ID and other fields. Automatically reserves it. Never change fixed/begun tasks, remove deadlines, or replace an unrelated subject.',
     args: z.strictObject({ id, patch, source }),
   },
+  move_task: {
+    description:
+      'Move an existing future task, including a fixed appointment, ONLY on explicit user request. Provide either the absolute start in minutes after midnight or a relative shiftMinutes; set the other to null. Never move an appointment to optimize the plan. Begun tasks stay locked.',
+    args: z
+      .strictObject({
+        id,
+        start: itemSchema.shape.start,
+        shiftMinutes: z.number().int().min(-1440).max(1440).nullable(),
+        source,
+      })
+      .refine(
+        (value) => (value.start === null) !== (value.shiftMinutes === null),
+        'Setze genau eine von start oder shiftMinutes, die andere auf null.',
+      ),
+  },
   prioritize_tasks: {
     description:
       'Reserve existing requested tasks before optional work, in priority order. Use for a requested focus or exam already present. The scheduler only displaces other tasks if necessary.',
@@ -104,6 +119,7 @@ export const plannerToolDeclarations = Object.entries(toolDefinitions).map(([nam
 const callSchema = z.discriminatedUnion('name', [
   z.strictObject({ name: z.literal('create_task'), args: toolDefinitions.create_task.args }),
   z.strictObject({ name: z.literal('update_task'), args: toolDefinitions.update_task.args }),
+  z.strictObject({ name: z.literal('move_task'), args: toolDefinitions.move_task.args }),
   z.strictObject({
     name: z.literal('prioritize_tasks'),
     args: toolDefinitions.prioritize_tasks.args,
@@ -134,6 +150,7 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
     taskOrder: [],
     focusIds: [],
     deferIds: [],
+    moves: [],
     reasons: [],
   };
   const question = calls.find((call) => call.name === 'ask_clarification');
@@ -205,6 +222,16 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
     throw new Error('Der Tagesplan unterstützt maximal 40 Aufgaben.');
   let contextUpdated = false;
   for (const call of calls) {
+    if (call.name === 'move_task') {
+      const { id: taskId, start, shiftMinutes } = call.args;
+      const task = request.plan.items.find((item) => item.id === taskId);
+      if (!task) throw new Error(`Unbekannte Aufgaben-ID: ${taskId}.`);
+      if (task.start !== null && task.start < request.plan.now)
+        throw new Error(`„${task.title}“ hat bereits begonnen und darf nicht verschoben werden.`);
+      if (intent.moves!.some((move) => move.id === taskId))
+        throw new Error('Eine Aufgabe darf pro Vorschlag nur einmal verschoben werden.');
+      intent.moves!.push({ id: taskId, start, shiftMinutes });
+    }
     if (call.name === 'prioritize_tasks') {
       for (const taskId of call.args.ids) {
         findMutable(taskId);
@@ -231,7 +258,11 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
   }
   if (intent.availabilityFrom < request.plan.now)
     throw new Error('availabilityFrom muss ab plan.now liegen, in Minuten nach Mitternacht.');
-  if (intent.deferIds.some((taskId) => focus.has(taskId)))
+  if (
+    intent.deferIds.some(
+      (taskId) => focus.has(taskId) || intent.moves!.some((move) => move.id === taskId),
+    )
+  )
     throw new Error(
       'Eine angeforderte Aufgabe kann nicht gleichzeitig priorisiert und zurückgestellt werden.',
     );

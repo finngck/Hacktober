@@ -44,13 +44,15 @@ npm start
 
 `npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln und den Gemma-Adapter. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
 
-`npm run test:live` prüft vier synthetische Fälle mit dem lokal eingerichteten Gemma-Key: Zugverspätung mit wenig Energie, zusätzliche Marketing-Klausur, Bearbeitung vorhandener Marketing-Lernzeit und neue Aufgabe zusammen mit geänderter Verfügbarkeit. Jeder Fall erlaubt maximal einen Reparaturversuch; der Befehl verbraucht API-Kontingent.
+`npm run test:live` prüft fünf synthetische Fälle mit dem lokal eingerichteten Gemma-Key: ausdrücklich verschobener fester Termin, Zugverspätung mit wenig Energie, zusätzliche Marketing-Klausur, Bearbeitung vorhandener Marketing-Lernzeit und neue Aufgabe zusammen mit geänderter Verfügbarkeit. Jeder Fall erlaubt maximal einen Reparaturversuch; der Befehl verbraucht API-Kontingent.
 
 ## GitHub und Vercel
 
 Das Vercel-Projekt `hacktober-daylight` ist mit `finngck/Hacktober` verbunden. `main` ist der gemeinsame Produktionsstand; Featurebranches erhalten Vorschau-Deployments über die Git-Verbindung. Änderungen weiterhin per geprüftem PR integrieren.
 
 Vercel baut die Vite-Oberfläche aus `dist/` und führt die drei Dateien unter `api/` als Node-Funktionen aus. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. `vercel.json` enthält die Build-Konfiguration; die Umplanungsfunktion hat maximal 70 Sekunden Laufzeit.
+
+Relative Imports im von Node geladenen Servercode verwenden explizite `.js`-Endungen. Bei Fork-PRs kann der Vercel-Check zunächst eine Freigabe durch ein Teammitglied verlangen; der Link steht im Bot-Kommentar am PR. Vor der Integration Build und betroffene API in der Preview prüfen, danach den Produktionsstand. Der konkrete Ablauf steht im [Arbeitsablauf](docs/workflow.md#vercel-vor-und-nach-dem-merge).
 
 Den `GEMMA_API_KEY` ausschließlich als geheime serverseitige Vercel-Umgebungsvariable hinterlegen. `.env` und die lokale Schlüsseldatei werden nicht hochgeladen. Zusätzliche eigene Hostnamen können mit `APP_HOSTS` (kommagetrennt, ohne Protokoll) freigegeben werden; die Vercel-Deployment-, Branch- und Produktionsadressen werden automatisch berücksichtigt.
 
@@ -65,7 +67,7 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
 - `src/components/Timeline.tsx`: Tagesansicht und Vergleich. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
 
-Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task`, `update_task`, `prioritize_tasks`, `defer_tasks`, `update_day_context`, `replan_day` und `ask_clarification`. Der Server prüft die vollständige Aufrufserie und führt sie auf einer Kopie aus. Aufgabenänderungen brauchen ein wörtliches Zitat aus der Nachricht; unbekannte Tools, Argumente, IDs sowie Änderungen an festen oder begonnenen Blöcken werden abgelehnt. Neue Aufgaben verwenden feste Bausteine (z. B. Klausurvorbereitung: 90 Minuten, hohe Priorität), wenn keine Dauer genannt wurde. Eine weitere Klausur erzeugt eine eigene Lernaufgabe; explizite Korrekturen bearbeiten die passende bestehende Aufgabe.
+Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task`, `update_task`, `move_task`, `prioritize_tasks`, `defer_tasks`, `update_day_context`, `replan_day` und `ask_clarification`. Der Server prüft die vollständige Aufrufserie und führt sie auf einer Kopie aus. Aufgabenänderungen brauchen ein wörtliches Zitat aus der Nachricht; unbekannte Tools, Argumente, IDs sowie Änderungen an begonnenen Blöcken werden abgelehnt. Feste zukünftige Termine lassen sich ausschließlich über `move_task` auf ausdrücklichen Nutzerwunsch verschieben. Neue Aufgaben verwenden feste Bausteine (z. B. Klausurvorbereitung: 90 Minuten, hohe Priorität), wenn keine Dauer genannt wurde. Eine weitere Klausur erzeugt eine eigene Lernaufgabe; explizite Korrekturen bearbeiten die passende bestehende Aufgabe.
 
 Der regelbasierte Scheduler reserviert zuerst heutige Fristen und Erholung, dann neu angeforderte oder bearbeitete Aufgaben, danach optionale Arbeit. Bereits passende Startzeiten bleiben möglichst erhalten; bei Platzproblemen folgt ein verdichteter Versuch. Eine angeforderte Aufgabe wird eingeplant oder erzeugt einen sichtbaren Konflikt. Zusammenfassung und Änderungsgründe entstehen aus dem tatsächlich berechneten Vorschlag. Alle bestehenden Aufgaben bleiben erhalten, auch wenn sie heute offen sind. Der Server prüft zusätzlich Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und Ausschlüsse. Ungültige Tool-Aufrufe erhalten maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
 

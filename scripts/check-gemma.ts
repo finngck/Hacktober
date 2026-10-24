@@ -10,7 +10,7 @@ import {
 import { config } from '../server/config';
 import { generatePlan } from '../server/gemma';
 
-// Explicit opt-in: four real requests, each with at most one bounded repair.
+// Explicit opt-in: five real requests, each with at most one bounded repair.
 const marketingPlan: Plan = structuredClone(demoPlan);
 marketingPlan.items.push({
   ...marketingPlan.items.find((item) => item.id === 'study')!,
@@ -24,6 +24,18 @@ const scenarios: {
   request: ReplanRequest;
   verify: (response: ReplanResponse) => void;
 }[] = [
+  {
+    name: 'explicit-fixed-appointment-move',
+    request: {
+      plan: demoPlan,
+      checkIn: demoCheckIn,
+      message: 'Bitte das Team-Meeting 15 Minuten früher.',
+    },
+    verify: (response) => {
+      assert.equal(response.proposedPlan!.items.find((item) => item.id === 'team')?.start, 915);
+      assert.equal(response.proposedPlan!.items.find((item) => item.id === 'team')?.fixed, true);
+    },
+  },
   {
     name: 'delay-and-energy',
     request: {

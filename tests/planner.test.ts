@@ -505,3 +505,91 @@ test('untrusted model prose is ignored and displayed summary comes only from app
   assert.doesNotMatch(response.result.summary, /Marketing|morgen/);
   assert.equal(response.proposedPlan!.items.length, demoPlan.items.length);
 });
+
+test('fixed appointments stay put unless the user explicitly asks to move them', () => {
+  const source = request();
+  const kept = scheduleFromIntent(source, intent());
+  assert.equal(kept.proposedPlan?.items.find((item) => item.id === 'team')?.start, 930);
+
+  const moved = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: 'team', start: null, shiftMinutes: -15 }],
+  });
+  const team = moved.proposedPlan?.items.find((item) => item.id === 'team');
+  assert.equal(moved.result.status, 'proposal');
+  assert.equal(team?.start, 915);
+  assert.equal(team?.fixed, true);
+  assert.deepEqual(validatePlan(moved.proposedPlan!), []);
+  assert.match(moved.result.placements.find((item) => item.id === 'team')!.reason, /Wunsch/);
+});
+
+test('explicit moves accept absolute times and report clear conflicts', () => {
+  const source = request();
+  const absolute = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: 'team', start: 900, shiftMinutes: null }],
+  });
+  assert.equal(absolute.proposedPlan?.items.find((item) => item.id === 'team')?.start, 900);
+
+  const outside = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: 'team', start: 1430, shiftMinutes: null }],
+  });
+  assert.equal(outside.result.status, 'conflict');
+  assert.equal(outside.proposedPlan, null);
+
+  const overlap = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: 'team', start: 1150, shiftMinutes: null }],
+  });
+  assert.equal(overlap.result.status, 'conflict');
+  assert.match(overlap.result.summary, /überschneiden/);
+});
+
+test('past or begun tasks cannot be moved even on request', () => {
+  const source = request();
+  const begun = source.plan.items.find(
+    (item) => item.start !== null && item.start < source.plan.now,
+  )!;
+  const outcome = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: begun.id, start: source.plan.now + 60, shiftMinutes: null }],
+  });
+  assert.equal(outcome.result.status, 'conflict');
+});
+
+test('native move tool preserves explicit fixed-appointment moves together with Marketing prep', async () => {
+  const source = marketingRequest();
+  source.message += '. Bitte das Team-Meeting 15 Minuten früher.';
+  const move = {
+    name: 'move_task',
+    args: {
+      id: 'team',
+      start: null,
+      shiftMinutes: -15,
+      source: 'Team-Meeting 15 Minuten früher',
+    },
+  };
+  const response = await generatePlan(source, {
+    apiKey: 'test',
+    model: 'gemma-4-26b-a4b-it',
+    fetcher: async () => providerResponse([createMarketing(), move]),
+  });
+  assert.equal(response.result.status, 'proposal');
+  assert.equal(response.proposedPlan!.items.find((item) => item.id === 'team')?.start, 915);
+  assert.equal(response.proposedPlan!.items.find((item) => item.id === 'team')?.fixed, true);
+  assert.notEqual(
+    response.proposedPlan!.items.find((item) => item.id === 'new-marketing')?.start,
+    null,
+  );
+  assert.equal(source.plan.items.find((item) => item.id === 'team')?.start, 930);
+  for (const invalid of [
+    { ...move, args: { ...move.args, start: 900 } },
+    { ...move, args: { ...move.args, shiftMinutes: null } },
+    { ...move, args: { ...move.args, id: 'missing' } },
+    { ...move, args: { ...move.args, id: 'lunch' } },
+    { ...move, args: { ...move.args, source: 'invented' } },
+  ])
+    assert.throws(() => prepareToolCalls(source, [invalid]));
+  assert.throws(() => prepareToolCalls(source, [move, move]));
+});
