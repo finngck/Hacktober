@@ -4,7 +4,7 @@ Verbindlich für jede Oberfläche von Pivot (Planer und Landingpage). Neue Featu
 
 ## Marke
 
-- **Stil:** coss-ui-Aufbau in der Pivot-Palette: beige App-Fläche, warmweiße Karten, feine Ränder, Salbeigrün für Aktionen, Fortschritt und Auswahl, Grün-Schwarz für Text. Weitere Farbe trägt nur Bedeutung (Kategorien, Status).
+- **Stil:** coss-ui-Aufbau in der Pivot-Palette: beige App-Fläche, warmweiße Karten, feine Ränder, Oliv aus dem Logo-Verlauf für Aktionen, Fortschritt, Auswahl und Terminkarten, Grün-Schwarz für Text. Weitere Farbe trägt nur Bedeutung (Kategorien, Status).
 - **Logo:** Pivot-App-Icon (`public/favicon.svg`) mit Wortmarke „Pivot“ in Inter (`Logo` in `src/components/daylight/AppHeader.tsx`). Die Landingpage (`index.html`, `src/styles/landing.css`) nutzt dieselbe neutrale Palette und Inter.
 - **Tonalität:** Deutsch, „du“, Satzanfang groß, aktive Verben. Ein Button sagt, was passiert („Plan übernehmen“), und der Toast danach greift dasselbe Wort auf („Plan übernommen“). Fehler erklären, was passiert ist und was hilft, ohne Entschuldigung.
 
@@ -18,7 +18,8 @@ Die einzige Quelle ist [`src/styles/theme.css`](../src/styles/theme.css). Die Na
 | Fläche     | `card`, `popover`                                | Karten, Dialoge, Popovers                      |
 | Text       | `foreground`, `muted-foreground`                 | Text, Nebentext                                |
 | Aktion     | `primary`, `accent`, `ring`                      | Hauptaktion, Auswahl, Fokus                    |
-| Kategorien | `category-{study,work,recovery,movement,social}` | Getönte Terminkarten (`bg-…/6`, `border-…/25`) |
+| Priorität  | `priority-{high,medium,low}`                     | Terminkarten in Oliv: hoch dunkel, niedrig hell |
+| Kategorien | `category-{study,work,recovery,movement,social}` | Reserve für Kategorie-Akzente                  |
 | Status     | `success`, `warning`, `destructive`, `info`      | Rückmeldungen                                  |
 
 Radien leiten sich aus `--radius` ab (`rounded-lg` für Bedienelemente, `rounded-xl`/`rounded-2xl` für Blöcke und Karten). Rohe Farbwerte in `src/**/*.ts(x)` sind verboten. `tests/design-system.test.ts` prüft das.

@@ -29,20 +29,11 @@ export const categoryIcons: Record<Category, typeof BookOpen01Icon> = {
   movement: Dumbbell01Icon,
   social: UserMultiple02Icon,
 };
-const categoryText: Record<Category, string> = {
-  study: 'text-category-study',
-  work: 'text-category-work',
-  recovery: 'text-category-recovery',
-  movement: 'text-category-movement',
-  social: 'text-category-social',
-};
-/** Event-style tint per category, as in coss calendar cards. */
-const categoryTint: Record<Category, string> = {
-  study: 'border-category-study/25 bg-category-study/6',
-  work: 'border-category-work/25 bg-category-work/6',
-  recovery: 'border-category-recovery/25 bg-category-recovery/6',
-  movement: 'border-category-movement/25 bg-category-movement/6',
-  social: 'border-category-social/25 bg-category-social/6',
+/** Block colour by priority: the more important, the darker the olive. */
+const priorityTint: Record<ScheduleItem['priority'], string> = {
+  high: 'border-priority-high bg-priority-high text-priority-high-foreground',
+  medium: 'border-priority-medium bg-priority-medium',
+  low: 'border-priority-low bg-priority-low',
 };
 
 function RailSegment({ past }: { from?: number; to?: number; past?: boolean }) {
@@ -79,17 +70,20 @@ function TimeBlock({
   focus: boolean;
   note?: string;
 }) {
+  const subtle = {
+    high: 'text-priority-high-foreground/75',
+    medium: 'text-foreground/70',
+    low: 'text-muted-foreground',
+  }[item.priority];
   return (
-    <article className={cn(timeBlock({ state }), categoryTint[item.category])}>
+    <article className={cn(timeBlock({ state }), priorityTint[item.priority])}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-        <span
-          className={cn('inline-flex items-center gap-1 font-medium', categoryText[item.category])}
-        >
+        <span className="inline-flex items-center gap-1 font-medium">
           <Icon icon={categoryIcons[item.category]} size={14} />
           {categoryLabels[item.category]}
         </span>
         {item.fixed && (
-          <span className="inline-flex items-center gap-1 text-muted-foreground">
+          <span className={cn('inline-flex items-center gap-1', subtle)}>
             <Icon icon={LockKeyIcon} size={12} />
             Fest
           </span>
@@ -102,7 +96,7 @@ function TimeBlock({
         )}
       </div>
       <h3 className="text-sm leading-snug font-semibold">{item.title}</h3>
-      <p className="text-xs text-muted-foreground">
+      <p className={cn('text-xs', subtle)}>
         {[
           `${item.duration}\u00a0Min.`,
           item.priority === 'high' ? 'Hohe Priorität' : '',
@@ -111,7 +105,7 @@ function TimeBlock({
           .filter(Boolean)
           .join(' · ')}
       </p>
-      {note && <p className="text-xs font-medium text-foreground">{note}</p>}
+      {note && <p className="text-xs font-medium">{note}</p>}
     </article>
   );
 }
@@ -219,7 +213,7 @@ export function Timeline({
                 <Icon
                   icon={categoryIcons[item.category]}
                   size={18}
-                  className={cn('mt-0.5', categoryText[item.category])}
+                  className="mt-0.5 text-priority-high"
                 />
                 <span className="grid">
                   <span className="font-medium">{item.title}</span>
