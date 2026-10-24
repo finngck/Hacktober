@@ -1,4 +1,4 @@
-import { versionsSchema, repositoryUrl, type Versions } from '../shared/versions';
+import { versionsSchema, repositoryUrl, type Versions } from '../shared/versions.js';
 
 const apiRoot = 'https://api.github.com/repos/finngck/Hacktober';
 let cached: { expires: number; value: Versions } | undefined;

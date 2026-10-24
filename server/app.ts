@@ -1,8 +1,8 @@
 import express from 'express';
-import { replanRequestSchema, validatePlan } from '../shared/contracts';
-import { generatePlan, PlannerError } from './gemma';
-import { isAllowedRequest } from './request-origin';
-import { getVersions } from './versions';
+import { replanRequestSchema, validatePlan } from '../shared/contracts.js';
+import { generatePlan, PlannerError } from './gemma.js';
+import { isAllowedRequest } from './request-origin.js';
+import { getVersions } from './versions.js';
 
 export function createApp(options: {
   apiKey?: string;
