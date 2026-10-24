@@ -104,17 +104,17 @@ export function ScreenshotImport({
       setRows(extracted.tasks.map(toRow));
       setNote(
         extracted.note ||
-          (extracted.tasks.length ? '' : 'Im Bild wurden keine Aufgaben oder Termine erkannt.'),
+          (extracted.tasks.length ? '' : 'No tasks or appointments were found in the image.'),
       );
       setDone(true);
     } catch (problem) {
       if (requestController.current !== controller) return;
       setError(
         controller.signal.aborted
-          ? 'Das Lesen hat zu lange gedauert. Versuche es erneut oder wähle einen kleineren Ausschnitt.'
+          ? 'Reading took too long. Try again or choose a smaller section.'
           : problem instanceof Error
             ? problem.message
-            : 'Das Bild konnte nicht gelesen werden. Nutze ein klares PNG, JPEG oder WebP.',
+            : "Couldn't read the image. Use a clear PNG, JPEG, or WebP.",
       );
     } finally {
       window.clearTimeout(timeout);
@@ -130,7 +130,7 @@ export function ScreenshotImport({
   function submit() {
     if (busy || disabled) return;
     const selected = rows.filter((row) => row.include);
-    if (!selected.length) return setError('Wähle mindestens eine Aufgabe aus.');
+    if (!selected.length) return setError('Select at least one task.');
     const items: ScheduleItem[] = [];
     for (const row of selected) {
       const parsed = itemSchema.safeParse({
@@ -145,7 +145,8 @@ export function ScreenshotImport({
         fixed: row.fixed,
         tags: [],
       });
-      if (!parsed.success) return setError(`Prüfe Titel, Uhrzeit und Dauer bei „${row.title}“.`);
+      if (!parsed.success)
+        return setError(`Check the title, time, and duration for "${row.title}".`);
       items.push(parsed.data);
     }
     const problem = onAdd(items);
@@ -169,17 +170,17 @@ export function ScreenshotImport({
       </DialogTrigger>
       <DialogPopup className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Screenshot importieren</DialogTitle>
+          <DialogTitle>Import screenshot</DialogTitle>
           <DialogDescription>
-            Stundenplan, Aufgabenliste oder Frist hochladen. Gemma liest Aufgaben und Zeiten aus, du
-            prüfst sie, bevor etwas in den Plan kommt. Das Bild geht zur Analyse an Google und wird
-            nicht gespeichert.
+            Upload a timetable, task list, or deadline. Gemma reads out tasks and times, and you
+            review them before anything goes into your plan. The image is sent to Google for
+            analysis and isn't stored.
           </DialogDescription>
         </DialogHeader>
         <DialogPanel className="grid gap-4">
           <label className="inline-flex h-9 w-fit cursor-pointer items-center gap-2 rounded-lg border border-input bg-popover px-3 text-sm font-medium shadow-xs/5 hover:bg-accent has-disabled:cursor-default has-disabled:opacity-64 has-focus-visible:ring-2 has-focus-visible:ring-ring">
             {busy ? <Spinner /> : <Icon icon={ImageUploadIcon} size={18} />}
-            {busy ? 'Bild wird gelesen …' : 'Bild auswählen'}
+            {busy ? 'Reading image …' : 'Choose image'}
             <input
               type="file"
               className="sr-only"
@@ -189,7 +190,7 @@ export function ScreenshotImport({
             />
           </label>
           <p className="text-xs text-muted-foreground">
-            PNG, JPEG oder WebP bis 20 MB. Große Bilder werden automatisch verkleinert.
+            PNG, JPEG, or WebP up to 20 MB. Large images are resized automatically.
           </p>
           {note && <p className="text-sm text-muted-foreground">{note}</p>}
           {rows.map((row) => (
@@ -204,14 +205,14 @@ export function ScreenshotImport({
                     checked={row.include}
                     onCheckedChange={(checked) => patch(row.key, { include: checked === true })}
                   />
-                  Übernehmen
+                  Include
                 </Label>
                 {row.when && (
-                  <span className="text-xs text-muted-foreground">Im Bild: {row.when}</span>
+                  <span className="text-xs text-muted-foreground">In image: {row.when}</span>
                 )}
               </div>
               <Input
-                aria-label="Titel"
+                aria-label="Title"
                 value={row.title}
                 maxLength={100}
                 onChange={(event) => patch(row.key, { title: event.target.value })}
@@ -227,7 +228,7 @@ export function ScreenshotImport({
                   />
                 </div>
                 <div className="grid gap-1">
-                  <Label htmlFor={`${row.key}-deadline`}>Frist</Label>
+                  <Label htmlFor={`${row.key}-deadline`}>Deadline</Label>
                   <Input
                     id={`${row.key}-deadline`}
                     type="time"
@@ -236,7 +237,7 @@ export function ScreenshotImport({
                   />
                 </div>
                 <div className="grid gap-1">
-                  <Label htmlFor={`${row.key}-duration`}>Dauer (Min.)</Label>
+                  <Label htmlFor={`${row.key}-duration`}>Duration (min)</Label>
                   <Input
                     id={`${row.key}-duration`}
                     type="number"
@@ -273,7 +274,7 @@ export function ScreenshotImport({
                   checked={row.fixed}
                   onCheckedChange={(checked) => patch(row.key, { fixed: checked === true })}
                 />
-                Fester Termin, Startzeit erforderlich
+                Fixed appointment, start time required
               </Label>
             </fieldset>
           ))}
@@ -286,7 +287,7 @@ export function ScreenshotImport({
         {done && rows.length > 0 && (
           <DialogFooter>
             <Button onClick={submit} disabled={busy || disabled}>
-              Ausgewählte hinzufügen
+              Add selected
             </Button>
           </DialogFooter>
         )}

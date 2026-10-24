@@ -27,7 +27,7 @@ import { ChoiceGroup, ChoiceItem } from './Choice';
 import { DaylightSlider } from './DaylightSlider';
 import { categoryIcons } from './Timeline';
 
-const priorities = { high: 'Hoch', medium: 'Mittel', low: 'Niedrig' } as const;
+const priorities = { high: 'High', medium: 'Medium', low: 'Low' } as const;
 const initial = {
   title: '',
   duration: 45,
@@ -53,7 +53,7 @@ export function AddTask({
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    if (form.fixed && !form.start) return setError('Ein fester Termin braucht eine Startzeit.');
+    if (form.fixed && !form.start) return setError('A fixed appointment needs a start time.');
     const parsed = itemSchema.safeParse({
       id: crypto.randomUUID(),
       title: form.title,
@@ -66,7 +66,7 @@ export function AddTask({
       fixed: form.fixed,
       tags: [],
     });
-    if (!parsed.success) return setError('Gib der Aufgabe einen Titel.');
+    if (!parsed.success) return setError('Give the task a title.');
     const problem = onAdd(parsed.data);
     if (problem) return setError(problem);
     setOpen(false);
@@ -85,42 +85,42 @@ export function AddTask({
     >
       <DialogTrigger render={<Button variant="outline" disabled={disabled} />}>
         <Icon icon={Add01Icon} size={18} />
-        Aufgabe
+        Task
       </DialogTrigger>
       <DialogPopup className="sm:max-w-md">
         <form onSubmit={submit} className="contents" noValidate>
           <DialogHeader>
-            <DialogTitle>Was steht noch an?</DialogTitle>
+            <DialogTitle>What else is coming up?</DialogTitle>
             <DialogDescription>
-              Ohne Startzeit bleibt die Aufgabe offen, bis Pivot sie einplant.
+              Without a start time, the task stays open until Pivot schedules it.
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="grid gap-5">
             <div className="grid gap-2">
-              <Label htmlFor="task-title">Aufgabe</Label>
+              <Label htmlFor="task-title">Task</Label>
               <Input
                 id="task-title"
                 autoFocus
                 maxLength={100}
                 value={form.title}
                 onChange={(event) => update({ title: event.target.value })}
-                placeholder="Präsentation vorbereiten …"
+                placeholder="Prepare presentation …"
               />
             </div>
             <DaylightSlider
-              label="Dauer"
+              label="Duration"
               tone="sun"
               min={5}
               max={240}
               step={5}
               value={form.duration}
               onValueChange={(duration) => update({ duration })}
-              display={`${form.duration}\u00a0Min.`}
-              startLabel="5 Min."
-              endLabel="4 Std."
+              display={`${form.duration}\u00a0min`}
+              startLabel="5 min"
+              endLabel="4 h"
             />
             <div className="grid gap-2">
-              <span className="text-sm font-medium">Kategorie</span>
+              <span className="text-sm font-medium">Category</span>
               <ChoiceGroup
                 variant="default"
                 className="flex-wrap gap-1.5"
@@ -150,7 +150,7 @@ export function AddTask({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="task-deadline">Frist heute (optional)</Label>
+                <Label htmlFor="task-deadline">Deadline today (optional)</Label>
                 <Input
                   id="task-deadline"
                   type="time"
@@ -160,7 +160,7 @@ export function AddTask({
               </div>
             </div>
             <div className="grid gap-2">
-              <span className="text-sm font-medium">Priorität</span>
+              <span className="text-sm font-medium">Priority</span>
               <ChoiceGroup
                 value={[form.priority]}
                 onValueChange={(value) =>
@@ -179,7 +179,7 @@ export function AddTask({
                 checked={form.fixed}
                 onCheckedChange={(checked) => update({ fixed: checked === true })}
               />
-              Fester Termin, darf nicht verschoben werden
+              Fixed appointment, can't be moved
             </Label>
             {error && (
               <Alert variant="error">
@@ -188,7 +188,7 @@ export function AddTask({
             )}
           </DialogPanel>
           <DialogFooter>
-            <Button type="submit">Aufgabe hinzufügen</Button>
+            <Button type="submit">Add task</Button>
           </DialogFooter>
         </form>
       </DialogPopup>

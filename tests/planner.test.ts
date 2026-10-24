@@ -18,11 +18,11 @@ const request = (): ReplanRequest =>
   structuredClone({
     plan: demoPlan,
     checkIn: demoCheckIn,
-    message: 'Ich bin ab 14 Uhr verfügbar, habe nur fünf Stunden geschlafen und wenig Energie.',
+    message: "I'm available from 14:00, only slept five hours and have little energy.",
   });
 const result = (): ModelResult => ({
   status: 'proposal',
-  summary: 'Lernen später, Projekt bleibt offen.',
+  summary: 'Study later, project stays open.',
   availabilityFrom: 840,
   energy: 'low',
   sleepHours: 5,
@@ -30,19 +30,19 @@ const result = (): ModelResult => ({
   placements: demoPlan.items.map((item) => ({
     id: item.id,
     start: item.id === 'study' ? 840 : item.id === 'project' ? null : item.start,
-    reason: 'An den veränderten Tag angepasst.',
+    reason: 'Adjusted to your changed day.',
   })),
 });
 const intent = (): PlanningIntent => ({
   status: 'ready',
-  summary: 'Lernen und Erholung haben heute Vorrang.',
+  summary: 'Study and recovery come first today.',
   availabilityFrom: 840,
   energy: 'low',
   sleepHours: 5,
   question: null,
   taskOrder: ['study', 'break', 'inbox', 'project', 'gym'],
   deferIds: ['project', 'gym'],
-  reasons: [{ id: 'project', reason: 'Heute weniger anspruchsvolle Arbeit einplanen.' }],
+  reasons: [{ id: 'project', reason: 'Plan less demanding work today.' }],
 });
 const toolCalls = () => [
   {
@@ -88,26 +88,26 @@ test('rejects fixed and past events moving, disappearing IDs, duplicates and inv
   for (const id of ['team', 'lunch']) {
     const changed = result();
     changed.placements.find((item) => item.id === id)!.start = 900;
-    assert.throws(() => materializeProposal(request(), changed), /darf nicht verschoben/);
+    assert.throws(() => materializeProposal(request(), changed), /cannot be moved/);
   }
   const missing = result();
   missing.placements.pop();
-  assert.throws(() => materializeProposal(request(), missing), /genau einmal/);
+  assert.throws(() => materializeProposal(request(), missing), /exactly once/);
   const duplicate = result();
   duplicate.placements[1] = duplicate.placements[0];
-  assert.throws(() => materializeProposal(request(), duplicate), /Doppelte/);
+  assert.throws(() => materializeProposal(request(), duplicate), /duplicate/);
   const invented = result();
   invented.placements[0].id = 'invented';
-  assert.throws(() => materializeProposal(request(), invented), /genau einmal/);
+  assert.throws(() => materializeProposal(request(), invented), /exactly once/);
 });
 
 test('rejects overlaps, scheduling before availability, day overrun, and missed deadlines', () => {
   for (const [id, start, pattern] of [
-    ['study', 900, /überschneiden/],
-    ['study', 810, /Verfügbarkeit/],
-    ['inbox', 1280, /Tagesrahmen/],
-    ['study', 1050, /Frist/],
-    ['study', null, /Frist/],
+    ['study', 900, /overlap/],
+    ['study', 810, /availability/],
+    ['inbox', 1280, /day window/],
+    ['study', 1050, /deadline/],
+    ['study', null, /deadline/],
   ] as const) {
     const changed = result();
     changed.placements.find((item) => item.id === id)!.start = start;
@@ -118,7 +118,7 @@ test('rejects overlaps, scheduling before availability, day overrun, and missed 
 test('hard exclusions require a conflicting flexible activity to stay unplanned', () => {
   const source = request();
   source.checkIn.exclusions.push('gym');
-  assert.throws(() => materializeProposal(source, result()), /Ausschluss/);
+  assert.throws(() => materializeProposal(source, result()), /excluded/);
   const changed = result();
   changed.placements.find((item) => item.id === 'gym')!.start = null;
   assert.doesNotThrow(() => materializeProposal(source, changed));
@@ -127,15 +127,15 @@ test('hard exclusions require a conflicting flexible activity to stay unplanned'
 test('low-energy replanning preserves existing recovery breaks', () => {
   const changed = result();
   changed.placements.find((item) => item.id === 'break')!.start = null;
-  assert.throws(() => materializeProposal(request(), changed), /Erholungspause/);
+  assert.throws(() => materializeProposal(request(), changed), /recovery break/);
 });
 
 test('invalid original schedules cannot be accepted, including fixed events with no start', () => {
   const source = request();
   source.plan.items[0].start = 810;
-  assert.match(validatePlan(source.plan).join(' '), /überschneiden/);
+  assert.match(validatePlan(source.plan).join(' '), /overlap/);
   source.plan.items.find((item) => item.id === 'team')!.start = null;
-  assert.match(validatePlan(source.plan).join(' '), /fester Termin/);
+  assert.match(validatePlan(source.plan).join(' '), /fixed appointment/);
 });
 
 test('accepts native calls only, never free text plans or JSON masquerading as tools', async () => {
@@ -208,7 +208,7 @@ test('invalid plans get one repair attempt, never a fabricated fallback', async 
         return providerResponse({ bad: 'output' });
       },
     }),
-    /zwei Versuchen/,
+    /two attempts/,
   );
   assert.equal(calls, 2);
 });
@@ -234,7 +234,7 @@ test('transient provider failures share the same two-attempt budget and never ex
         return new Response('DO NOT EXPOSE provider-details', { status: 503 });
       },
     }),
-    /vorübergehenden Fehler/,
+    /temporary error/,
   );
   assert.equal(calls, 2);
 });
@@ -251,14 +251,14 @@ test('the scheduler preserves recovery and commitments, defers heavy work, and d
   const impossible = scheduleFromIntent(request(), { ...intent(), availabilityFrom: 1080 });
   assert.equal(impossible.result.status, 'conflict');
   assert.equal(impossible.proposedPlan, null);
-  assert.match(impossible.result.summary, /Team-Meeting/);
+  assert.match(impossible.result.summary, /Team meeting/);
   const question = scheduleFromIntent(request(), {
     ...intent(),
     status: 'clarification',
-    question: 'Ab wann bist du verfügbar?',
+    question: 'When are you available from?',
   });
   assert.equal(question.proposedPlan, null);
-  assert.equal(question.result.question, 'Ab wann bist du verfügbar?');
+  assert.equal(question.result.question, 'When are you available from?');
 });
 
 test('scheduler honors exclusions and model priorities while keeping deadline work mandatory', () => {
@@ -282,7 +282,7 @@ test('conflicts and clarifications cannot be applied; missing key, rate limit an
     status: 'conflict' as const,
     availabilityFrom: 1080,
     placements: [],
-    summary: 'Ab 18 Uhr kannst du das Meeting um 15:30 nicht erreichen.',
+    summary: "From 18:00 you can't make the 15:30 meeting.",
   };
   const response = await generatePlan(request(), {
     apiKey: 'test',
@@ -293,16 +293,16 @@ test('conflicts and clarifications cannot be applied; missing key, rate limit an
       ]),
   });
   assert.equal(response.proposedPlan, null);
-  assert.throws(() => materializeProposal(request(), conflict), /kein Planvorschlag/);
-  await assert.rejects(generatePlan(request(), { model: 'gemma-4-26b-a4b-it' }), /API-Key/);
-  await assert.rejects(generatePlan(request(), { apiKey: 'test', model: 'gemini-4' }), /Gemma-4/);
+  assert.throws(() => materializeProposal(request(), conflict), /no plan proposal/);
+  await assert.rejects(generatePlan(request(), { model: 'gemma-4-26b-a4b-it' }), /API key/);
+  await assert.rejects(generatePlan(request(), { apiKey: 'test', model: 'gemini-4' }), /Gemma 4/);
   await assert.rejects(
     generatePlan(request(), {
       apiKey: 'test',
       model: 'gemma-4-26b-a4b-it',
       fetcher: async () => new Response('DO NOT EXPOSE test-secret', { status: 429 }),
     }),
-    /Gemma-Limit/,
+    /Gemma rate limit/,
   );
   await assert.rejects(
     generatePlan(request(), {
@@ -312,22 +312,22 @@ test('conflicts and clarifications cannot be applied; missing key, rate limit an
         throw new Error('DO NOT EXPOSE test-secret');
       },
     }),
-    /nicht erreichbar/,
+    /can't be reached/,
   );
 });
 
 const marketingRequest = (): ReplanRequest => ({
   ...request(),
   message:
-    'Ich schreib morgen noch eine marketing Klausur und muss noch lernen kannst du das einplanen und irrelevante sachen austauschen',
+    'i have a marketing exam tomorrow and still need to study can you fit that in and swap out stuff that doesnt matter',
 });
 const createMarketing = () => ({
   name: 'create_task',
   args: {
     id: 'new-marketing',
     brick: 'exam_prep',
-    title: 'Für die Marketing-Klausur lernen',
-    source: 'morgen noch eine marketing Klausur und muss noch lernen',
+    title: 'Study for the marketing exam',
+    source: 'a marketing exam tomorrow and still need to study',
   },
 });
 
@@ -350,7 +350,7 @@ test('screenshot regression: new Marketing prep is actually scheduled, Statistic
   assert.equal(plan.items.length, source.plan.items.length + 1);
   assert.equal(
     plan.items.find((item) => item.id === 'study')?.title,
-    'Für die Statistik-Klausur lernen',
+    'Study for the statistics exam',
   );
   assert.notEqual(plan.items.find((item) => item.id === 'study')?.start, null);
   for (const item of source.plan.items) {
@@ -369,23 +369,23 @@ test('screenshot regression: new Marketing prep is actually scheduled, Statistic
     plan.items.find((item) => item.id === 'inbox')?.start,
     source.plan.items.find((item) => item.id === 'inbox')?.start,
   );
-  assert.match(response.result.summary, /Neu eingeplant: „Für die Marketing/);
+  assert.match(response.result.summary, /Newly scheduled: "Study for the marketing/);
   assert.deepEqual(validatePlan(plan), []);
   assert.deepEqual(source, unchanged);
 });
 
 test('editing existing Marketing prep preserves identity and is visible even without a time change', () => {
   const source = marketingRequest();
-  source.message = 'Bitte die Marketing-Lernzeit auf 60 Minuten kürzen.';
+  source.message = 'Please cut the marketing study time to 60 minutes.';
   const marketing = source.plan.items.find((item) => item.id === 'study')!;
-  marketing.title = 'Für die Marketing-Klausur lernen';
+  marketing.title = 'Study for the marketing exam';
   const prepared = prepareToolCalls(source, [
     {
       name: 'update_task',
       args: {
         id: 'study',
         patch: { duration: 60 },
-        source: 'Marketing-Lernzeit auf 60 Minuten kürzen',
+        source: 'cut the marketing study time to 60 minutes',
       },
     },
   ]);
@@ -397,11 +397,8 @@ test('editing existing Marketing prep preserves identity and is visible even wit
   assert.equal(after.duration, 60);
   assert.equal(after.title, marketing.title);
   assert.ok(hasItemChanged(marketing, after));
-  assert.match(response.result.summary, /Bearbeitet und eingeplant/);
-  assert.match(
-    response.result.placements.find((item) => item.id === 'study')!.reason,
-    /60 Minuten/,
-  );
+  assert.match(response.result.summary, /Edited and scheduled/);
+  assert.match(response.result.placements.find((item) => item.id === 'study')!.reason, /60 min/);
 });
 
 test('unknown tools, forged fields, unsupported edits, invented evidence and duplicate tasks fail atomically', () => {
@@ -456,7 +453,7 @@ test('requested prep survives low energy, but impossible time or exclusions prod
   const failed = scheduleFromIntent(impossible.request, impossible.intent, source.plan);
   assert.equal(failed.result.status, 'conflict');
   assert.equal(failed.proposedPlan, null);
-  assert.match(failed.result.summary, /Marketing/);
+  assert.match(failed.result.summary, /marketing/i);
   source.checkIn.exclusions.push('gym');
   const excluded = prepareToolCalls(source, [
     {
@@ -484,7 +481,7 @@ test('priority references resolve new tasks regardless of batch order; clarifica
   assert.deepEqual(prepared.intent.focusIds, ['new-marketing']);
   const question = {
     name: 'ask_clarification',
-    args: { question: 'Welche Lernaufgabe meinst du?' },
+    args: { question: 'Which study task do you mean?' },
   };
   assert.throws(() => prepareToolCalls(source, [question, createMarketing()]));
   const clarification = prepareToolCalls(source, [question]);
@@ -496,14 +493,14 @@ test('priority references resolve new tasks regardless of batch order; clarifica
 test('untrusted model prose is ignored and displayed summary comes only from applied tools', async () => {
   const data = await providerResponse([{ name: 'replan_day', args: {} }]).json();
   data.candidates[0].content.parts.unshift({
-    text: 'Marketing ist jetzt eingeplant, Projekt und Gym sind morgen.',
+    text: 'Marketing is now scheduled, project and gym are tomorrow.',
   });
   const response = await generatePlan(marketingRequest(), {
     apiKey: 'test',
     model: 'gemma-4-26b-a4b-it',
     fetcher: async () => new Response(JSON.stringify(data)),
   });
-  assert.doesNotMatch(response.result.summary, /Marketing|morgen/);
+  assert.doesNotMatch(response.result.summary, /marketing|tomorrow/i);
   assert.equal(response.proposedPlan!.items.length, demoPlan.items.length);
 });
 
@@ -521,7 +518,7 @@ test('fixed appointments stay put unless the user explicitly asks to move them',
   assert.equal(team?.start, 915);
   assert.equal(team?.fixed, true);
   assert.deepEqual(validatePlan(moved.proposedPlan!), []);
-  assert.match(moved.result.placements.find((item) => item.id === 'team')!.reason, /Wunsch/);
+  assert.match(moved.result.placements.find((item) => item.id === 'team')!.reason, /as you asked/);
 });
 
 test('explicit moves accept absolute times and report clear conflicts', () => {
@@ -544,7 +541,7 @@ test('explicit moves accept absolute times and report clear conflicts', () => {
     moves: [{ id: 'team', start: 1150, shiftMinutes: null }],
   });
   assert.equal(overlap.result.status, 'conflict');
-  assert.match(overlap.result.summary, /überschneiden/);
+  assert.match(overlap.result.summary, /overlap/);
 });
 
 test('past or begun tasks cannot be moved even on request', () => {
@@ -561,14 +558,14 @@ test('past or begun tasks cannot be moved even on request', () => {
 
 test('native move tool preserves explicit fixed-appointment moves together with Marketing prep', async () => {
   const source = marketingRequest();
-  source.message += '. Bitte das Team-Meeting 15 Minuten früher.';
+  source.message += '. Please move the team meeting 15 minutes earlier.';
   const move = {
     name: 'move_task',
     args: {
       id: 'team',
       start: null,
       shiftMinutes: -15,
-      source: 'Team-Meeting 15 Minuten früher',
+      source: 'team meeting 15 minutes earlier',
     },
   };
   const response = await generatePlan(source, {
@@ -610,7 +607,7 @@ test('context tools merge compatible fields atomically and reject contradictory 
   assert.equal(prepared.intent.sleepHours, 5);
   assert.throws(
     () => prepareToolCalls(source, [context({ energy: 'low' }), context({ energy: 'high' })]),
-    /Widersprüchliche/,
+    /Conflicting/,
   );
   assert.throws(
     () =>
@@ -618,7 +615,7 @@ test('context tools merge compatible fields atomically and reject contradictory 
         context({ signals: { schlaefrig: true } }),
         context({ signals: { schlaefrig: false } }),
       ]),
-    /Widersprüchliche/,
+    /Conflicting/,
   );
 });
 

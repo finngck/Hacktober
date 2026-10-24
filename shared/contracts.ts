@@ -121,13 +121,13 @@ export type ExtractedTask = z.infer<typeof extractedTaskSchema>;
 export type ExtractResponse = z.infer<typeof extractResponseSchema>;
 
 export const categoryLabels: Record<Category, string> = {
-  study: 'Lernen',
-  work: 'Arbeit',
-  recovery: 'Pause',
-  movement: 'Bewegung',
-  social: 'Freizeit',
+  study: 'Study',
+  work: 'Work',
+  recovery: 'Break',
+  movement: 'Movement',
+  social: 'Social',
 };
-export const energyLevelLabels = ['Sehr niedrig', 'Niedrig', 'Okay', 'Hoch', 'Sehr hoch'] as const;
+export const energyLevelLabels = ['Very low', 'Low', 'Okay', 'High', 'Very high'] as const;
 /** The planner works with three levels; the check-in slider offers five. */
 export const energyFromLevel = (level: number): Energy =>
   level <= 2 ? 'low' : level >= 4 ? 'high' : 'medium';
@@ -138,18 +138,12 @@ export const energyLevelOf = (checkIn: { energy: Energy; energyLevel?: number })
     ? checkIn.energyLevel
     : defaultEnergyLevel[checkIn.energy];
 export const sleepQualityLabels: Record<SleepQuality, string> = {
-  poor: 'Unruhig',
+  poor: 'Restless',
   okay: 'Okay',
-  good: 'Erholsam',
+  good: 'Restful',
 };
-export const moodLabels = ['Mies', 'Gedrückt', 'Neutral', 'Gut', 'Richtig gut'] as const;
-export const stressLabels = [
-  'Entspannt',
-  'Locker',
-  'Etwas los',
-  'Angespannt',
-  'Überladen',
-] as const;
+export const moodLabels = ['Awful', 'Down', 'Neutral', 'Good', 'Great'] as const;
+export const stressLabels = ['Relaxed', 'Easygoing', 'Busy', 'Tense', 'Overloaded'] as const;
 export const formatTime = (minutes: number) =>
   `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 export const parseTime = (time: string) => {
@@ -175,30 +169,30 @@ export function hasItemChanged(before: ScheduleItem | undefined, after: Schedule
 export function validatePlan(plan: Plan): string[] {
   const errors: string[] = [];
   if (plan.dayStart > plan.now || plan.now >= plan.dayEnd)
-    errors.push('Der Tagesrahmen ist ungültig.');
+    errors.push('The day window is invalid.');
   if (plan.availableFrom < plan.now || plan.availableFrom > plan.dayEnd)
-    errors.push('Die Verfügbarkeit liegt außerhalb des Tagesrahmens.');
+    errors.push('Your availability is outside the day window.');
   if (new Set(plan.items.map((item) => item.id)).size !== plan.items.length)
-    errors.push('Aufgaben-IDs müssen eindeutig sein.');
+    errors.push('Task IDs must be unique.');
   const scheduled = plan.items
     .filter((item) => item.start !== null)
     .toSorted((a, b) => a.start! - b.start!);
   for (const item of plan.items) {
     if (item.fixed && item.start === null)
-      errors.push(`„${item.title}“ ist ein fester Termin und braucht eine Startzeit.`);
+      errors.push(`"${item.title}" is a fixed appointment and needs a start time.`);
     if (item.start === null) continue;
     const end = item.start + item.duration;
     if (item.start < plan.dayStart || end > plan.dayEnd)
-      errors.push(`„${item.title}“ liegt außerhalb des Tagesrahmens.`);
+      errors.push(`"${item.title}" is outside the day window.`);
     if (item.start >= plan.now && item.start < plan.availableFrom)
-      errors.push(`„${item.title}“ liegt vor der Verfügbarkeit.`);
+      errors.push(`"${item.title}" starts before your availability.`);
     if (item.deadline !== null && end > item.deadline)
-      errors.push(`„${item.title}“ überschreitet die Frist.`);
+      errors.push(`"${item.title}" misses its deadline.`);
   }
   for (let index = 1; index < scheduled.length; index++) {
     const previous = scheduled[index - 1];
     if (previous.start! + previous.duration > scheduled[index].start!) {
-      errors.push(`„${previous.title}“ und „${scheduled[index].title}“ überschneiden sich.`);
+      errors.push(`"${previous.title}" and "${scheduled[index].title}" overlap.`);
     }
   }
   return errors;
@@ -210,19 +204,20 @@ export function materializeProposal(
   result: ModelResult,
   movedIds: ReadonlySet<string> = new Set(),
 ): Plan {
-  if (result.status !== 'proposal') throw new Error('Es liegt noch kein Planvorschlag vor.');
+  if (result.status !== 'proposal') throw new Error('There is no plan proposal yet.');
   const source = request.plan;
   const errors: string[] = [];
   const placements = new Map(result.placements.map((item) => [item.id, item]));
-  if (placements.size !== result.placements.length) errors.push('Doppelte Aufgaben im Vorschlag.');
+  if (placements.size !== result.placements.length)
+    errors.push('The proposal contains duplicate tasks.');
   if (
     placements.size !== source.items.length ||
     [...placements.keys()].some((id) => !source.items.some((item) => item.id === id))
   ) {
-    errors.push('Jede bestehende Aufgabe muss genau einmal enthalten sein.');
+    errors.push('Every existing task must appear exactly once.');
   }
   if (result.availabilityFrom < source.now || result.availabilityFrom > source.dayEnd)
-    errors.push('Die früheste Verfügbarkeit ist ungültig.');
+    errors.push('The earliest availability is invalid.');
   const items = source.items.map((item) => {
     const placement = placements.get(item.id);
     if (!placement) return item;
@@ -232,11 +227,11 @@ export function materializeProposal(
       placement.start !== item.start &&
       (started || !movedIds.has(item.id))
     )
-      errors.push(`„${item.title}“ darf nicht verschoben werden.`);
+      errors.push(`"${item.title}" cannot be moved.`);
     if (!started && placement.start !== null && placement.start < result.availabilityFrom)
-      errors.push(`„${item.title}“ liegt vor der Verfügbarkeit.`);
+      errors.push(`"${item.title}" starts before your availability.`);
     if (!started && placement.start === null && item.deadline !== null)
-      errors.push(`„${item.title}“ hat heute eine Frist und darf nicht entfallen.`);
+      errors.push(`"${item.title}" has a deadline today and cannot be dropped.`);
     if (
       !started &&
       item.start !== null &&
@@ -246,7 +241,7 @@ export function materializeProposal(
       !item.tags.some((tag) => request.checkIn.exclusions.includes(tag))
     ) {
       errors.push(
-        `„${item.title}“ ist eine eingeplante Erholungspause und soll bei wenig Energie erhalten bleiben.`,
+        `"${item.title}" is a scheduled recovery break and should stay when your energy is low.`,
       );
     }
     if (
@@ -255,7 +250,7 @@ export function materializeProposal(
       placement.start !== null &&
       item.tags.some((tag) => request.checkIn.exclusions.includes(tag))
     ) {
-      errors.push(`„${item.title}“ widerspricht einem ausdrücklichen Ausschluss.`);
+      errors.push(`"${item.title}" conflicts with something you explicitly excluded.`);
     }
     return { ...item, start: placement.start };
   });

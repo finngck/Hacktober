@@ -23,15 +23,18 @@ import {
 } from './CheckInControls';
 
 const steps = [
-  { title: 'Wie hast du geschlafen?', description: 'Schlaf bestimmt, wie viel heute drin ist.' },
+  { title: 'How did you sleep?', description: 'Sleep sets how much you can take on today.' },
   {
-    title: 'Wie viel Energie hast du?',
-    description: 'Schieb die Sonne so hoch, wie du dich fühlst.',
+    title: 'How much energy do you have?',
+    description: 'Slide the sun as high as you feel.',
   },
-  { title: 'Wie geht es dir?', description: 'Bei viel Druck plant Pivot mehr Luft ein.' },
   {
-    title: 'Was ist heute das Eine?',
-    description: 'Dein Fokus bekommt das beste freie Zeitfenster.',
+    title: 'How are you feeling?',
+    description: 'Under pressure, Pivot plans in more breathing room.',
+  },
+  {
+    title: "What's the one thing today?",
+    description: 'Your focus gets the best free time slot.',
   },
 ];
 
@@ -73,7 +76,7 @@ export function CheckInFlow({
   }, [open]);
   const reset = (nextOpen: boolean) => onOpenChange(nextOpen);
   const hour = new Date().getHours();
-  const greeting = hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Hallo' : 'Guten Abend';
+  const greeting = hour < 11 ? 'Good morning' : hour < 18 ? 'Hello' : 'Good evening';
 
   return (
     <Dialog open={open} onOpenChange={reset}>
@@ -92,10 +95,10 @@ export function CheckInFlow({
                   <Icon icon={Sun03Icon} size={44} />
                 </span>
               </span>
-              <DialogTitle className="text-3xl">Check-in erledigt</DialogTitle>
+              <DialogTitle className="text-3xl">Check-in done</DialogTitle>
               <p className="inline-flex animate-rise items-center gap-2 rounded-full bg-accent px-3 py-1 font-medium">
                 <Icon icon={FireIcon} size={18} className="text-muted-foreground" />
-                {result.streak === 1 ? 'Tag 1 deiner Serie' : `${result.streak} Tage in Folge`}
+                {result.streak === 1 ? 'Day 1 of your streak' : `${result.streak} days in a row`}
               </p>
               {result.unlocked.length > 0 && (
                 <ul className="grid w-full animate-rise gap-2 [animation-delay:150ms]">
@@ -106,7 +109,7 @@ export function CheckInFlow({
                     >
                       <Icon icon={SparklesIcon} size={20} className="text-muted-foreground" />
                       <span className="grid">
-                        <span className="font-medium">Neu: {badges[id].title}</span>
+                        <span className="font-medium">New: {badges[id].title}</span>
                         <span className="text-sm text-muted-foreground">
                           {badges[id].description}
                         </span>
@@ -116,12 +119,12 @@ export function CheckInFlow({
                 </ul>
               )}
               <DialogDescription>
-                Soll Pivot deinen restlichen Tag an diesen Check-in anpassen?
+                Should Pivot adjust the rest of your day to this check-in?
               </DialogDescription>
             </DialogPanel>
             <DialogFooter>
               <Button variant="ghost" onClick={() => reset(false)}>
-                Später
+                Later
               </Button>
               <Button
                 disabled={planningDisabled}
@@ -130,7 +133,7 @@ export function CheckInFlow({
                   onPlanDay();
                 }}
               >
-                Tag anpassen
+                Adjust day
               </Button>
             </DialogFooter>
           </>
@@ -145,7 +148,7 @@ export function CheckInFlow({
           >
             <DialogHeader>
               <p className="text-sm text-muted-foreground">
-                {greeting}. Schritt {step + 1} von {steps.length}
+                {greeting}. Step {step + 1} of {steps.length}
               </p>
               <div className="flex gap-1.5" aria-hidden="true">
                 {steps.map((_, index) => (
@@ -176,12 +179,10 @@ export function CheckInFlow({
             <DialogFooter>
               {step > 0 && (
                 <Button variant="ghost" onClick={() => setStep(step - 1)}>
-                  Zurück
+                  Back
                 </Button>
               )}
-              <Button type="submit">
-                {step < steps.length - 1 ? 'Weiter' : 'Check-in abschließen'}
-              </Button>
+              <Button type="submit">{step < steps.length - 1 ? 'Next' : 'Finish check-in'}</Button>
             </DialogFooter>
           </form>
         )}

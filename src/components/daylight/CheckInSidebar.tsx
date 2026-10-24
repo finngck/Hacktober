@@ -54,7 +54,7 @@ function CheckInRow({
     <Popover>
       <PopoverTrigger
         className="group flex min-h-12 w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent data-popup-open:bg-accent"
-        aria-label={`${label}: ${value}. Ändern`}
+        aria-label={`${label}: ${value}. Change`}
       >
         <span className="grid size-8 shrink-0 place-items-center rounded-lg border bg-background text-foreground transition-transform group-active:scale-95 lg:size-9">
           {icon}
@@ -104,7 +104,7 @@ export function CheckInSidebar({
   const days = streak(progress);
   const goal = nextStreakGoal(days);
   return (
-    <aside className="grid content-start gap-4" aria-label="Daily Check-in und Erfolge">
+    <aside className="grid content-start gap-4" aria-label="Daily Check-in and achievements">
       <section
         className="rounded-xl border bg-card p-2 shadow-xs/5"
         aria-labelledby="check-in-title"
@@ -116,12 +116,12 @@ export function CheckInSidebar({
           {done ? (
             <span className="inline-flex items-center gap-1 text-xs whitespace-nowrap text-success-foreground">
               <Icon icon={CheckmarkCircle02Icon} size={14} />
-              Erledigt
+              Done
             </span>
           ) : (
             <span className="inline-flex items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
               <span className="size-1.5 rounded-full bg-info" />
-              Offen
+              Open
             </span>
           )}
         </div>
@@ -129,34 +129,34 @@ export function CheckInSidebar({
           disabled={disabled}
           className="grid grid-cols-2 gap-0.5 disabled:opacity-64 sm:grid-cols-3 lg:grid-cols-1"
         >
-          <legend className="sr-only">Dein Check-in</legend>
+          <legend className="sr-only">Your check-in</legend>
           <CheckInRow
             icon={<Icon icon={Moon02Icon} size={18} />}
-            label="Schlaf"
+            label="Sleep"
             value={summary.sleep}
-            title="Schlaf"
+            title="Sleep"
           >
             <SleepControl checkIn={checkIn} onChange={onChange} />
           </CheckInRow>
           <CheckInRow
             icon={<Icon icon={BatteryMedium01Icon} size={18} />}
-            label="Energie"
+            label="Energy"
             value={summary.energy}
-            title="Energie"
+            title="Energy"
           >
             <EnergyControl checkIn={checkIn} onChange={onChange} />
           </CheckInRow>
           <CheckInRow
             icon={<Icon icon={moodIcons[checkIn.mood - 1]} size={18} />}
-            label="Stimmung"
+            label="Mood"
             value={summary.mood}
-            title="Stimmung"
+            title="Mood"
           >
             <MoodControl checkIn={checkIn} onChange={onChange} />
           </CheckInRow>
           <CheckInRow
             icon={<Icon icon={AiBrain01Icon} size={18} />}
-            label="Kopf"
+            label="Stress"
             value={summary.stress}
             title="Stress"
           >
@@ -164,17 +164,17 @@ export function CheckInSidebar({
           </CheckInRow>
           <CheckInRow
             icon={<Icon icon={Target02Icon} size={18} />}
-            label="Fokus"
+            label="Focus"
             value={summary.focus}
-            title="Fokus für heute"
+            title="Focus for today"
           >
             <FocusControl checkIn={checkIn} onChange={onChange} plan={plan} />
           </CheckInRow>
           <CheckInRow
             icon={<Icon icon={Settings02Icon} size={18} />}
-            label="Präferenzen"
+            label="Preferences"
             value={summary.preferences}
-            title="Präferenzen"
+            title="Preferences"
           >
             <PreferencesControl checkIn={checkIn} onChange={onChange} />
           </CheckInRow>
@@ -185,7 +185,7 @@ export function CheckInSidebar({
           onClick={onStartFlow}
           disabled={disabled}
         >
-          {done ? 'Check-in erneut durchgehen' : 'Check-in starten'}
+          {done ? 'Redo check-in' : 'Start check-in'}
         </Button>
       </section>
 
@@ -201,20 +201,20 @@ export function CheckInSidebar({
           </span>
           <div className="grid">
             <h2 id="streak-title" className="text-xl leading-tight font-semibold tabular">
-              {days === 1 ? '1 Tag' : `${days} Tage`}
+              {days === 1 ? '1 day' : `${days} days`}
             </h2>
-            <span className="text-sm text-muted-foreground">Check-in-Serie</span>
+            <span className="text-sm text-muted-foreground">Check-in streak</span>
           </div>
         </div>
         <Progress
           value={(days / goal) * 100}
           className="mt-3"
-          aria-label="Fortschritt zur nächsten Serie"
+          aria-label="Progress to next streak goal"
         />
         <p className="mt-1.5 text-xs text-muted-foreground">
-          Noch {goal - days} {goal - days === 1 ? 'Tag' : 'Tage'} bis {goal} in Folge
+          {goal - days} more {goal - days === 1 ? 'day' : 'days'} to {goal} in a row
         </p>
-        <ul className="mt-4 grid grid-cols-6 gap-1.5" aria-label="Abzeichen">
+        <ul className="mt-4 grid grid-cols-6 gap-1.5" aria-label="Badges">
           {badgeOrder.map((id) => {
             const unlocked = progress.badges.includes(id);
             return (
@@ -227,7 +227,7 @@ export function CheckInSidebar({
                         ? 'bg-card text-foreground ring-1 ring-border shadow-xs/5'
                         : 'bg-muted text-muted-foreground/50',
                     )}
-                    aria-label={`${badges[id].title}${unlocked ? '' : ' (noch gesperrt)'}: ${badges[id].description}`}
+                    aria-label={`${badges[id].title}${unlocked ? '' : ' (still locked)'}: ${badges[id].description}`}
                   >
                     <Icon icon={unlocked ? Award01Icon : LockKeyIcon} size={unlocked ? 18 : 14} />
                   </TooltipTrigger>

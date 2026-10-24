@@ -79,12 +79,10 @@ export function scheduleFromIntent(
       proposedPlan: null,
     };
   if (intent.availabilityFrom < plan.now)
-    return conflict(
-      'Die neue Verfügbarkeit liegt vor der Demo-Uhrzeit. Gib eine Uhrzeit für den restlichen Tag an.',
-    );
+    return conflict('The new availability is before the demo time. Give a time later in the day.');
   if (intent.availabilityFrom >= plan.dayEnd)
     return conflict(
-      `Du bist erst ab ${formatTime(intent.availabilityFrom)} verfügbar, dein Tag endet um ${formatTime(plan.dayEnd)}. Passe die Verfügbarkeit oder den Tagesrahmen an.`,
+      `You're only available from ${formatTime(intent.availabilityFrom)}, but your day ends at ${formatTime(plan.dayEnd)}. Adjust your availability or the day window.`,
     );
 
   // Fixed tasks never move on their own; they move only when the user explicitly asks for it.
@@ -93,22 +91,20 @@ export function scheduleFromIntent(
     const item = plan.items.find((candidate) => candidate.id === move.id);
     if (!item) continue;
     if (item.start !== null && item.start < plan.now)
-      return conflict(
-        `„${item.title}“ hat bereits begonnen oder liegt in der Vergangenheit und lässt sich nicht verschieben.`,
-      );
+      return conflict(`"${item.title}" has already started or is in the past and can't be moved.`);
     const target =
       move.start ?? (item.start === null ? null : item.start + (move.shiftMinutes ?? 0));
     if (target === null)
       return conflict(
-        `Für „${item.title}“ fehlt die neue Uhrzeit. Nenne die gewünschte Startzeit.`,
+        `The new time for "${item.title}" is missing. Tell me the start time you want.`,
       );
     if (target < plan.now || target < plan.dayStart || target + item.duration > plan.dayEnd)
       return conflict(
-        `„${item.title}“ passt um ${formatTime(target)} nicht in den Tag (${formatTime(plan.now)}–${formatTime(plan.dayEnd)}). Wähle eine andere Uhrzeit.`,
+        `"${item.title}" doesn't fit into the day at ${formatTime(target)} (${formatTime(plan.now)}–${formatTime(plan.dayEnd)}). Pick another time.`,
       );
     if (item.deadline !== null && target + item.duration > item.deadline)
       return conflict(
-        `„${item.title}“ würde ihre Frist um ${formatTime(item.deadline)} überschreiten. Wähle eine frühere Uhrzeit.`,
+        `"${item.title}" would miss its ${formatTime(item.deadline)} deadline. Pick an earlier time.`,
       );
     movedStarts.set(item.id, target);
   }
@@ -126,7 +122,7 @@ export function scheduleFromIntent(
     const previous = lockedBlocks[index - 1];
     if (previous.start! + previous.duration > lockedBlocks[index].start!)
       return conflict(
-        `„${previous.title}“ (${formatTime(previous.start!)}–${formatTime(previous.start! + previous.duration)}) und „${lockedBlocks[index].title}“ (ab ${formatTime(lockedBlocks[index].start!)}) würden sich überschneiden. Verschiebe einen der beiden Termine ausdrücklich.`,
+        `"${previous.title}" (${formatTime(previous.start!)}–${formatTime(previous.start! + previous.duration)}) and "${lockedBlocks[index].title}" (from ${formatTime(lockedBlocks[index].start!)}) would overlap. Explicitly move one of the two appointments.`,
       );
   }
   const unavailableFixed = locked.find(
@@ -134,7 +130,7 @@ export function scheduleFromIntent(
   );
   if (unavailableFixed)
     return conflict(
-      `„${unavailableFixed.title}“ beginnt fest um ${formatTime(unavailableFixed.start!)}. Du bist erst ab ${formatTime(intent.availabilityFrom)} verfügbar. Sag mir ausdrücklich, ob ich den Termin verschieben soll, oder ändere die Verfügbarkeit; ich verschiebe ihn nicht von allein.`,
+      `"${unavailableFixed.title}" is fixed at ${formatTime(unavailableFixed.start!)}. You're only available from ${formatTime(intent.availabilityFrom)}. Tell me explicitly if I should move the appointment, or change your availability; I won't move it on my own.`,
     );
 
   const lockedIds = new Set(locked.map((item) => item.id));
@@ -147,10 +143,10 @@ export function scheduleFromIntent(
         id: item.id,
         start: item.start,
         reason: movedStarts.has(item.id)
-          ? `Auf deinen Wunsch auf ${formatTime(item.start!)} verschoben.`
+          ? `Moved to ${formatTime(item.start!)} as you asked.`
           : item.fixed
-            ? 'Fester Termin bleibt unverändert.'
-            : 'Vergangener oder begonnener Block bleibt unverändert.',
+            ? 'Fixed appointment stays unchanged.'
+            : 'Past or started block stays unchanged.',
       },
     ]),
   );
@@ -175,30 +171,30 @@ export function scheduleFromIntent(
     occupied.push({ start, end: start + item.duration });
     const before = originalPlan.items.find((source) => source.id === item.id);
     const reason = !before
-      ? 'Neu angelegt und für dein Anliegen eingeplant.'
+      ? 'Newly added and scheduled for your request.'
       : before.title !== item.title || before.duration !== item.duration
-        ? `Wie angefragt bearbeitet: ${item.duration} Minuten${before.title === item.title ? '' : `, zuvor „${before.title}“`}.`
+        ? `Edited as requested: ${item.duration} min${before.title === item.title ? '' : `, previously "${before.title}"`}.`
         : item.deadline !== null
-          ? `Heute vor ${formatTime(item.deadline)} fällig; dafür ist dieses Zeitfenster reserviert.`
+          ? `Due today before ${formatTime(item.deadline)}; this slot is reserved for it.`
           : recovery(item)
-            ? 'Deine Erholungspause bleibt bei wenig Energie eingeplant.'
+            ? 'Your recovery break stays scheduled while your energy is low.'
             : focusIds.has(item.id)
-              ? 'Für dein Anliegen vor optionalen Aufgaben eingeplant.'
+              ? 'Scheduled ahead of optional tasks for your request.'
               : start === item.start
-                ? 'Passt weiterhin in deinen Tag.'
-                : 'In ein freies Zeitfenster verschoben.';
+                ? 'Still fits into your day.'
+                : 'Moved to a free slot.';
     placements.set(item.id, { id: item.id, start, reason });
     return true;
   }
   for (const item of mandatory) {
     if (excluded(item))
       return conflict(
-        `„${item.title}“ hat eine heutige Frist, widerspricht aber einem Ausschluss. Kläre, welche Vorgabe gelten soll.`,
+        `"${item.title}" has a deadline today but conflicts with an exclusion. Decide which one should apply.`,
       );
     if (!place(item)) {
       if (!compact) return scheduleFromIntent(request, intent, originalPlan, true);
       return conflict(
-        `Für „${item.title}“ (${item.duration} Minuten${item.deadline === null ? '' : `, Frist ${formatTime(item.deadline)}`}) wurde zwischen den festen Terminen kein passendes Zeitfenster gefunden. Passe Dauer, Verfügbarkeit oder Verpflichtungen an.`,
+        `No suitable slot between your fixed appointments was found for "${item.title}" (${item.duration} min${item.deadline === null ? '' : `, deadline ${formatTime(item.deadline)}`}). Adjust the duration, your availability or your commitments.`,
       );
     }
   }
@@ -219,12 +215,12 @@ export function scheduleFromIntent(
     .toSorted((a, b) => (focusOrder.get(a.id) ?? 40) - (focusOrder.get(b.id) ?? 40))) {
     if (excluded(item))
       return conflict(
-        `„${item.title}“ widerspricht einem Ausschluss. Kläre diese Vorgabe, bevor die Aufgabe eingeplant wird.`,
+        `"${item.title}" conflicts with an exclusion. Resolve that before the task is scheduled.`,
       );
     if (!place(item)) {
       if (!compact) return scheduleFromIntent(request, intent, originalPlan, true);
       return conflict(
-        `Für deine angeforderte Aufgabe „${item.title}“ (${item.duration} Minuten) ist kein passendes Zeitfenster frei. Verkürze die Aufgabe oder passe den Tagesrahmen an.`,
+        `There's no free slot for your requested task "${item.title}" (${item.duration} min). Shorten the task or adjust the day window.`,
       );
     }
   }
@@ -242,12 +238,12 @@ export function scheduleFromIntent(
     );
   for (const item of optional) {
     let reason = '';
-    if (excluded(item)) reason = 'Diese Aktivität ist in deinen Präferenzen ausgeschlossen.';
+    if (excluded(item)) reason = 'You excluded this activity in your preferences.';
     else if (item.id !== focusId && intent.energy === 'low' && item.effort === 'high')
-      reason = 'Die anspruchsvolle Aufgabe bleibt bei wenig Energie heute offen.';
-    else if (deferIds.has(item.id)) reason = 'Auf deinen Wunsch bleibt diese Aufgabe heute offen.';
+      reason = 'This demanding task stays open today because your energy is low.';
+    else if (deferIds.has(item.id)) reason = 'This task stays open today as you asked.';
     else if (place(item)) continue;
-    else reason = 'Heute ist kein ausreichend großes freies Zeitfenster mehr vorhanden.';
+    else reason = "There's no free slot left today that's long enough.";
     placements.set(item.id, { id: item.id, start: null, reason });
   }
   const result: ModelResult = {
@@ -280,17 +276,17 @@ function describeProposal(before: Plan, after: Plan): string {
   const names = (items: ScheduleItem[]) =>
     items
       .slice(0, 2)
-      .map((item) => `„${item.title}“`)
-      .join(', ') + (items.length > 2 ? ` und ${items.length - 2} weitere` : '');
+      .map((item) => `"${item.title}"`)
+      .join(', ') + (items.length > 2 ? ` and ${items.length - 2} more` : '');
   const parts: string[] = [];
-  if (added.length) parts.push(`Neu eingeplant: ${names(added)}.`);
-  if (edited.length) parts.push(`Bearbeitet und eingeplant: ${names(edited)}.`);
-  if (moved.length) parts.push(`Zeitlich angepasst: ${names(moved)}.`);
-  if (open.length) parts.push(`Heute offen: ${names(open)}. Diese Aufgaben bleiben erhalten.`);
+  if (added.length) parts.push(`Newly scheduled: ${names(added)}.`);
+  if (edited.length) parts.push(`Edited and scheduled: ${names(edited)}.`);
+  if (moved.length) parts.push(`Rescheduled: ${names(moved)}.`);
+  if (open.length) parts.push(`Open today: ${names(open)}. These tasks are kept.`);
   if (before.availableFrom !== after.availableFrom)
-    parts.push(`Verfügbar ab ${formatTime(after.availableFrom)}.`);
+    parts.push(`Available from ${formatTime(after.availableFrom)}.`);
   return (
     parts.join(' ').slice(0, 900) ||
-    'Deine Aufgaben passen weiterhin in den Tag; die Zeitblöcke bleiben unverändert.'
+    'Your tasks still fit into the day; the time blocks stay unchanged.'
   );
 }

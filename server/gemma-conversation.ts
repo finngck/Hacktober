@@ -36,7 +36,7 @@ export function toGemmaContents(request: ConversationRequest) {
     const parts: Part[] = [];
     if (message.role === 'tool') {
       const name = names.get(message.tool_call_id ?? '');
-      if (!name) throw new PlannerError('Ein Tool-Ergebnis hat keinen passenden Aufruf.', 400);
+      if (!name) throw new PlannerError('A tool result has no matching call.', 400);
       let result: unknown;
       try {
         result = JSON.parse(message.content || '{}');
@@ -49,12 +49,12 @@ export function toGemmaContents(request: ConversationRequest) {
       for (const call of message.tool_calls ?? []) {
         const name = call.function.name as VoiceToolName;
         if (!Object.hasOwn(voiceToolArguments, name))
-          throw new PlannerError('Unbekanntes Sprachtool.', 400);
+          throw new PlannerError('Unknown voice tool.', 400);
         let args: unknown;
         try {
           args = voiceToolArguments[name].parse(JSON.parse(call.function.arguments));
         } catch {
-          throw new PlannerError('Ungültige Argumente im Sprachtool.', 400);
+          throw new PlannerError('Invalid voice tool arguments.', 400);
         }
         names.set(call.id, name);
         parts.push({ functionCall: { name, args } });
@@ -85,7 +85,7 @@ async function* googleEvents(body: ReadableStream<Uint8Array>) {
       }
       if (done) break;
     }
-    if (buffer.trim()) throw new PlannerError('Die Modellantwort wurde unterbrochen.', 502);
+    if (buffer.trim()) throw new PlannerError('The model response was interrupted.', 502);
   } finally {
     reader.releaseLock();
   }
@@ -96,11 +96,11 @@ export async function* streamGemmaConversation(
   options: { apiKey?: string; model: string; fetcher?: typeof fetch },
   signal: AbortSignal,
 ): AsyncGenerator<Record<string, unknown>> {
-  if (!options.apiKey) throw new PlannerError('Gemma ist noch nicht eingerichtet.', 503);
+  if (!options.apiKey) throw new PlannerError("Gemma isn't set up yet.", 503);
   if (!/^gemma-4-[a-z0-9-]+$/.test(options.model))
-    throw new PlannerError('Für den Sprachdialog wird ein Gemma-4-Modell benötigt.', 503);
+    throw new PlannerError('Voice chat needs a Gemma 4 model.', 503);
   const contents = toGemmaContents(request);
-  if (!contents.length) throw new PlannerError('Die Gesprächsnachricht fehlt.', 400);
+  if (!contents.length) throw new PlannerError('The conversation message is missing.', 400);
   const response = await (options.fetcher ?? fetch)(
     `https://generativelanguage.googleapis.com/v1beta/models/${options.model}:streamGenerateContent?alt=sse`,
     {
@@ -123,8 +123,8 @@ export async function* streamGemmaConversation(
   if (!response.ok || !response.body)
     throw new PlannerError(
       response.status === 429
-        ? 'Das Gemma-Limit ist erreicht. Versuche es gleich erneut.'
-        : 'Gemma konnte den Sprachdialog nicht beantworten.',
+        ? 'The Gemma rate limit has been reached. Try again in a moment.'
+        : "Gemma couldn't answer in voice chat.",
       response.status === 429 ? 429 : 502,
     );
   const id = `chatcmpl-${randomUUID()}`;
@@ -141,7 +141,7 @@ export async function* streamGemmaConversation(
     [];
   let hasText = false;
   for await (const event of googleEvents(response.body)) {
-    if (event.error) throw new PlannerError('Gemma hat den Sprachdialog unterbrochen.', 502);
+    if (event.error) throw new PlannerError('Gemma interrupted the voice chat.', 502);
     for (const part of event.candidates?.[0]?.content?.parts ?? []) {
       if (part.thought) continue;
       if (part.text) {
@@ -151,10 +151,9 @@ export async function* streamGemmaConversation(
       if (part.functionCall) {
         const name = part.functionCall.name as VoiceToolName;
         if (!Object.hasOwn(voiceToolArguments, name) || calls.length)
-          throw new PlannerError('Gemma hat eine ungültige Tool-Auswahl geliefert.', 502);
+          throw new PlannerError('Gemma returned an invalid tool choice.', 502);
         const parsed = voiceToolArguments[name].safeParse(part.functionCall.args ?? {});
-        if (!parsed.success)
-          throw new PlannerError('Gemma hat ungültige Tool-Argumente geliefert.', 502);
+        if (!parsed.success) throw new PlannerError('Gemma returned invalid tool arguments.', 502);
         calls.push({
           id: `call_${randomUUID().replaceAll('-', '')}`,
           type: 'function',
@@ -163,7 +162,7 @@ export async function* streamGemmaConversation(
       }
     }
   }
-  if (!hasText && !calls.length) throw new PlannerError('Gemma hat keine Antwort geliefert.', 502);
+  if (!hasText && !calls.length) throw new PlannerError("Gemma didn't return a response.", 502);
   if (calls.length) yield chunk({ tool_calls: calls.map((call, index) => ({ index, ...call })) });
   yield chunk({}, calls.length ? 'tool_calls' : 'stop');
 }
