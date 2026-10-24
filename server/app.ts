@@ -1,5 +1,6 @@
 import express from 'express';
-import { replanRequestSchema, validatePlan } from '../shared/contracts';
+import { extractRequestSchema, replanRequestSchema, validatePlan } from '../shared/contracts';
+import { extractTasks } from './extract';
 import { generatePlan, PlannerError } from './gemma';
 import { isAllowedRequest } from './request-origin';
 import { getVersions } from './versions';
@@ -27,12 +28,37 @@ export function createApp(options: {
         .json({ error: 'Diese Anfrage kommt nicht aus einer freigegebenen App-Adresse.' });
     next();
   });
+  app.post('/api/extract', express.json({ limit: '4mb' }), async (req, res) => {
+    const parsed = extractRequestSchema.safeParse(req.body);
+    if (!parsed.success)
+      return res.status(400).json({
+        error: 'Das Bild ist ungültig oder zu groß. Nutze PNG, JPEG oder WebP bis etwa 2,5 MB.',
+      });
+    if (activeExtractions >= 2)
+      return res
+        .status(429)
+        .json({ error: 'Es werden gerade zwei Bilder gelesen. Versuche es gleich erneut.' });
+    activeExtractions++;
+    try {
+      return res.json(await extractTasks(parsed.data, options));
+    } catch (error) {
+      return res.status(error instanceof PlannerError ? error.status : 500).json({
+        error:
+          error instanceof PlannerError
+            ? error.message
+            : 'Das Bild konnte nicht gelesen werden. Versuche es erneut.',
+      });
+    } finally {
+      activeExtractions--;
+    }
+  });
   app.use(express.json({ limit: '64kb' }));
   app.get('/api/health', (_req, res) =>
     res.json({ configured: Boolean(options.apiKey), model: options.model }),
   );
   app.get('/api/versions', async (_req, res) => res.json(await getVersions()));
   let activeRequests = 0;
+  let activeExtractions = 0;
   app.post('/api/replan', async (req, res) => {
     const parsed = replanRequestSchema.safeParse(req.body);
     if (!parsed.success)

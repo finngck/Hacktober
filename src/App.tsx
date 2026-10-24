@@ -28,6 +28,7 @@ import { freshWorkspace, loadWorkspace, saveWorkspace } from './state';
 import { Icon } from './components/Icon';
 import { Timeline } from './components/Timeline';
 import { AddTask } from './components/AddTask';
+import { ScreenshotImport } from './components/ScreenshotImport';
 import { CheckInPanel } from './components/CheckInPanel';
 
 export default function App() {
@@ -86,10 +87,14 @@ export default function App() {
     setWorkspace((previous) => ({ ...previous, checkIn: { ...previous.checkIn, ...patch } }));
   }
   function addTask(item: ScheduleItem) {
-    if (plan.items.length >= 40) return 'Der Prototyp unterstützt bis zu 40 Aufgaben.';
-    if (item.start !== null && item.start < plan.now)
+    return addTasks([item]);
+  }
+  function addTasks(items: ScheduleItem[]) {
+    if (plan.items.length + items.length > 40)
+      return 'Der Prototyp unterstützt bis zu 40 Aufgaben.';
+    if (items.some((item) => item.start !== null && item.start < plan.now))
       return 'Neue Aufgaben müssen nach der Demo-Uhrzeit 13:00 beginnen.';
-    const nextPlan = { ...plan, items: [...plan.items, item] };
+    const nextPlan = { ...plan, items: [...plan.items, ...items] };
     const issues = validatePlan(nextPlan);
     if (issues.length) return issues.join(' ');
     clearDraft();
@@ -98,7 +103,9 @@ export default function App() {
       plan: nextPlan,
       history: [...previous.history, { plan: previous.plan, checkIn: previous.checkIn }].slice(-5),
     }));
-    setNotice('Aufgabe hinzugefügt.');
+    setNotice(
+      items.length === 1 ? 'Aufgabe hinzugefügt.' : `${items.length} Aufgaben hinzugefügt.`,
+    );
     return undefined;
   }
   async function replan(event: FormEvent) {
@@ -265,7 +272,10 @@ export default function App() {
                     {fixedCount} feste Termine
                   </p>
                 </div>
-                <AddTask onAdd={addTask} disabled={busy} />
+                <div className="panel-actions">
+                  <ScreenshotImport onAdd={addTasks} disabled={busy} />
+                  <AddTask onAdd={addTask} disabled={busy} />
+                </div>
               </div>
               <div className="plan-legend">
                 <span>

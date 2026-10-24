@@ -65,6 +65,30 @@ export const replanResponseSchema = z.object({
   meta: z.object({ model: z.string(), elapsedMs: z.number(), attempts: z.number() }),
 });
 
+export const imageTypeSchema = z.enum(['image/png', 'image/jpeg', 'image/webp']);
+export const extractRequestSchema = z.object({
+  image: z.string().min(100).max(3_500_000),
+  mimeType: imageTypeSchema,
+});
+export const extractedTaskSchema = z.object({
+  title: z.string().trim().min(1).max(100),
+  category: categorySchema,
+  duration: z.number().int().min(5).max(480),
+  start: minute.nullable(),
+  deadline: minute.nullable(),
+  priority: z.enum(['low', 'medium', 'high']),
+  fixed: z.boolean(),
+  /** Date/time text exactly as shown in the image, so the user can check it. */
+  when: z.string().max(80).nullable(),
+});
+export const extractResultSchema = z.object({
+  tasks: z.array(extractedTaskSchema).max(20),
+  note: z.string().max(400).nullable(),
+});
+export const extractResponseSchema = extractResultSchema.extend({
+  meta: z.object({ model: z.string(), elapsedMs: z.number(), attempts: z.number() }),
+});
+
 export type Category = z.infer<typeof categorySchema>;
 export type Energy = z.infer<typeof energySchema>;
 export type ScheduleItem = z.infer<typeof itemSchema>;
@@ -73,6 +97,9 @@ export type CheckIn = z.infer<typeof checkInSchema>;
 export type ReplanRequest = z.infer<typeof replanRequestSchema>;
 export type ModelResult = z.infer<typeof modelResultSchema>;
 export type ReplanResponse = z.infer<typeof replanResponseSchema>;
+export type ExtractRequest = z.infer<typeof extractRequestSchema>;
+export type ExtractedTask = z.infer<typeof extractedTaskSchema>;
+export type ExtractResponse = z.infer<typeof extractResponseSchema>;
 
 export const categoryLabels: Record<Category, string> = {
   study: 'Lernen',
