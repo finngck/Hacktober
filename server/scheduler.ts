@@ -228,6 +228,9 @@ export function scheduleFromIntent(
   }
   const priority = { high: 0, medium: 1, low: 2 };
   const order = new Map(intent.taskOrder.map((id, index) => [id, index]));
+  // The focus chosen in the daily check-in gets the first optional slot.
+  const focusId = checkIn.focusTaskId;
+  if (focusId !== null) order.set(focusId, -1);
   const optional = flexible
     .filter((item) => !placements.has(item.id))
     .toSorted(
@@ -238,7 +241,7 @@ export function scheduleFromIntent(
   for (const item of optional) {
     let reason = '';
     if (excluded(item)) reason = 'Diese Aktivität ist in deinen Präferenzen ausgeschlossen.';
-    else if (intent.energy === 'low' && item.effort === 'high')
+    else if (item.id !== focusId && intent.energy === 'low' && item.effort === 'high')
       reason = 'Die anspruchsvolle Aufgabe bleibt bei wenig Energie heute offen.';
     else if (deferIds.has(item.id)) reason = 'Auf deinen Wunsch bleibt diese Aufgabe heute offen.';
     else if (place(item)) continue;

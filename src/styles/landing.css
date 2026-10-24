@@ -1,10 +1,12 @@
+/* Landing page: same Pivot olive palette and Inter as the planner (values mirror src/styles/theme.css). */
 :root {
   --ink: #17211e;
-  --paper: #f7f5ef;
-  --sage: #dfe7d8;
-  --green: #647a6c;
+  --paper: #f3f1ea;
+  --sage: #ece8d6;
+  --green: #6b6a3c;
+  --olive: #4f5732;
   --white: #fffefa;
-  --muted: #626a63;
+  --muted: #5f6861;
 }
 * {
   box-sizing: border-box;
@@ -13,7 +15,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font-family: 'Manrope Variable', 'Avenir Next', sans-serif;
+  font-family: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -55,7 +57,7 @@ a:focus-visible {
 }
 .button {
   display: inline-block;
-  background: var(--ink);
+  background: var(--olive);
   color: white;
   padding: 13px 21px;
   border-radius: 12px;
@@ -66,7 +68,7 @@ a:focus-visible {
     background 0.2s;
 }
 .button:hover {
-  background: var(--green);
+  background: var(--ink);
   transform: translateY(-2px);
 }
 
@@ -104,7 +106,7 @@ h1 span {
 }
 .microcopy {
   font-size: 12px;
-  color: #747b74;
+  color: #6f7268;
   margin-top: 15px;
 }
 
@@ -118,7 +120,7 @@ h1 span {
   max-width: 340px;
   margin: auto;
   background: var(--white);
-  border: 1px solid #e8e7df;
+  border: 1px solid #e6e2d4;
   border-radius: 25px;
   padding: 25px 20px;
   box-shadow: 0 20px 60px #17211e12;
@@ -128,7 +130,7 @@ h1 span {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #727a72;
+  color: #6f7268;
   margin-bottom: 20px;
 }
 .status {
@@ -144,25 +146,25 @@ h1 span {
   font-size: 14px;
   padding: 12px 14px;
   border-radius: 14px 14px 4px 14px;
-  background: #f3f2ed;
+  background: #f3f1ea;
   margin-bottom: 6px;
 }
 .task {
   padding: 15px;
   margin-top: 12px;
   border-radius: 14px;
-  background: #f3f2ed;
+  background: #f3f1ea;
   font-size: 13px;
 }
 .task strong {
   display: block;
 }
 .task small {
-  color: #737a72;
+  color: #6f7268;
 }
 .task.adapt {
-  background: #e4eddd;
-  border: 1px solid #d3e0ca;
+  background: #ece8d6;
+  border: 1px solid #d9d3b5;
 }
 .choices {
   display: flex;
@@ -177,11 +179,11 @@ h1 span {
   padding: 5px 10px;
 }
 .choices b {
-  background: var(--ink);
+  background: var(--olive);
   color: white;
 }
 .choices i {
-  border: 1px solid #c9d4c0;
+  border: 1px solid #cfc9a8;
 }
 
 .features {
@@ -224,13 +226,13 @@ h1 span {
   padding: 30px 26px;
 }
 .highlight.voice {
-  background: #efe9f6;
+  background: #ece8d6;
 }
 .highlight.adaptive {
-  background: #e4eddd;
+  background: #e2e4cb;
 }
 .highlight.energy {
-  background: #f6eadb;
+  background: #f1e6d0;
 }
 .highlight .symbol {
   font-size: 30px;
@@ -261,7 +263,7 @@ h1 span {
   gap: 18px;
 }
 .feature {
-  border: 1px solid #eae9e2;
+  border: 1px solid #e6e2d4;
   border-radius: 20px;
   padding: 25px;
 }
@@ -275,7 +277,7 @@ h1 span {
   margin: 0 0 8px;
 }
 .feature p {
-  color: #727971;
+  color: #6f7268;
   font-size: 14px;
   margin: 0;
 }
@@ -322,7 +324,7 @@ h1 span {
   text-align: center;
 }
 .closing .eyebrow {
-  color: #a9bba9;
+  color: #c9c4a0;
 }
 .closing h2 {
   font-size: clamp(32px, 4vw, 48px);
@@ -331,7 +333,7 @@ h1 span {
   margin: 12px 0;
 }
 .closing p {
-  color: #c4ccc5;
+  color: #d8d4c0;
   max-width: 470px;
   margin: 0 auto 25px;
 }
@@ -342,7 +344,7 @@ h1 span {
 footer {
   padding: 25px 28px 40px;
   text-align: center;
-  color: #747b74;
+  color: #6f7268;
   font-size: 12px;
   max-width: 640px;
   margin: auto;

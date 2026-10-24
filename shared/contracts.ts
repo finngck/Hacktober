@@ -4,6 +4,8 @@ import { energyMeasuresSchema } from './measures.js';
 export const categorySchema = z.enum(['study', 'work', 'recovery', 'movement', 'social']);
 export const energySchema = z.enum(['low', 'medium', 'high']);
 export const exclusionSchema = z.enum(['coffee', 'running', 'gym']);
+export const sleepQualitySchema = z.enum(['poor', 'okay', 'good']);
+const scale = z.number().int().min(1).max(5);
 const minute = z.number().int().min(0).max(1440);
 
 export const itemSchema = z.object({
@@ -34,6 +36,11 @@ export const checkInSchema = z.object({
   energy: energySchema,
   productiveTime: z.enum(['morning', 'afternoon', 'any']),
   exclusions: z.array(exclusionSchema).max(3),
+  // Defaults keep check-ins saved before these signals existed valid.
+  sleepQuality: sleepQualitySchema.default('okay'),
+  mood: scale.default(3),
+  stress: scale.default(2),
+  focusTaskId: z.string().max(80).nullable().default(null),
 });
 
 export const replanRequestSchema = z.object({
@@ -95,6 +102,7 @@ export type Category = z.infer<typeof categorySchema>;
 export type Energy = z.infer<typeof energySchema>;
 export type ScheduleItem = z.infer<typeof itemSchema>;
 export type Plan = z.infer<typeof planSchema>;
+export type SleepQuality = z.infer<typeof sleepQualitySchema>;
 export type CheckIn = z.infer<typeof checkInSchema>;
 export type ReplanRequest = z.infer<typeof replanRequestSchema>;
 export type ModelResult = z.infer<typeof modelResultSchema>;
@@ -111,6 +119,19 @@ export const categoryLabels: Record<Category, string> = {
   social: 'Freizeit',
 };
 export const energyLabels: Record<Energy, string> = { low: 'Wenig', medium: 'Okay', high: 'Viel' };
+export const sleepQualityLabels: Record<SleepQuality, string> = {
+  poor: 'Unruhig',
+  okay: 'Okay',
+  good: 'Erholsam',
+};
+export const moodLabels = ['Mies', 'Gedrückt', 'Neutral', 'Gut', 'Richtig gut'] as const;
+export const stressLabels = [
+  'Entspannt',
+  'Locker',
+  'Etwas los',
+  'Angespannt',
+  'Überladen',
+] as const;
 export const formatTime = (minutes: number) =>
   `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
 export const parseTime = (time: string) => {

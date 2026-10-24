@@ -4,15 +4,17 @@ import { extractTasks } from './extract.js';
 import { generatePlan, PlannerError } from './gemma.js';
 import { isAllowedRequest } from './request-origin.js';
 import { getVersions } from './versions.js';
+import { createConversationRouter, createVoiceRouter, type VoiceOptions } from './voice.js';
 
-export function createApp(options: {
-  apiKey?: string;
-  model: string;
-  fetcher?: typeof fetch;
-  allowedHosts?: string[];
-}) {
+export function createApp(
+  options: VoiceOptions & {
+    allowedHosts?: string[];
+  },
+) {
   const app = express();
   app.disable('x-powered-by');
+  // ElevenLabs calls this server-to-server endpoint with its own bearer secret.
+  app.use('/api/voice', express.json({ limit: '512kb' }), createConversationRouter(options));
   app.use('/api', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     const host = req.headers.host;
@@ -28,6 +30,8 @@ export function createApp(options: {
         .json({ error: 'Diese Anfrage kommt nicht aus einer freigegebenen App-Adresse.' });
     next();
   });
+  app.use('/api/voice', createVoiceRouter(options));
+  let activeExtractions = 0;
   app.post('/api/extract', express.json({ limit: '4mb' }), async (req, res) => {
     const parsed = extractRequestSchema.safeParse(req.body);
     if (!parsed.success)
@@ -52,14 +56,12 @@ export function createApp(options: {
       activeExtractions--;
     }
   });
-  app.use(express.json({ limit: '64kb' }));
   app.get('/api/health', (_req, res) =>
     res.json({ configured: Boolean(options.apiKey), model: options.model }),
   );
   app.get('/api/versions', async (_req, res) => res.json(await getVersions()));
   let activeRequests = 0;
-  let activeExtractions = 0;
-  app.post('/api/replan', async (req, res) => {
+  app.post('/api/replan', express.json({ limit: '64kb' }), async (req, res) => {
     const parsed = replanRequestSchema.safeParse(req.body);
     if (!parsed.success)
       return res

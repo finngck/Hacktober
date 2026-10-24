@@ -1,0 +1,176 @@
+/*
+ * Pivot design tokens (coss ui structure, Pivot beige-green palette). The single source for colour, type, radius and motion.
+ * Semantic names follow coss ui, so every component in src/components/ui picks up the brand.
+ * New UI uses these tokens (via Tailwind classes such as bg-primary or text-category-study),
+ * never raw colour values. See docs/design-system.md.
+ */
+
+:root {
+  /* Pivot palette: warm beige surfaces, deep green ink, olive from the logo gradient for actions, progress and selection. Colour beyond that carries meaning (categories, status). */
+  --ink: #17211e;
+  --olive: #8a8653;
+
+  /* Task categories: data colours for event tints, muted to sit on the beige surface. */
+  --category-study: #6f5fa6;
+  --category-work: #3f6a8f;
+  --category-recovery: #4f7a5c;
+  --category-movement: #b0652f;
+  --category-social: #a8506f;
+
+  /* Timeline blocks by priority, warm olive from the logo gradient: dark for high, mid for medium, light for low. */
+  --priority-high: #4f5732;
+  --priority-high-foreground: #fffefa;
+  --priority-medium: #b3ae74;
+  --priority-low: #ece8d6;
+
+  /* coss ui semantic tokens */
+  --background: #f3f1ea;
+  --foreground: var(--ink);
+  --card: #fffefa;
+  --card-foreground: var(--ink);
+  --popover: #fffefa;
+  --popover-foreground: var(--ink);
+  --primary: var(--priority-high);
+  --primary-foreground: #fffefa;
+  --secondary: color-mix(in srgb, var(--olive) 16%, transparent);
+  --secondary-foreground: var(--ink);
+  --muted: color-mix(in srgb, var(--olive) 14%, transparent);
+  --muted-foreground: #5f6861;
+  --accent: color-mix(in srgb, var(--olive) 22%, transparent);
+  --accent-foreground: var(--ink);
+  --destructive: #d4553f;
+  --destructive-foreground: #a33a28;
+  --success: #5f8f6a;
+  --success-foreground: #3f6b4a;
+  --warning: #d49a3a;
+  --warning-foreground: #95641b;
+  --info: #5b7f99;
+  --info-foreground: #3b5d75;
+  --border: color-mix(in srgb, var(--ink) 9%, transparent);
+  --input: color-mix(in srgb, var(--olive) 28%, transparent);
+  --ring: var(--olive);
+  --radius: 0.625rem;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: ui-monospace, monospace;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-category-study: var(--category-study);
+  --color-category-work: var(--category-work);
+  --color-category-recovery: var(--category-recovery);
+  --color-category-movement: var(--category-movement);
+  --color-category-social: var(--category-social);
+
+  --color-priority-high: var(--priority-high);
+  --color-priority-high-foreground: var(--priority-high-foreground);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+
+  /* Motion: short for feedback, one longer moment for the morning check-in. */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-skeleton: skeleton 2s -1s infinite linear;
+  --animate-toast-success-odd: toast-pop 0.32s var(--ease-out-soft);
+  --animate-toast-success-even: toast-pop 0.32s var(--ease-out-soft);
+  --animate-toast-error-odd: toast-shake 0.28s var(--ease-out-soft);
+  --animate-toast-error-even: toast-shake 0.28s var(--ease-out-soft);
+  --animate-pop: pop 0.28s var(--ease-spring);
+  --animate-rise: rise 0.5s var(--ease-out-soft) both;
+  --animate-sunburst: sunburst 0.6s var(--ease-out-soft) both;
+
+  @keyframes skeleton {
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes toast-pop {
+    30% {
+      scale: 1.025;
+    }
+    60% {
+      scale: 0.99;
+    }
+  }
+  @keyframes toast-shake {
+    25% {
+      translate: -3px 0;
+    }
+    75% {
+      translate: 3px 0;
+    }
+  }
+  @keyframes pop {
+    0% {
+      scale: 0.82;
+      opacity: 0.4;
+    }
+    100% {
+      scale: 1;
+      opacity: 1;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 14px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+  @keyframes sunburst {
+    0% {
+      scale: 0.4;
+      opacity: 0;
+      rotate: -30deg;
+    }
+    60% {
+      opacity: 1;
+    }
+    100% {
+      scale: 1;
+      opacity: 1;
+      rotate: 0deg;
+    }
+  }
+}
