@@ -459,7 +459,8 @@ export function measureContext(
     nachMittagessen: lunchEnd !== undefined,
     mussDanachLeistungsfaehig:
       nextFixed !== undefined && nextFixed.start! - plan.now <= PERFORM_SOON_MIN,
-    freieZeitMin: (upcoming[0]?.start ?? plan.dayEnd) - plan.now,
+    // The first free block starts once the user is available again.
+    freieZeitMin: Math.max(0, (upcoming[0]?.start ?? plan.dayEnd) - plan.availableFrom),
   };
 }
 

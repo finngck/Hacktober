@@ -126,3 +126,45 @@ test('the Gemma adapter returns engine-selected measures from the reported signa
   assert.ok(response.measures.restrictions.some((item) => item.id === 'KOF_NICHT_UEBERDECKEN'));
   assert.ok(response.measures.actions.length > 0);
 });
+
+test('nap advice follows the proposed plan, not the replaced one', async () => {
+  const state = { energy: 'low' as const, sleepHours: 5 };
+  const before = ids(selectMeasures(request(), state, { schlaefrig: true }));
+  assert.ok(before.actions.includes('NAP_KURZ'));
+  const response = await generatePlan(request(), {
+    apiKey: 'test',
+    model: 'gemma-4-26b-a4b-it',
+    fetcher: async () =>
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      status: 'ready',
+                      summary: 'Lernen direkt jetzt.',
+                      availabilityFrom: 780,
+                      ...state,
+                      question: null,
+                      taskOrder: ['study', 'break', 'inbox'],
+                      deferIds: ['project', 'gym'],
+                      reasons: [],
+                      signals: { schlaefrig: true },
+                    }),
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+  });
+  assert.equal(response.proposedPlan?.items.find((item) => item.id === 'study')?.start, 780);
+  assert.equal(
+    response.measures.actions.some((item) => item.id === 'NAP_KURZ'),
+    false,
+  );
+});
