@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pivot">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f1f0eb"/>
+      <stop offset="0.55" stop-color="#c9cdbd"/>
+      <stop offset="1" stop-color="#d9cfae"/>
+    </linearGradient>
+    <radialGradient id="green" cx="0.44" cy="0.44" r="0.5">
+      <stop offset="0" stop-color="#3f5945"/>
+      <stop offset="0.45" stop-color="#55705a" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#7d8f78" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="olive" cx="0.82" cy="0.62" r="0.38">
+      <stop offset="0" stop-color="#858456" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#858456" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="tile">
+      <rect width="512" height="512" rx="114"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#base)"/>
+    <rect width="512" height="512" fill="url(#olive)"/>
+    <rect width="512" height="512" fill="url(#green)"/>
+  </g>
+  <g fill="#fffefa">
+    <circle cx="160" cy="348" r="36"/>
+    <path fill-rule="evenodd" d="M176 138H293a92 92 0 0 1 0 184H222V193H176ZM275 193H293a36 36 0 0 1 0 72H275Z"/>
+  </g>
+</svg>
