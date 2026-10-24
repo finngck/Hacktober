@@ -34,6 +34,8 @@ export const planSchema = z.object({
 export const checkInSchema = z.object({
   sleepHours: z.number().min(0).max(16),
   energy: energySchema,
+  // Finer 1–5 reading behind `energy`; older check-ins only carry the coarse level.
+  energyLevel: scale.optional(),
   productiveTime: z.enum(['morning', 'afternoon', 'any']),
   exclusions: z.array(exclusionSchema).max(3),
   // Defaults keep check-ins saved before these signals existed valid.
@@ -119,6 +121,16 @@ export const categoryLabels: Record<Category, string> = {
   social: 'Freizeit',
 };
 export const energyLabels: Record<Energy, string> = { low: 'Wenig', medium: 'Okay', high: 'Viel' };
+export const energyLevelLabels = ['Sehr wenig', 'Wenig', 'Okay', 'Viel', 'Sehr viel'] as const;
+/** The planner works with three levels; the check-in slider offers five. */
+export const energyFromLevel = (level: number): Energy =>
+  level <= 2 ? 'low' : level >= 4 ? 'high' : 'medium';
+const defaultEnergyLevel: Record<Energy, number> = { low: 2, medium: 3, high: 4 };
+/** The stored fine level, unless the planner has since moved energy to another band. */
+export const energyLevelOf = (checkIn: Pick<CheckIn, 'energy' | 'energyLevel'>) =>
+  checkIn.energyLevel !== undefined && energyFromLevel(checkIn.energyLevel) === checkIn.energy
+    ? checkIn.energyLevel
+    : defaultEnergyLevel[checkIn.energy];
 export const sleepQualityLabels: Record<SleepQuality, string> = {
   poor: 'Unruhig',
   okay: 'Okay',
