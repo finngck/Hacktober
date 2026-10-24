@@ -6,12 +6,19 @@ const snapshotSchema = z.object({ plan: planSchema, checkIn: checkInSchema });
 const stateSchema = snapshotSchema.extend({
   version: z.literal(1),
   history: z.array(snapshotSchema).max(5),
+  tipsDismissedOn: z.iso.date().nullable().default(null),
 });
 export type Workspace = z.infer<typeof stateSchema>;
 const key = 'daylight.workspace.v1';
 
 export const freshWorkspace = (): Workspace =>
-  structuredClone({ version: 1, plan: demoPlan, checkIn: demoCheckIn, history: [] });
+  structuredClone({
+    version: 1,
+    plan: demoPlan,
+    checkIn: demoCheckIn,
+    history: [],
+    tipsDismissedOn: null,
+  });
 
 export function loadWorkspace(): Workspace {
   try {
