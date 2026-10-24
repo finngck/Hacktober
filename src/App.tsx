@@ -29,7 +29,6 @@ import { Icon } from './components/Icon';
 import { Timeline } from './components/Timeline';
 import { AddTask } from './components/AddTask';
 import { CheckInPanel } from './components/CheckInPanel';
-import { VersionMenu } from './components/VersionMenu';
 
 export default function App() {
   const [workspace, setWorkspace] = useState(loadWorkspace);
@@ -176,7 +175,6 @@ export default function App() {
           Dein Tagescopilot
         </div>
         <div className="header-actions">
-          <VersionMenu />
           <span className="demo-label">
             <span />
             Beispieltag

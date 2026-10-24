@@ -8,7 +8,7 @@ Der lokale Daylight-Prototyp setzt den Textablauf aus **Chat Core Features** um:
 
 React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Die Icons kommen aus HugeIcons. Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
 
-Sprache, ElevenLabs, Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Menü **Versionen** zeigt den gebauten Commit, Branch, Buildzeit, die letzten Änderungen auf `main` und erfolgreiche Deployments aus dem öffentlichen GitHub-Verlauf.
+Sprache, ElevenLabs, Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
 
 ## Einstieg
 
@@ -54,7 +54,7 @@ Vercel baut die Vite-Oberfläche aus `dist/` und führt die drei Dateien unter `
 
 Den `GEMMA_API_KEY` ausschließlich als geheime serverseitige Vercel-Umgebungsvariable hinterlegen. `.env` und die lokale Schlüsseldatei werden nicht hochgeladen. Zusätzliche eigene Hostnamen können mit `APP_HOSTS` (kommagetrennt, ohne Protokoll) freigegeben werden; die Vercel-Deployment-, Branch- und Produktionsadressen werden automatisch berücksichtigt.
 
-Das Versionsmenü liest nur den öffentlichen Repository-Verlauf, keine GitHub- oder Vercel-Tokens. Ein nicht verfügbarer Verlauf blockiert die Tagesplanung nicht. Deployment-Links behalten die im Vercel-Projekt konfigurierte Zugriffskontrolle. Browserdaten bleiben pro Gerät und Domain lokal; es gibt noch keine gemeinsame Datenspeicherung.
+Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Verlauf, keine GitHub- oder Vercel-Tokens. Browserdaten bleiben pro Gerät und Domain lokal; es gibt noch keine gemeinsame Datenspeicherung.
 
 ## Schnittstellen und Planregeln
 
