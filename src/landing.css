@@ -202,6 +202,70 @@ h1 span {
   line-height: 1.1;
   margin: 14px 0 42px;
 }
+.energy-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 650;
+  background: var(--sage);
+  border-radius: 20px;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+}
+.mic {
+  margin-right: 6px;
+}
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.highlight {
+  position: relative;
+  border-radius: 22px;
+  padding: 30px 26px;
+}
+.highlight.voice {
+  background: #efe9f6;
+}
+.highlight.adaptive {
+  background: #e4eddd;
+}
+.highlight.energy {
+  background: #f6eadb;
+}
+.highlight .symbol {
+  font-size: 30px;
+  margin-bottom: 22px;
+}
+.highlight h3 {
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  margin: 0 0 10px;
+}
+.highlight p {
+  color: #4f5852;
+  font-size: 15px;
+  margin: 0;
+}
+.highlight small {
+  display: block;
+  margin-top: 12px;
+  color: #747b74;
+  font-size: 12px;
+}
+.badge {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--white);
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+.extras-title {
+  margin: 48px 0 18px;
+}
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -315,6 +379,7 @@ footer {
     padding-left: 16px;
     padding-right: 16px;
   }
+  .highlights,
   .feature-grid,
   .steps {
     grid-template-columns: 1fr;
