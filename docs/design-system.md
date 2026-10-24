@@ -30,7 +30,7 @@ Radien leiten sich aus `--radius` ab (`rounded-lg` für Bedienelemente, `rounded
 
 ## Bewegung
 
-Rückmeldung auf Handlungen ist kurz (`animate-pop`). Der Abschluss des Morgen-Check-ins nutzt `animate-sunburst` und `animate-rise`. Im aktiv gestarteten Sprachdialog reagiert die grüne Kugel auf den Audiopegel; beim Verbinden und Planen pulsiert sie langsam, während einer Pause ruht sie. Keine Einblend-Animationen auf jedem Abschnitt. `prefers-reduced-motion` schaltet die Animationen ab.
+Rückmeldung auf Handlungen ist kurz (`animate-pop`). Der Abschluss des Morgen-Check-ins nutzt `animate-sunburst` und `animate-rise`. Im aktiv gestarteten Sprachdialog reagiert die organisch bewegte Kugel mit fließenden Mint-/Smaragdverläufen auf den Audiopegel; beim Verbinden und Planen bewegt sie sich langsamer, während einer Pause ruht sie. Keine Einblend-Animationen auf jedem Abschnitt. `prefers-reduced-motion` schaltet die Animationen ab.
 
 ## Komponenten
 

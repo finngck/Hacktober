@@ -278,8 +278,6 @@ export function VoicePanel(props: Props) {
           : error
             ? 'Lass uns neu verbinden'
             : 'Sprich mit Pivot';
-  const lastAgent = messages.findLast((message) => message.role === 'agent');
-
   return (
     <>
       <Button
@@ -321,6 +319,7 @@ export function VoicePanel(props: Props) {
             <div className="voice-orb-halo" />
             <div className="voice-orb">
               <div className="voice-orb-flow" />
+              <div className="voice-orb-current" />
               <div className="voice-orb-light" />
             </div>
           </div>
@@ -336,13 +335,31 @@ export function VoicePanel(props: Props) {
                 : planning
                   ? 'Die Änderungen erscheinen gleich in deinem Tagesplan.'
                   : connected
-                    ? (lastAgent?.text ??
-                      'Du kannst ganz normal sprechen und mich jederzeit unterbrechen.')
+                    ? 'Du kannst ganz normal sprechen und mich jederzeit unterbrechen.'
                     : inProgress
                       ? 'Erlaube das Mikrofon, wenn dein Browser danach fragt.'
                       : 'Zum Beispiel: „Ich bin erst ab 14 Uhr da. Plane meinen Tag um.“'}
             </p>
           </div>
+          {messages.length > 0 && (
+            <div
+              ref={transcript}
+              className="voice-transcript mx-6 mt-4 grid max-h-40 gap-3 overflow-y-auto rounded-xl border bg-background/60 p-4 text-sm leading-relaxed"
+              role="log"
+              aria-label="Gespräch mit Pivot"
+              tabIndex={0}
+            >
+              {messages.map((message) => (
+                <p
+                  key={message.key}
+                  className={cn('grid gap-1', message.role === 'user' && 'text-muted-foreground')}
+                >
+                  <strong className="text-xs">{message.role === 'user' ? 'Du' : 'Pivot'}</strong>
+                  <span className="whitespace-pre-wrap break-words">{message.text}</span>
+                </p>
+              ))}
+            </div>
+          )}
           {error && (
             <p
               role="alert"
@@ -352,12 +369,16 @@ export function VoicePanel(props: Props) {
             </p>
           )}
           {outcome && (
-            <div className="mx-6 mt-4 rounded-xl border bg-background p-3" aria-live="polite">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold">
-                  {outcome.status === 'applied'
-                    ? 'Dein Plan ist aktualisiert'
-                    : 'Eine kurze Rückmeldung'}
+            <details
+              key={JSON.stringify(outcome)}
+              className="mx-6 mt-4 rounded-xl border bg-background p-3 text-sm"
+            >
+              <summary className="cursor-pointer font-medium">
+                {outcome.status === 'applied' ? 'Planänderung ansehen' : 'Rückmeldung ansehen'}
+              </summary>
+              <div className="mt-2 flex items-start justify-between gap-2">
+                <p className="text-sm text-muted-foreground">
+                  {outcome.question || outcome.summary}
                 </p>
                 {outcome.status === 'applied' && outcome.changes && (
                   <Button
@@ -377,9 +398,6 @@ export function VoicePanel(props: Props) {
                   </Button>
                 )}
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {outcome.question || outcome.summary}
-              </p>
               {!!outcome.changes?.length && (
                 <ul className="mt-3 grid gap-2 text-sm">
                   {outcome.changes.map((change, index) => (
@@ -395,7 +413,7 @@ export function VoicePanel(props: Props) {
                   ))}
                 </ul>
               )}
-            </div>
+            </details>
           )}
           <div className="flex flex-wrap justify-center gap-3 px-6 py-5">
             {connected && (
@@ -494,30 +512,6 @@ export function VoicePanel(props: Props) {
                 <Icon icon={ArrowUp02Icon} size={20} />
               </Button>
             </form>
-          )}
-          {messages.length > 0 && (
-            <details className="mx-6 mb-4 text-sm">
-              <summary className="cursor-pointer text-muted-foreground">Gespräch mitlesen</summary>
-              <div
-                ref={transcript}
-                className="mt-3 grid max-h-44 gap-3 overflow-y-auto"
-                role="log"
-                aria-label="Gespräch mit Pivot"
-              >
-                {messages.map((message) => (
-                  <p
-                    key={message.key}
-                    className={cn(
-                      'grid gap-0.5',
-                      message.role === 'user' && 'text-muted-foreground',
-                    )}
-                  >
-                    <strong className="text-xs">{message.role === 'user' ? 'Du' : 'Pivot'}</strong>
-                    <span>{message.text}</span>
-                  </p>
-                ))}
-              </div>
-            </details>
           )}
           <p className="border-t px-6 py-4 text-center text-xs leading-relaxed text-muted-foreground">
             Änderungen werden direkt übernommen und lassen sich rückgängig machen. Audio:

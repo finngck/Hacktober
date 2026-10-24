@@ -220,7 +220,6 @@ export default function App() {
                   ? ` · ${changes.length - 3} weitere Änderungen im Gespräch.`
                   : '')
               : applied.result.summary,
-            timeout: 10000,
             actionProps: { children: 'Rückgängig', onClick: voiceUndo },
           });
         },
