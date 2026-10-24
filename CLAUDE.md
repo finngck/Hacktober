@@ -1,0 +1,3 @@
+# Gemeinsame Projektregeln
+
+@AGENTS.md
