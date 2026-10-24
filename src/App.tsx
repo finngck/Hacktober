@@ -9,6 +9,7 @@ import {
   type ReplanResponse,
   type ScheduleItem,
 } from '../shared/contracts';
+import { fitIntoDay } from '../shared/fit';
 import { freshWorkspace, loadWorkspace, saveWorkspace } from './state';
 import {
   badges,
@@ -112,12 +113,20 @@ export default function App() {
     setProgress(recorded.progress);
     return { streak: streak(recorded.progress), unlocked: recorded.unlocked };
   }
-  function addTasks(items: ScheduleItem[]) {
+  function importTasks(items: ScheduleItem[]) {
+    const fitted = fitIntoDay(plan, items);
+    return addTasks(fitted.items, fitted.notes, fitted.planItems);
+  }
+  function addTasks(
+    items: ScheduleItem[],
+    notes: string[] = [],
+    existing: ScheduleItem[] = plan.items,
+  ) {
     if (plan.items.length + items.length > 40)
       return 'Der Prototyp unterstützt bis zu 40 Aufgaben.';
     if (items.some((item) => item.start !== null && item.start < plan.now))
       return `Neue Aufgaben müssen nach der Demo-Uhrzeit ${formatTime(plan.now)} beginnen.`;
-    const nextPlan = { ...plan, items: [...plan.items, ...items] };
+    const nextPlan = { ...plan, items: [...existing, ...items] };
     const issues = validatePlan(nextPlan);
     if (issues.length) return issues.join(' ');
     clearDraft();
@@ -129,7 +138,7 @@ export default function App() {
     toastManager.add({
       type: 'success',
       title: items.length === 1 ? 'Aufgabe hinzugefügt' : `${items.length} Aufgaben hinzugefügt`,
-      description: items.map((item) => item.title).join(', '),
+      description: [items.map((item) => item.title).join(', '), ...notes].join(' '),
     });
     return undefined;
   }
@@ -402,7 +411,7 @@ export default function App() {
                   <TooltipPopup>Rückgängig</TooltipPopup>
                 </Tooltip>
               )}
-              <ScreenshotImport onAdd={addTasks} disabled={busy} />
+              <ScreenshotImport onAdd={importTasks} disabled={busy} />
               <AddTask onAdd={(item) => addTasks([item])} disabled={busy} />
             </div>
           </div>
