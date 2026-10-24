@@ -1,8 +1,7 @@
-import { useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { ImageUploadIcon } from '@hugeicons/core-free-icons';
 import {
   categoryLabels,
-  extractResponseSchema,
   formatTime,
   itemSchema,
   parseTime,
@@ -26,6 +25,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { readScreenshot } from '@/lib/screenshot';
 import { Icon } from '../Icon';
 import { ChoiceGroup, ChoiceItem } from './Choice';
 import { categoryIcons } from './Timeline';
@@ -56,18 +56,6 @@ const toRow = (task: ExtractedTask): Row => ({
   when: task.when,
 });
 
-/** Shrinks the screenshot in the browser so the upload stays small and fast. */
-async function prepareImage(file: File): Promise<{ image: string; mimeType: 'image/jpeg' }> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
-  return { image: dataUrl.slice(dataUrl.indexOf(',') + 1), mimeType: 'image/jpeg' };
-}
-
 export function ScreenshotImport({
   onAdd,
   disabled,
@@ -81,6 +69,15 @@ export function ScreenshotImport({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const requestController = useRef<AbortController | null>(null);
+
+  useEffect(() => () => requestController.current?.abort(), []);
+
+  function cancel() {
+    requestController.current?.abort();
+    requestController.current = null;
+    setBusy(false);
+  }
 
   function reset() {
     setRows([]);
@@ -92,18 +89,18 @@ export function ScreenshotImport({
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    cancel();
     reset();
+    const controller = new AbortController();
+    requestController.current = controller;
+    const timeout = window.setTimeout(
+      () => controller.abort(new DOMException('Upload timed out', 'TimeoutError')),
+      65_000,
+    );
     setBusy(true);
     try {
-      const payload = await prepareImage(file);
-      const result = await fetch('/api/extract', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const body = await result.json();
-      if (!result.ok) throw new Error(body.error || 'Das Bild konnte nicht gelesen werden.');
-      const extracted = extractResponseSchema.parse(body);
+      const extracted = await readScreenshot(file, controller.signal);
+      if (requestController.current !== controller || controller.signal.aborted) return;
       setRows(extracted.tasks.map(toRow));
       setNote(
         extracted.note ||
@@ -111,19 +108,27 @@ export function ScreenshotImport({
       );
       setDone(true);
     } catch (problem) {
+      if (requestController.current !== controller) return;
       setError(
-        problem instanceof Error && !(problem instanceof SyntaxError)
-          ? problem.message
-          : 'Das Bild konnte nicht gelesen werden. Nutze ein klares PNG, JPEG oder WebP.',
+        controller.signal.aborted
+          ? 'Das Lesen hat zu lange gedauert. Versuche es erneut oder wähle einen kleineren Ausschnitt.'
+          : problem instanceof Error
+            ? problem.message
+            : 'Das Bild konnte nicht gelesen werden. Nutze ein klares PNG, JPEG oder WebP.',
       );
     } finally {
-      setBusy(false);
+      window.clearTimeout(timeout);
+      if (requestController.current === controller) {
+        requestController.current = null;
+        setBusy(false);
+      }
     }
   }
   function patch(key: string, change: Partial<Row>) {
     setRows((previous) => previous.map((row) => (row.key === key ? { ...row, ...change } : row)));
   }
   function submit() {
+    if (busy || disabled) return;
     const selected = rows.filter((row) => row.include);
     if (!selected.length) return setError('Wähle mindestens eine Aufgabe aus.');
     const items: ScheduleItem[] = [];
@@ -153,8 +158,9 @@ export function ScreenshotImport({
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        cancel();
+        reset();
         setOpen(next);
-        if (next) reset();
       }}
     >
       <DialogTrigger render={<Button variant="outline" disabled={disabled} />}>
@@ -182,6 +188,9 @@ export function ScreenshotImport({
               onChange={pick}
             />
           </label>
+          <p className="text-xs text-muted-foreground">
+            PNG, JPEG oder WebP bis 20 MB. Große Bilder werden automatisch verkleinert.
+          </p>
           {note && <p className="text-sm text-muted-foreground">{note}</p>}
           {rows.map((row) => (
             <fieldset
@@ -276,7 +285,9 @@ export function ScreenshotImport({
         </DialogPanel>
         {done && rows.length > 0 && (
           <DialogFooter>
-            <Button onClick={submit}>Ausgewählte hinzufügen</Button>
+            <Button onClick={submit} disabled={busy || disabled}>
+              Ausgewählte hinzufügen
+            </Button>
           </DialogFooter>
         )}
       </DialogPopup>

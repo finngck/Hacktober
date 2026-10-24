@@ -76,6 +76,7 @@ export async function extractTasks(
         },
       );
     } catch {
+      if (attempt === 1) continue;
       throw new PlannerError(
         'Gemma ist gerade nicht erreichbar oder hat zu lange gebraucht. Versuche es erneut.',
         504,
@@ -115,6 +116,7 @@ export async function extractTasks(
           .map((part: { text?: string }) => part.text || '')
           .join('') || '';
     } catch {
+      if (attempt === 1) continue;
       throw new PlannerError('Gemma hat keine lesbare Antwort geliefert. Versuche es erneut.', 502);
     }
     try {

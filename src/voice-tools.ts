@@ -82,6 +82,7 @@ export async function executeVoiceReplan(
     checkIn: {
       ...source.checkIn,
       energy: response.result.energy,
+      energyLevel: response.result.energyLevel,
       sleepHours: response.result.sleepHours,
     },
     history: [...source.history, { plan: source.plan, checkIn: source.checkIn }].slice(-5),

@@ -267,6 +267,7 @@ export default function App() {
       checkIn: {
         ...previous.checkIn,
         energy: response.result.energy,
+        energyLevel: response.result.energyLevel,
         sleepHours: response.result.sleepHours,
       },
       history: [...previous.history, { plan: previous.plan, checkIn: previous.checkIn }].slice(-5),

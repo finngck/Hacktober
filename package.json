@@ -15,6 +15,7 @@
     "test:live": "node --import tsx scripts/check-gemma.ts",
     "format": "prettier --write src server api shared tests scripts public index.html package.json tsconfig.json vite.config.ts vercel.json",
     "format:check": "prettier --check src server api shared tests scripts public index.html package.json tsconfig.json vite.config.ts vercel.json",
+    "test:upload": "node --import tsx --test tests/browser/*.test.ts",
     "voice:setup": "node --import tsx scripts/configure-voice.ts",
     "test:voice:live": "node --import tsx scripts/check-voice.ts"
   },
@@ -41,6 +42,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "playwright": "1.62.1",
     "prettier": "^3.9.10",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.20.0",
