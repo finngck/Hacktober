@@ -258,7 +258,7 @@ export default function App() {
         <main
           id="day-plan"
           tabIndex={-1}
-          className="grid scroll-mt-20 content-start gap-5 outline-none lg:[grid-area:day]"
+          className="grid scroll-mt-20 content-start gap-5 rounded-2xl border bg-card p-4 shadow-xs/5 outline-none sm:p-6 lg:[grid-area:day]"
         >
           {!storageAvailable && (
             <Alert variant="warning">
@@ -269,7 +269,7 @@ export default function App() {
           )}
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{dateLabel}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">{dateLabel}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
                 Demo-Uhrzeit {formatTime(plan.now)}, {fixedCount}{' '}
                 {fixedCount === 1 ? 'fester Termin' : 'feste Termine'} vor dir
@@ -303,7 +303,7 @@ export default function App() {
                 <TabsTab value="proposal">
                   Vorschlag
                   {changedItems.length > 0 && (
-                    <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground tabular">
+                    <span className="rounded-md bg-primary px-1.5 text-xs text-primary-foreground tabular">
                       {changedItems.length}
                     </span>
                   )}

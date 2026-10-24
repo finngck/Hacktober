@@ -87,14 +87,14 @@ export function CheckInFlow({
           <>
             <DialogPanel className="grid justify-items-center gap-4 py-8 text-center">
               <span className="relative grid size-28 place-items-center">
-                <span className="absolute inset-0 animate-sunburst rounded-full bg-sun/25" />
-                <span className="grid size-20 animate-sunburst place-items-center rounded-full bg-sun text-sun-ink shadow-lg">
+                <span className="absolute inset-0 animate-sunburst rounded-full bg-muted" />
+                <span className="grid size-20 animate-sunburst place-items-center rounded-full bg-primary text-primary-foreground shadow-lg">
                   <Icon icon={Sun03Icon} size={44} />
                 </span>
               </span>
               <DialogTitle className="text-3xl">Check-in erledigt</DialogTitle>
               <p className="inline-flex animate-rise items-center gap-2 rounded-full bg-accent px-3 py-1 font-medium">
-                <Icon icon={FireIcon} size={18} className="text-sun-ink" />
+                <Icon icon={FireIcon} size={18} className="text-muted-foreground" />
                 {result.streak === 1 ? 'Tag 1 deiner Serie' : `${result.streak} Tage in Folge`}
               </p>
               {result.unlocked.length > 0 && (
@@ -104,7 +104,7 @@ export function CheckInFlow({
                       key={id}
                       className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2 text-left"
                     >
-                      <Icon icon={SparklesIcon} size={20} className="text-sun-ink" />
+                      <Icon icon={SparklesIcon} size={20} className="text-muted-foreground" />
                       <span className="grid">
                         <span className="font-medium">Neu: {badges[id].title}</span>
                         <span className="text-sm text-muted-foreground">
@@ -151,7 +151,7 @@ export function CheckInFlow({
                 {steps.map((_, index) => (
                   <span key={index} className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                     <span
-                      className="block h-full origin-left rounded-full bg-sun transition-transform duration-500 ease-(--ease-out-soft)"
+                      className="block h-full origin-left rounded-full bg-primary transition-transform duration-500 ease-(--ease-out-soft)"
                       style={{ transform: `scaleX(${index <= step ? 1 : 0})` }}
                     />
                   </span>

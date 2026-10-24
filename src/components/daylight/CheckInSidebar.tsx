@@ -56,12 +56,12 @@ function CheckInRow({
         className="group flex min-h-12 w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent data-popup-open:bg-accent"
         aria-label={`${label}: ${value}. Ändern`}
       >
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted text-foreground transition-transform group-active:scale-95 lg:size-9">
+        <span className="grid size-8 shrink-0 place-items-center rounded-lg border bg-background text-foreground transition-transform group-active:scale-95 lg:size-9">
           {icon}
         </span>
         <span className="grid min-w-0 flex-1">
           <span className="text-xs text-muted-foreground">{label}</span>
-          <span className="truncate font-medium">{value}</span>
+          <span className="truncate text-sm font-medium">{value}</span>
         </span>
         <Icon
           icon={ArrowRight01Icon}
@@ -77,7 +77,7 @@ function CheckInRow({
         sideOffset={12}
         className="w-[min(22rem,90vw)]"
       >
-        <PopoverTitle className="mb-3 font-heading text-lg">{title}</PopoverTitle>
+        <PopoverTitle className="mb-3 text-base font-semibold">{title}</PopoverTitle>
         {children}
       </PopoverPopup>
     </Popover>
@@ -106,7 +106,7 @@ export function CheckInSidebar({
   return (
     <aside className="grid content-start gap-4" aria-label="Daily Check-in und Erfolge">
       <section
-        className="rounded-2xl border bg-card p-3 shadow-xs/5"
+        className="rounded-xl border bg-card p-2 shadow-xs/5"
         aria-labelledby="check-in-title"
       >
         <div className="flex items-center justify-between gap-2 px-2 pt-1 pb-2">
@@ -119,8 +119,8 @@ export function CheckInSidebar({
               Erledigt
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 text-xs whitespace-nowrap text-sun-ink">
-              <span className="size-2 animate-glow rounded-full bg-sun" />
+            <span className="inline-flex items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-info" />
               Offen
             </span>
           )}
@@ -189,15 +189,12 @@ export function CheckInSidebar({
         </Button>
       </section>
 
-      <section
-        className="rounded-2xl border bg-card p-4 shadow-xs/5"
-        aria-labelledby="streak-title"
-      >
+      <section className="rounded-xl border bg-card p-4 shadow-xs/5" aria-labelledby="streak-title">
         <div className="flex items-center gap-3">
           <span
             className={cn(
-              'grid size-11 place-items-center rounded-full',
-              days ? 'bg-sun text-sun-ink' : 'bg-muted text-muted-foreground',
+              'grid size-10 place-items-center rounded-lg',
+              days ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
             )}
           >
             <Icon icon={FireIcon} size={22} />
@@ -226,7 +223,9 @@ export function CheckInSidebar({
                   <TooltipTrigger
                     className={cn(
                       'grid aspect-square w-full place-items-center rounded-full transition-transform hover:scale-105',
-                      unlocked ? 'bg-sun/30 text-sun-ink' : 'bg-muted text-muted-foreground/60',
+                      unlocked
+                        ? 'bg-card text-foreground ring-1 ring-border shadow-xs/5'
+                        : 'bg-muted text-muted-foreground/50',
                     )}
                     aria-label={`${badges[id].title}${unlocked ? '' : ' (noch gesperrt)'}: ${badges[id].description}`}
                   >

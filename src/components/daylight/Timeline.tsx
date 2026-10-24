@@ -35,43 +35,32 @@ const categoryText: Record<Category, string> = {
   movement: 'text-category-movement',
   social: 'text-category-social',
 };
-const categoryBar: Record<Category, string> = {
-  study: 'bg-category-study',
-  work: 'bg-category-work',
-  recovery: 'bg-category-recovery',
-  movement: 'bg-category-movement',
-  social: 'bg-category-social',
+/** Event-style tint per category, as in coss calendar cards. */
+const categoryTint: Record<Category, string> = {
+  study: 'border-category-study/25 bg-category-study/6',
+  work: 'border-category-work/25 bg-category-work/6',
+  recovery: 'border-category-recovery/25 bg-category-recovery/6',
+  movement: 'border-category-movement/25 bg-category-movement/6',
+  social: 'border-category-social/25 bg-category-social/6',
 };
 
-/** The sky colour token for a minute of the day; the rail paints the day with it. */
-export function skyAt(minute: number) {
-  const hour = minute / 60;
-  if (hour < 7 || hour >= 21) return 'var(--sky-night)';
-  if (hour < 9) return 'var(--sky-dawn)';
-  if (hour < 11) return 'var(--sky-morning)';
-  if (hour < 15) return 'var(--sky-noon)';
-  if (hour < 18) return 'var(--sky-afternoon)';
-  return 'var(--sky-dusk)';
-}
-
-function RailSegment({ from, to, past }: { from: number; to: number; past?: boolean }) {
+function RailSegment({ past }: { from?: number; to?: number; past?: boolean }) {
   return (
     <span
       aria-hidden="true"
-      className={cn('w-2 justify-self-center rounded-full', past && 'opacity-30')}
-      style={{ background: `linear-gradient(${skyAt(from)}, ${skyAt(to)})` }}
+      className={cn('w-px justify-self-center bg-border', past && 'opacity-50')}
     />
   );
 }
 
 const timeBlock = cva(
-  'relative grid gap-1 overflow-hidden rounded-xl border bg-card py-3 pr-3 pl-4 shadow-xs/5 transition-[opacity,box-shadow]',
+  'relative grid gap-0.5 overflow-hidden rounded-lg border px-3 py-2.5 transition-[opacity,box-shadow]',
   {
     variants: {
       state: {
         upcoming: '',
-        past: 'opacity-55 shadow-none',
-        changed: 'border-primary/40 ring-3 ring-primary/10',
+        past: 'opacity-50',
+        changed: 'ring-2 ring-primary/70 ring-offset-1 ring-offset-card',
       },
     },
     defaultVariants: { state: 'upcoming' },
@@ -90,11 +79,7 @@ function TimeBlock({
   note?: string;
 }) {
   return (
-    <article className={timeBlock({ state })}>
-      <span
-        aria-hidden="true"
-        className={cn('absolute inset-y-2 left-1.5 w-1 rounded-full', categoryBar[item.category])}
-      />
+    <article className={cn(timeBlock({ state }), categoryTint[item.category])}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
         <span
           className={cn('inline-flex items-center gap-1 font-medium', categoryText[item.category])}
@@ -109,14 +94,14 @@ function TimeBlock({
           </span>
         )}
         {focus && (
-          <Badge className="bg-sun text-sun-ink" size="sm">
+          <Badge variant="outline" size="sm">
             <Icon icon={Target02Icon} size={12} />
             Fokus
           </Badge>
         )}
       </div>
-      <h3 className="font-heading text-base leading-snug font-semibold">{item.title}</h3>
-      <p className="text-sm text-muted-foreground">
+      <h3 className="text-sm leading-snug font-semibold">{item.title}</h3>
+      <p className="text-xs text-muted-foreground">
         {[
           `${item.duration}\u00a0Min.`,
           item.priority === 'high' ? 'Hohe Priorität' : '',
@@ -125,7 +110,7 @@ function TimeBlock({
           .filter(Boolean)
           .join(' · ')}
       </p>
-      {note && <p className="text-sm text-primary">{note}</p>}
+      {note && <p className="text-xs font-medium text-foreground">{note}</p>}
     </article>
   );
 }
@@ -166,32 +151,26 @@ export function Timeline({
           return (
             <li key={item.id} className="grid">
               {index === firstUpcoming && (
-                <div className="grid grid-cols-[3.25rem_1.25rem_1fr] items-center gap-x-3 py-2">
-                  <time className="text-right font-heading text-sm font-semibold text-sun-ink">
-                    {formatTime(plan.now)}
-                  </time>
-                  <span className="size-4 animate-glow justify-self-center rounded-full bg-sun ring-4 ring-background" />
-                  <span className="flex items-center gap-2 text-sm font-medium">
+                <div className="grid grid-cols-[3rem_0.75rem_1fr] items-center gap-x-3 py-2">
+                  <time className="text-right text-xs font-semibold">{formatTime(plan.now)}</time>
+                  <span className="size-2 justify-self-center rounded-full bg-foreground" />
+                  <span className="flex items-center gap-2 text-xs font-medium">
                     Jetzt
-                    <span className="h-px flex-1 bg-sun/60" />
+                    <span className="flex-1 border-t border-dotted border-foreground/50" />
                   </span>
                 </div>
               )}
               {gap >= 15 && (
-                <div className="grid grid-cols-[3.25rem_1.25rem_1fr] gap-x-3">
+                <div className="grid grid-cols-[3rem_0.75rem_1fr] gap-x-3">
                   <span />
                   <RailSegment from={gapStart} to={item.start!} />
                   <span className="py-2 text-sm text-muted-foreground">{gap}&nbsp;Min. frei</span>
                 </div>
               )}
-              <div className="grid grid-cols-[3.25rem_1.25rem_1fr] gap-x-3">
+              <div className="grid grid-cols-[3rem_0.75rem_1fr] gap-x-3">
                 <div className="grid content-start pt-3 text-right">
-                  <time className="font-heading text-sm font-semibold">
-                    {formatTime(item.start!)}
-                  </time>
-                  <time className="font-heading text-xs text-muted-foreground">
-                    {formatTime(end)}
-                  </time>
+                  <time className="text-sm font-semibold">{formatTime(item.start!)}</time>
+                  <time className="text-xs text-muted-foreground">{formatTime(end)}</time>
                 </div>
                 <RailSegment from={item.start!} to={end} past={past} />
                 <div className="py-1">
@@ -211,16 +190,14 @@ export function Timeline({
           );
         })}
       </ol>
-      <div className="grid grid-cols-[3.25rem_1.25rem_1fr] items-center gap-x-3 py-2">
-        <time className="text-right font-heading text-sm text-muted-foreground">
-          {formatTime(plan.dayEnd)}
-        </time>
+      <div className="grid grid-cols-[3rem_0.75rem_1fr] items-center gap-x-3 py-2">
+        <time className="text-right text-sm text-muted-foreground">{formatTime(plan.dayEnd)}</time>
         <Icon icon={SunsetIcon} size={18} className="justify-self-center text-muted-foreground" />
         <span className="text-sm text-muted-foreground">Feierabend</span>
       </div>
       {deferred.length > 0 && (
         <div className="mt-4 rounded-xl border border-dashed p-4">
-          <h3 className="font-heading font-semibold">
+          <h3 className="font-semibold">
             Heute offen <span className="text-muted-foreground">{deferred.length}</span>
           </h3>
           <p className="mb-3 text-sm text-muted-foreground">

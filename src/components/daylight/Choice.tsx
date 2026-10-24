@@ -3,9 +3,8 @@ import { Toggle } from '@/components/ui/toggle';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 
-/** Selected choices read clearly at a glance: filled with the brand colour, with a small pop. */
-const pressed =
-  'data-pressed:border-primary data-pressed:bg-primary data-pressed:text-primary-foreground data-pressed:animate-pop';
+/** Selected choices use the coss accent surface and a heavier label. */
+const pressed = 'data-pressed:bg-accent data-pressed:text-foreground data-pressed:font-medium';
 
 export function ChoiceGroup({ className, ...props }: ComponentProps<typeof ToggleGroup>) {
   return <ToggleGroup variant="outline" className={cn('w-full', className)} {...props} />;

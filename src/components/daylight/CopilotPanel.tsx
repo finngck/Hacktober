@@ -60,11 +60,11 @@ export function CopilotPanel({
   }, [response]);
   return (
     <section
-      className="grid content-start gap-4 rounded-2xl border bg-card p-4 shadow-xs/5"
+      className="grid content-start gap-4 rounded-xl border bg-card p-4 shadow-xs/5"
       aria-labelledby="copilot-title"
     >
       <div>
-        <h2 id="copilot-title" className="text-xl font-semibold">
+        <h2 id="copilot-title" className="text-base font-semibold">
           Was hat sich geändert?
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -177,7 +177,7 @@ export function CopilotPanel({
                 icon={result.status === 'proposal' ? SparklesIcon : Alert02Icon}
                 size={20}
                 className={
-                  result.status === 'proposal' ? 'text-sun-ink' : 'text-warning-foreground'
+                  result.status === 'proposal' ? 'text-foreground' : 'text-warning-foreground'
                 }
               />
               {result.status === 'proposal'

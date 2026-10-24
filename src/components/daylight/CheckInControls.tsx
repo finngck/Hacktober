@@ -25,54 +25,6 @@ import {
 
 type ControlProps = { checkIn: CheckIn; onChange: (patch: Partial<CheckIn>) => void };
 
-/** The sun climbs with your energy: the one illustrated moment of the check-in. */
-export function SunHorizon({ level, className }: { level: number; className?: string }) {
-  const y = 74 - level * 24;
-  return (
-    <svg viewBox="0 0 200 90" className={cn('w-full', className)} aria-hidden="true">
-      <defs>
-        <linearGradient id="dl-sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--sky-dawn)" stopOpacity={0.25 + level * 0.25} />
-          <stop offset="100%" stopColor="var(--sky-morning)" stopOpacity={0.35 + level * 0.3} />
-        </linearGradient>
-      </defs>
-      <clipPath id="dl-above-horizon">
-        <rect x="0" y="0" width="200" height="74" rx="14" />
-      </clipPath>
-      <rect x="0" y="0" width="200" height="74" rx="14" fill="url(#dl-sky)" />
-      <g clipPath="url(#dl-above-horizon)">
-        <g
-          className="transition-transform duration-500 ease-(--ease-spring)"
-          style={{ transform: `translateY(${y}px)` }}
-        >
-          <g
-            className="transition-opacity duration-500"
-            style={{ opacity: level / 2 }}
-            stroke="var(--sun)"
-            strokeWidth="3"
-            strokeLinecap="round"
-          >
-            {Array.from({ length: 8 }, (_, index) => {
-              const angle = (index / 8) * Math.PI * 2;
-              return (
-                <line
-                  key={index}
-                  x1={100 + Math.cos(angle) * 24}
-                  y1={Math.sin(angle) * 24}
-                  x2={100 + Math.cos(angle) * 31}
-                  y2={Math.sin(angle) * 31}
-                />
-              );
-            })}
-          </g>
-          <circle cx="100" cy="0" r="17" fill="var(--sun)" />
-        </g>
-      </g>
-      <line x1="8" y1="74" x2="192" y2="74" stroke="var(--ink)" strokeOpacity="0.25" />
-    </svg>
-  );
-}
-
 export function SleepControl({ checkIn, onChange }: ControlProps) {
   return (
     <div className="grid gap-4">
@@ -113,7 +65,6 @@ export function EnergyControl({ checkIn, onChange }: ControlProps) {
   const level = energyLevels.indexOf(checkIn.energy);
   return (
     <div className="grid gap-3">
-      <SunHorizon level={level} className="max-h-28" />
       <DaylightSlider
         label="Energie gerade"
         tone="sun"
@@ -140,7 +91,7 @@ export function MoodControl({ checkIn, onChange }: ControlProps) {
       onValueChange={(mood) => onChange({ mood })}
       display={
         <span className="inline-flex items-center gap-2">
-          <Icon icon={moodIcons[checkIn.mood - 1]} size={26} className="text-sun-ink" />
+          <Icon icon={moodIcons[checkIn.mood - 1]} size={26} className="text-muted-foreground" />
           {moodLabels[checkIn.mood - 1]}
         </span>
       }

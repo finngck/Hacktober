@@ -1,6 +1,5 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/bricolage-grotesque';
-@import '@fontsource-variable/atkinson-hyperlegible-next';
+@import '@fontsource-variable/inter';
 @import './theme.css';
 
 @layer base {
@@ -62,59 +61,16 @@
   }
 }
 
-/*
- * Daylight slider: coss Slider with a larger, tactile thumb and a tone gradient.
- * Tones are set with data-tone on the root; colours come from theme tokens only.
- */
+/* Daylight slider: coss Slider with a slightly larger thumb for touch. */
 @layer components {
-  .dl-slider {
-    --dl-from: var(--sky-dawn);
-    --dl-to: var(--evening);
-  }
-  .dl-slider[data-tone='sleep'] {
-    --dl-from: var(--sky-dusk);
-    --dl-to: var(--evening);
-  }
-  .dl-slider[data-tone='sun'] {
-    --dl-from: var(--sky-morning);
-    --dl-to: var(--sun);
-  }
-  .dl-slider[data-tone='mood'] {
-    --dl-from: var(--sky-dusk);
-    --dl-to: var(--sky-noon);
-  }
-  .dl-slider[data-tone='stress'] {
-    --dl-from: var(--category-recovery);
-    --dl-to: var(--sky-afternoon);
-  }
   .dl-slider [data-slot='slider-control'] {
-    padding-block: 0.75rem;
-    cursor: grab;
-  }
-  .dl-slider [data-slot='slider-control']:active {
-    cursor: grabbing;
+    padding-block: 0.5rem;
   }
   .dl-slider [data-slot='slider-track'][data-orientation='horizontal'] {
-    height: 0.625rem;
-  }
-  .dl-slider [data-slot='slider-track']::before {
-    inset: 0;
-    background: var(--muted);
-  }
-  .dl-slider [data-slot='slider-indicator'] {
-    margin: 0;
-    background: linear-gradient(90deg, var(--dl-from), var(--dl-to));
+    height: 0.375rem;
   }
   .dl-slider [data-slot='slider-thumb'] {
-    width: 1.75rem;
-    height: 1.75rem;
-    border: 3px solid var(--dl-to);
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--ink) 18%, transparent);
-    transition:
-      scale 160ms var(--ease-spring),
-      border-color 160ms;
-  }
-  .dl-slider [data-slot='slider-thumb'][data-dragging] {
-    scale: 1.18;
+    width: 1.25rem;
+    height: 1.25rem;
   }
 }

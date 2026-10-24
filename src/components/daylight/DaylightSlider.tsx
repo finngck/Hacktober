@@ -38,7 +38,7 @@ export function DaylightSlider({
         <span className="text-sm text-muted-foreground">{label}</span>
         <span
           key={value}
-          className="animate-pop font-heading text-2xl leading-none font-semibold tabular"
+          className="animate-pop text-xl leading-none font-semibold tracking-tight tabular"
           aria-hidden="true"
         >
           {display}

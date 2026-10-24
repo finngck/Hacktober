@@ -19,15 +19,15 @@ import { Button } from '@/components/ui/button';
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from '@/components/ui/menu';
 import { Icon } from '../Icon';
 
-/** The wordmark. The sun is the only place the brand colour sits on its own. */
+/** The wordmark: sun icon on a dark tile, as in the favicon. */
 export function Logo() {
   return (
     <span
       translate="no"
-      className="inline-flex items-center gap-2 font-heading text-xl font-bold tracking-tight"
+      className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight"
     >
-      <span className="grid size-8 place-items-center rounded-full bg-sun text-sun-ink">
-        <Icon icon={Sun03Icon} size={20} strokeWidth={2} />
+      <span className="grid size-7 place-items-center rounded-lg bg-primary text-primary-foreground">
+        <Icon icon={Sun03Icon} size={17} strokeWidth={2} />
       </span>
       daylight
     </span>
@@ -45,7 +45,7 @@ export function AppHeader({
 }) {
   const [confirmReset, setConfirmReset] = useState(false);
   return (
-    <header className="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
+    <header className="sticky top-0 z-30 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
         <a href="#day-plan" aria-label="Daylight, zum Tagesplan" className="rounded-full">
           <Logo />

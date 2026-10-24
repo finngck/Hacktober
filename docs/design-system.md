@@ -4,40 +4,37 @@ Verbindlich für jede Oberfläche von Daylight. Neue Features übernehmen damit 
 
 ## Marke
 
-- **Idee:** Der Tag als Lichtverlauf. Die Sonne steht für Energie und für „jetzt“, das Abendblau für Entscheidungen.
-- **Logo:** Wortmarke `daylight` in Bricolage Grotesque, davor die Sonne im runden Sonnengelb-Feld (`Logo` in `src/components/daylight/AppHeader.tsx`, Favicon `public/favicon.svg`). Nicht einfärben, nicht strecken.
-- **Tonalität:** Deutsch, „du“, Satzanfang groß, aktive Verben. Ein Button sagt, was passiert („Plan übernehmen“), und der Toast danach greift dasselbe Wort auf („Plan übernommen“). Fehler erklären, was passiert ist und was hilft, ohne Entschuldigung. Keine Großbuchstaben-Labels, keine Pfeile in Button-Texten.
+- **Stil:** Neutraler coss-ui-Look: graue App-Fläche, weiße Karten, feine Ränder, Schwarz-Grau für Aktionen. Farbe trägt nur Bedeutung (Kategorien, Status).
+- **Logo:** Wortmarke `daylight` in Inter, davor die Sonne auf dunkler Kachel (`Logo` in `src/components/daylight/AppHeader.tsx`, Favicon `public/favicon.svg`).
+- **Tonalität:** Deutsch, „du“, Satzanfang groß, aktive Verben. Ein Button sagt, was passiert („Plan übernehmen“), und der Toast danach greift dasselbe Wort auf („Plan übernommen“). Fehler erklären, was passiert ist und was hilft, ohne Entschuldigung.
 
 ## Tokens
 
 Die einzige Quelle ist [`src/styles/theme.css`](../src/styles/theme.css). Die Namen folgen coss ui, deshalb übernehmen alle Komponenten die Marke automatisch.
 
-| Rolle      | Token / Tailwind-Klasse                          | Einsatz                                            |
-| ---------- | ------------------------------------------------ | -------------------------------------------------- |
-| Papier     | `background`                                     | Seitenhintergrund                                  |
-| Fläche     | `card`, `popover`                                | Karten, Dialoge, Popovers                          |
-| Tinte      | `foreground`, `muted-foreground`                 | Text, Nebentext                                    |
-| Abendblau  | `primary`, `ring`, `accent`                      | Hauptaktion, Fokus, Auswahl                        |
-| Sonnengelb | `sun`, `sun-ink`                                 | Logo, „Jetzt“, Serie, Abzeichen, nicht für Flächen |
-| Himmel     | `--sky-*`                                        | Lichtleiste der Timeline und Slider-Verläufe       |
-| Kategorien | `category-{study,work,recovery,movement,social}` | Nur zur Kennzeichnung von Aufgaben                 |
-| Status     | `success`, `warning`, `destructive`, `info`      | Rückmeldungen                                      |
+| Rolle      | Token / Tailwind-Klasse                          | Einsatz                                        |
+| ---------- | ------------------------------------------------ | ---------------------------------------------- |
+| App-Fläche | `background`                                     | Seitenhintergrund                              |
+| Fläche     | `card`, `popover`                                | Karten, Dialoge, Popovers                      |
+| Text       | `foreground`, `muted-foreground`                 | Text, Nebentext                                |
+| Aktion     | `primary`, `accent`, `ring`                      | Hauptaktion, Auswahl, Fokus                    |
+| Kategorien | `category-{study,work,recovery,movement,social}` | Getönte Terminkarten (`bg-…/6`, `border-…/25`) |
+| Status     | `success`, `warning`, `destructive`, `info`      | Rückmeldungen                                  |
 
 Radien leiten sich aus `--radius` ab (`rounded-lg` für Bedienelemente, `rounded-xl`/`rounded-2xl` für Blöcke und Karten). Rohe Farbwerte in `src/**/*.ts(x)` sind verboten. `tests/design-system.test.ts` prüft das.
 
 ## Schrift
 
-- **Bricolage Grotesque** (`font-heading`): Überschriften, Datum, Uhrzeiten, große Slider-Werte.
-- **Atkinson Hyperlegible Next** (`font-sans`): alles andere. Die Schrift ist auf Lesbarkeit ausgelegt, deshalb ist die Null durchgestrichen.
+**Inter** (`font-sans`) für alles; Hierarchie über Größe und Gewicht (`font-semibold` für Titel), Zahlen mit `tabular`.
 
 ## Bewegung
 
-Rückmeldung auf Handlungen ist kurz (`animate-pop`, Daumen am Slider). Der einzige längere Moment ist der Abschluss des Morgen-Check-ins (`animate-sunburst`, `animate-rise`). Keine Einblend-Animationen auf jedem Abschnitt. `prefers-reduced-motion` schaltet alle Animationen ab.
+Rückmeldung auf Handlungen ist kurz (`animate-pop`). Der einzige längere Moment ist der Abschluss des Morgen-Check-ins (`animate-sunburst`, `animate-rise`). Keine Einblend-Animationen auf jedem Abschnitt. `prefers-reduced-motion` schaltet alle Animationen ab.
 
 ## Komponenten
 
 - `src/components/ui/`: coss ui (MIT, Quelle: [`cosscom/ui`](https://github.com/cosscom/ui/tree/3d8ca28e7d90123e9e0f44665944dc240b026ccb/apps/ui)). Die Dateien werden **nicht von Hand geändert**, Prettier ignoriert sie. Anpassungen gehören in Tokens oder in einen Daylight-Baustein.
-- `src/components/daylight/`: Daylight-Bausteine. `DaylightSlider` für jede Werteinstellung, `ChoiceGroup`/`ChoiceItem`/`ChoiceChip` für Auswahl, `Timeline` mit Lichtleiste, Check-in-Steuerelemente, Flow und Sidebar.
+- `src/components/daylight/`: Daylight-Bausteine. `DaylightSlider` für jede Werteinstellung, `ChoiceGroup`/`ChoiceItem`/`ChoiceChip` für Auswahl, `Timeline`, Check-in-Steuerelemente, Flow und Sidebar.
 - Neue UI setzt nur diese beiden Ebenen und Tokens zusammen. Keine eigenen Buttons, Dialoge oder Farbwerte.
 - Icons: HugeIcons über `src/components/Icon.tsx`. coss-Komponenten bringen intern Lucide-Icons mit, das bleibt so.
 
