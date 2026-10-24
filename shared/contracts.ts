@@ -121,7 +121,7 @@ export const categoryLabels: Record<Category, string> = {
   social: 'Freizeit',
 };
 export const energyLabels: Record<Energy, string> = { low: 'Wenig', medium: 'Okay', high: 'Viel' };
-export const energyLevelLabels = ['Sehr wenig', 'Wenig', 'Okay', 'Viel', 'Sehr viel'] as const;
+export const energyLevelLabels = ['Sehr niedrig', 'Niedrig', 'Okay', 'Hoch', 'Sehr hoch'] as const;
 /** The planner works with three levels; the check-in slider offers five. */
 export const energyFromLevel = (level: number): Energy =>
   level <= 2 ? 'low' : level >= 4 ? 'high' : 'medium';

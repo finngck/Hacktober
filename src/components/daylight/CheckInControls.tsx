@@ -76,8 +76,8 @@ export function EnergyControl({ checkIn, onChange }: ControlProps) {
           onChange({ energyLevel, energy: energyFromLevel(energyLevel) })
         }
         display={energyLevelLabels[level - 1]}
-        startLabel="Sehr wenig"
-        endLabel="Sehr viel"
+        startLabel="Sehr niedrig"
+        endLabel="Sehr hoch"
       />
     </div>
   );
