@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { once } from 'node:events';
+import { readFile } from 'node:fs/promises';
 import { chromium, webkit, type Browser, type Page } from 'playwright';
 import { createServer, type ViteDevServer } from 'vite';
 import { createApp } from '../../server/app.js';
@@ -76,6 +77,14 @@ async function openImport() {
 }
 
 async function fixture(page: Page, mimeType = 'image/png', transparent = false, noise = false) {
+  // WebKit's canvas silently falls back to PNG when asked to encode WebP.
+  if (mimeType === 'image/webp') {
+    return {
+      name: 'tasks.webp',
+      mimeType,
+      buffer: await readFile(new URL('./fixtures/tasks.webp', import.meta.url)),
+    };
+  }
   const base64 = await page.evaluate(
     ({ mimeType, transparent, noise }) => {
       const canvas = document.createElement('canvas');
