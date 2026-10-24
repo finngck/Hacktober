@@ -29,12 +29,34 @@ export const categoryIcons: Record<Category, typeof BookOpen01Icon> = {
   movement: Dumbbell01Icon,
   social: UserMultiple02Icon,
 };
-/** Block colour by priority: the more important, the darker the olive. */
-const priorityTint: Record<ScheduleItem['priority'], string> = {
-  high: 'border-priority-high bg-priority-high text-priority-high-foreground',
-  medium: 'border-priority-medium bg-priority-medium',
-  low: 'border-priority-low bg-priority-low',
+/** Category colour stays the same across priorities and planning states. */
+const categoryTint: Record<Category, string> = {
+  study: 'border-category-study/25 border-l-category-study/70 bg-category-study/10',
+  work: 'border-category-work/25 border-l-category-work/70 bg-category-work/10',
+  recovery: 'border-category-recovery/25 border-l-category-recovery/70 bg-category-recovery/10',
+  movement: 'border-category-movement/25 border-l-category-movement/70 bg-category-movement/10',
+  social: 'border-category-social/25 border-l-category-social/70 bg-category-social/10',
 };
+const categoryText: Record<Category, string> = {
+  study: 'text-category-study',
+  work: 'text-category-work',
+  recovery: 'text-category-recovery',
+  movement: 'text-category-movement',
+  social: 'text-category-social',
+};
+const priorityLabels: Record<ScheduleItem['priority'], string> = {
+  high: 'Hohe Priorität',
+  medium: 'Mittlere Priorität',
+  low: 'Niedrige Priorität',
+};
+
+function PriorityBadge({ priority }: { priority: ScheduleItem['priority'] }) {
+  return (
+    <Badge variant={priority === 'high' ? 'default' : 'outline'} size="sm">
+      {priorityLabels[priority]}
+    </Badge>
+  );
+}
 
 function RailSegment({ past }: { from?: number; to?: number; past?: boolean }) {
   return (
@@ -46,7 +68,7 @@ function RailSegment({ past }: { from?: number; to?: number; past?: boolean }) {
 }
 
 const timeBlock = cva(
-  'relative grid gap-0.5 overflow-hidden rounded-lg border px-3 py-2.5 transition-[opacity,box-shadow]',
+  'relative grid gap-0.5 overflow-hidden rounded-lg border border-l-[3px] px-3 py-2.5 transition-[opacity,box-shadow]',
   {
     variants: {
       state: {
@@ -70,20 +92,19 @@ function TimeBlock({
   focus: boolean;
   note?: string;
 }) {
-  const subtle = {
-    high: 'text-priority-high-foreground/75',
-    medium: 'text-foreground/70',
-    low: 'text-muted-foreground',
-  }[item.priority];
   return (
-    <article className={cn(timeBlock({ state }), priorityTint[item.priority])}>
+    <article className={cn(timeBlock({ state }), categoryTint[item.category])}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
         <span className="inline-flex items-center gap-1 font-medium">
-          <Icon icon={categoryIcons[item.category]} size={14} />
+          <Icon
+            icon={categoryIcons[item.category]}
+            size={14}
+            className={categoryText[item.category]}
+          />
           {categoryLabels[item.category]}
         </span>
         {item.fixed && (
-          <span className={cn('inline-flex items-center gap-1', subtle)}>
+          <span className="inline-flex items-center gap-1 text-muted-foreground">
             <Icon icon={LockKeyIcon} size={12} />
             Fest
           </span>
@@ -96,15 +117,17 @@ function TimeBlock({
         )}
       </div>
       <h3 className="text-sm leading-snug font-semibold">{item.title}</h3>
-      <p className={cn('text-xs', subtle)}>
-        {[
-          `${item.duration}\u00a0Min.`,
-          item.priority === 'high' ? 'Hohe Priorität' : '',
-          item.deadline !== null ? `Frist ${formatTime(item.deadline)}` : '',
-        ]
-          .filter(Boolean)
-          .join(' · ')}
-      </p>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <p className="text-xs text-muted-foreground">
+          {[
+            `${item.duration}\u00a0Min.`,
+            item.deadline !== null ? `Frist ${formatTime(item.deadline)}` : '',
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+        <PriorityBadge priority={item.priority} />
+      </div>
       {note && <p className="text-xs font-medium">{note}</p>}
     </article>
   );
@@ -213,10 +236,14 @@ export function Timeline({
                 <Icon
                   icon={categoryIcons[item.category]}
                   size={18}
-                  className="mt-0.5 text-priority-high"
+                  className={cn('mt-0.5 shrink-0', categoryText[item.category])}
                 />
                 <span className="grid">
                   <span className="font-medium">{item.title}</span>
+                  <span className="flex flex-wrap items-center gap-2 text-xs">
+                    {categoryLabels[item.category]}
+                    <PriorityBadge priority={item.priority} />
+                  </span>
                   <span className="text-sm text-muted-foreground">
                     {[`${item.duration}\u00a0Min.`, result ? reasonFor(item.id) : '']
                       .filter(Boolean)
