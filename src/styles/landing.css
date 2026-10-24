@@ -1,11 +1,12 @@
-/* Landing page: same neutral coss look and Inter as the planner (see theme.css). */
+/* Landing page: same Pivot olive palette and Inter as the planner (values mirror src/styles/theme.css). */
 :root {
-  --ink: #171717;
-  --paper: #f5f5f5;
-  --sage: #e4e4e4;
-  --green: #747474;
-  --white: #fefefe;
-  --muted: #686868;
+  --ink: #17211e;
+  --paper: #f3f1ea;
+  --sage: #ece8d6;
+  --green: #6b6a3c;
+  --olive: #4f5732;
+  --white: #fffefa;
+  --muted: #5f6861;
 }
 * {
   box-sizing: border-box;
@@ -56,7 +57,7 @@ a:focus-visible {
 }
 .button {
   display: inline-block;
-  background: var(--ink);
+  background: var(--olive);
   color: white;
   padding: 13px 21px;
   border-radius: 12px;
@@ -67,7 +68,7 @@ a:focus-visible {
     background 0.2s;
 }
 .button:hover {
-  background: var(--green);
+  background: var(--ink);
   transform: translateY(-2px);
 }
 
@@ -105,7 +106,7 @@ h1 span {
 }
 .microcopy {
   font-size: 12px;
-  color: #797979;
+  color: #6f7268;
   margin-top: 15px;
 }
 
@@ -119,17 +120,17 @@ h1 span {
   max-width: 340px;
   margin: auto;
   background: var(--white);
-  border: 1px solid #e7e7e7;
+  border: 1px solid #e6e2d4;
   border-radius: 25px;
   padding: 25px 20px;
-  box-shadow: 0 20px 60px #1f1f1f12;
+  box-shadow: 0 20px 60px #17211e12;
   transform: rotate(-1deg);
 }
 .phone-top {
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #787878;
+  color: #6f7268;
   margin-bottom: 20px;
 }
 .status {
@@ -145,25 +146,25 @@ h1 span {
   font-size: 14px;
   padding: 12px 14px;
   border-radius: 14px 14px 4px 14px;
-  background: #f2f2f2;
+  background: #f3f1ea;
   margin-bottom: 6px;
 }
 .task {
   padding: 15px;
   margin-top: 12px;
   border-radius: 14px;
-  background: #f2f2f2;
+  background: #f3f1ea;
   font-size: 13px;
 }
 .task strong {
   display: block;
 }
 .task small {
-  color: #787878;
+  color: #6f7268;
 }
 .task.adapt {
-  background: #eaeaea;
-  border: 1px solid #dcdcdc;
+  background: #ece8d6;
+  border: 1px solid #d9d3b5;
 }
 .choices {
   display: flex;
@@ -178,11 +179,11 @@ h1 span {
   padding: 5px 10px;
 }
 .choices b {
-  background: var(--ink);
+  background: var(--olive);
   color: white;
 }
 .choices i {
-  border: 1px solid #d0d0d0;
+  border: 1px solid #cfc9a8;
 }
 
 .features {
@@ -203,13 +204,66 @@ h1 span {
   line-height: 1.1;
   margin: 14px 0 42px;
 }
+.energy-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 650;
+  background: var(--sage);
+  border-radius: 20px;
+  padding: 5px 10px;
+  margin-bottom: 10px;
+}
+.mic {
+  margin-right: 6px;
+}
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.highlight {
+  border-radius: 22px;
+  padding: 30px 26px;
+}
+.highlight.voice {
+  background: #ece8d6;
+}
+.highlight.adaptive {
+  background: #e2e4cb;
+}
+.highlight.energy {
+  background: #f1e6d0;
+}
+.highlight .symbol {
+  font-size: 30px;
+  margin-bottom: 22px;
+}
+.highlight h3 {
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  margin: 0 0 10px;
+}
+.highlight p {
+  color: #4f5852;
+  font-size: 15px;
+  margin: 0;
+}
+.highlight small {
+  display: block;
+  margin-top: 12px;
+  color: #747b74;
+  font-size: 12px;
+}
+.extras-title {
+  margin: 48px 0 18px;
+}
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
 }
 .feature {
-  border: 1px solid #e9e9e9;
+  border: 1px solid #e6e2d4;
   border-radius: 20px;
   padding: 25px;
 }
@@ -223,7 +277,7 @@ h1 span {
   margin: 0 0 8px;
 }
 .feature p {
-  color: #777777;
+  color: #6f7268;
   font-size: 14px;
   margin: 0;
 }
@@ -270,7 +324,7 @@ h1 span {
   text-align: center;
 }
 .closing .eyebrow {
-  color: #b6b6b6;
+  color: #c9c4a0;
 }
 .closing h2 {
   font-size: clamp(32px, 4vw, 48px);
@@ -279,7 +333,7 @@ h1 span {
   margin: 12px 0;
 }
 .closing p {
-  color: #cacaca;
+  color: #d8d4c0;
   max-width: 470px;
   margin: 0 auto 25px;
 }
@@ -290,7 +344,7 @@ h1 span {
 footer {
   padding: 25px 28px 40px;
   text-align: center;
-  color: #797979;
+  color: #6f7268;
   font-size: 12px;
   max-width: 640px;
   margin: auto;
@@ -316,6 +370,7 @@ footer {
     padding-left: 16px;
     padding-right: 16px;
   }
+  .highlights,
   .feature-grid,
   .steps {
     grid-template-columns: 1fr;
