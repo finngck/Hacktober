@@ -26,7 +26,7 @@ export function Logo() {
       className="inline-flex items-center gap-2 text-xl leading-none font-semibold tracking-tight"
     >
       <img src="/favicon.svg" alt="" className="size-7.5 shrink-0" />
-      Pivot
+      Pivot.
     </span>
   );
 }
