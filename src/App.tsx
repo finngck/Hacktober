@@ -176,11 +176,9 @@ export default function App() {
         Zum Tagesplan
       </a>
       <header className="app-header">
-        <a className="brand" href="#day-plan" aria-label="Daylight, zum Tagesplan">
-          <span className="brand-symbol">
-            <Icon icon={Sun03Icon} size={27} />
-          </span>
-          daylight<span className="brand-dot">.</span>
+        <a className="brand" href="#day-plan" aria-label="Pivot, zum Tagesplan">
+          <img className="brand-symbol" src="/favicon.svg" alt="" />
+          Pivot
         </a>
         <div className="header-context">
           <span className="context-divider" />
@@ -508,7 +506,7 @@ export default function App() {
             </aside>
           </div>
           <footer className="workspace-footer">
-            <span>Daylight · Lokaler Prototyp</span>
+            <span>Pivot · Lokaler Prototyp</span>
             <span>Synthetische Beispieldaten · Heute statt alles auf einmal</span>
           </footer>
         </main>
