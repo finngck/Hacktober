@@ -64,6 +64,7 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 
 - `GET /api/health`: lokale Konfiguration (`configured`, `model`); bestätigt keine externe Erreichbarkeit.
 - `GET /api/versions`: öffentliche GitHub-Commits und erfolgreiche Deployment-Links, kurz zwischengespeichert.
+- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Ob das konfigurierte Gemma-Modell Bilder verarbeitet, ist mit `npm run test:live` noch nicht geprüft.
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `server/gemma.ts`: Google-REST-Adapter mit `gemma-4-26b-a4b-it` als Standard; über `GEMMA_MODEL` auf ein anderes freigegebenes Gemma-4-Modell umstellbar. [Offizielle Modell-Dokumentation](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
