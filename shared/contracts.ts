@@ -85,8 +85,13 @@ export const replanResponseSchema = z.object({
 });
 
 export const imageTypeSchema = z.enum(['image/png', 'image/jpeg', 'image/webp']);
+export const MAX_IMAGE_BASE64_LENGTH = 3_500_000;
 export const extractRequestSchema = z.object({
-  image: z.string().min(100).max(3_500_000),
+  image: z
+    .string()
+    .min(4)
+    .max(MAX_IMAGE_BASE64_LENGTH)
+    .refine((value) => value.length % 4 === 0 && /^[A-Za-z0-9+/]+={0,2}$/.test(value)),
   mimeType: imageTypeSchema,
 });
 export const extractedTaskSchema = z.object({
