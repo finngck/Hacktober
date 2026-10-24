@@ -21,6 +21,15 @@ Ein öffentlicher Klon beweist nur Lesezugriff. Push und PR-Erstellung werden du
 4. Einen PR mit Ziel `finngck/Hacktober:main` erstellen. Ergebnis, ausgeführte Prüfungen und offene Einschränkungen knapp nennen. Für mehrzeilige Beschreibungen `gh pr create --body-file` verwenden.
 5. PR-Link an Finns Instanz übergeben. Andere Instanzen erhalten Code erst durch Push und Fetch/Pull; ihre Chats werden nicht automatisch synchronisiert.
 
+Vor der Übergabe den eigenen Arbeitsbranch bei sauberem Arbeitsstand auf den aktuellen `main` bringen:
+
+```sh
+git fetch origin
+git merge origin/main
+```
+
+Konflikte im eigenen Zuständigkeitsbereich selbst lösen, bei gemeinsamen Schnittstellen mit Finns Instanz abstimmen. Danach erneut prüfen und normal pushen; kein Force-Push.
+
 Bei fehlenden Schreibrechten: `gh repo fork finngck/Hacktober --clone=false` nutzen, den eigenen Fork als weiteres Remote hinzufügen und den eigenen Branch dorthin pushen. Den PR mit `--repo finngck/Hacktober --head EIGENER_LOGIN:BRANCH` erstellen.
 
 ## Integration durch Finns Instanz
