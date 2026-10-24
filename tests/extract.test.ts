@@ -134,3 +134,70 @@ test('rejects unsupported or oversized images at the schema and endpoint', async
     server.close();
   }
 });
+
+test('recovers from a dropped connection or unreadable provider response within two calls', async () => {
+  for (const failure of ['network', 'timeout', 'json']) {
+    let calls = 0;
+    const result = await extractTasks(image, {
+      apiKey: 'test-key',
+      model: 'gemma-4-test',
+      fetcher: async () => {
+        if (++calls === 1) {
+          if (failure === 'network') throw new TypeError('fetch failed');
+          if (failure === 'timeout') throw new DOMException('timeout', 'TimeoutError');
+          return new Response('not json');
+        }
+        return providerResponse(JSON.stringify({ tasks: [task], note: null }));
+      },
+    });
+    assert.equal(calls, 2);
+    assert.equal(result.meta.attempts, 2);
+    assert.equal(result.tasks[0].title, task.title);
+  }
+});
+
+test('bounds persistent network failures and does not retry quota or permission failures', async () => {
+  for (const status of [0, 429, 403]) {
+    let calls = 0;
+    await assert.rejects(
+      extractTasks(image, {
+        apiKey: 'test-key',
+        model: 'gemma-4-test',
+        fetcher: async () => {
+          calls++;
+          if (status === 0) throw new TypeError('private provider details');
+          return new Response('private provider details', { status });
+        },
+      }),
+      (error: Error) => error instanceof PlannerError && !error.message.includes('private'),
+    );
+    assert.equal(calls, status === 0 ? 2 : 1);
+  }
+});
+
+test('rejects malformed base64 before invoking the provider', async () => {
+  let calls = 0;
+  const server = createApp({
+    model: 'gemma-4-test',
+    apiKey: 'test-key',
+    fetcher: async () => {
+      calls++;
+      return providerResponse(JSON.stringify({ tasks: [], note: null }));
+    },
+  }).listen(0, '127.0.0.1');
+  await new Promise((resolve) => server.once('listening', resolve));
+  try {
+    const { port } = server.address() as { port: number };
+    for (const value of ['!'.repeat(200), 'data:image/png;base64,AAAA', 'A'.repeat(201), 'AA=A']) {
+      const response = await fetch(`http://127.0.0.1:${port}/api/extract`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...image, image: value }),
+      });
+      assert.equal(response.status, 400);
+    }
+    assert.equal(calls, 0);
+  } finally {
+    server.close();
+  }
+});
