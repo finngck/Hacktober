@@ -36,9 +36,16 @@ Bei fehlenden Schreibrechten: `gh repo fork finngck/Hacktober --clone=false` nut
 
 - PR-Head, vollständigen Diff, Dateiumfang und vorhandene Checks lesen. Fakten und Annahmen müssen getrennt sein. Offene Fehler zuerst beheben lassen.
 - Nur PRs im bestätigten Auftragsumfang integrieren. Im Kooperationstest sind das ausschließlich die vier in [den Startaufträgen](cooperation-test.md) definierten Branches und Änderungen.
-- Sofern Checks vorhanden sind, auf deren erfolgreichen Abschluss warten. Es sind noch keine App-Tests oder CI-Workflows eingerichtet; Dokuprüfungen im PR benennen.
+- Bei App-Änderungen `npm test`, `npm run build` und `npm run format:check` ausführen. Sofern Remote-Checks vorhanden sind, auf deren erfolgreichen Abschluss für den geprüften Head warten. Dokuprüfungen und nicht ausgeführte Prüfungen im PR benennen.
 - Einen geprüften PR mit Squash und dem geprüften Head-SHA mergen: `gh pr merge NUMMER --repo finngck/Hacktober --squash --match-head-commit GEPRUEFTER_SHA`. Kein `--admin` und kein blindes Auto-Merge.
 - Danach den gemergten Stand holen und den kombinierten Diff prüfen. Neue Produktarbeit beginnt erst mit einem eigenen Auftrag und Abnahmekriterien.
+
+## Vercel vor und nach dem Merge
+
+1. Gegen den aktuellen `origin/main` prüfen; frühere ESM- und Deployment-Fixes nicht durch einen alten Featurebranch überschreiben. `vercel.json` baut die Vite-Oberfläche nach `dist/`; `api/` delegiert an dieselbe Express-App wie der lokale Server. Relative Node-Imports und Re-Exports behalten explizite `.js`-Endungen.
+2. Den Vercel-Check des aktuellen PR-Heads lesen. Bei Forks kann Vercel vor dem Build eine Freigabe verlangen. Ein berechtigtes Teammitglied prüft den Diff und genehmigt genau diesen Commit über den Link im Vercel-Bot-Kommentar. Git Fork Protection bleibt aktiv; bei fehlendem Zugang den konkreten Blocker melden. [Vercel-Dokumentation zu Fork-Freigaben](https://vercel.com/docs/git/vercel-for-github#deployment-authorizations-for-forks).
+3. Bei API-Änderungen zusätzlich zur erfolgreichen Preview `/api/health` und den betroffenen Endpunkt prüfen. Für `/api/replan` ausschließlich synthetische Plandaten und den erwarteten Origin verwenden; Modellaufrufe verbrauchen Kontingent. Ohne eingerichteten Key keinen erfolgreichen Modelltest behaupten. Ein grüner Frontend-Build schließt Fehler wie `ERR_MODULE_NOT_FOUND` in Node-Funktionen nicht aus.
+4. Nach dem geprüften Squash-Merge das automatische Produktionsdeployment von `main` abwarten, Commit und Status abgleichen und betroffene API-Funktionen erneut prüfen. Bei Fehlern Logs lesen und die konkrete Ursache beheben; keinen erfolgreichen Release behaupten, solange der Laufzeitcheck fehlschlägt.
 
 ## Spätere MVP-Arbeit
 
