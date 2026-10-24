@@ -1,4 +1,4 @@
-import { useEffect, useRef, type FormEvent, type RefObject } from 'react';
+import { useEffect, useRef, type FormEvent, type RefObject, type ReactNode } from 'react';
 import {
   Alert02Icon,
   Clock01Icon,
@@ -42,6 +42,7 @@ export function CopilotPanel({
   conversation,
   onNewRequest,
   textareaRef,
+  voiceControl,
 }: {
   message: string;
   onMessageChange: (message: string) => void;
@@ -57,6 +58,7 @@ export function CopilotPanel({
   conversation: { message: string; reply: string }[];
   onNewRequest: () => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
+  voiceControl?: ReactNode;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const result = response?.result;
@@ -139,6 +141,7 @@ export function CopilotPanel({
           </div>
         </div>
       </form>
+      {voiceControl}
 
       {!response && !busy && !conversation.length && (
         <div className="grid gap-2">

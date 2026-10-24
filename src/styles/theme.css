@@ -9,6 +9,11 @@
   /* Pivot palette: warm beige surfaces, deep green ink, olive from the logo gradient for actions, progress and selection. Colour beyond that carries meaning (categories, status). */
   --ink: #17211e;
   --olive: #8a8653;
+  /* Voice orb: luminous mint, emerald and a soft lime highlight. */
+  --voice-light: #d8ffe5;
+  --voice-mid: #53c995;
+  --voice-deep: #166b53;
+  --voice-highlight: #c9f798;
 
   /* Task categories: data colours for event tints, muted to sit on the beige surface. */
   --category-study: #6f5fa6;

@@ -8,7 +8,7 @@ import './styles/index.css';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <TooltipProvider delay={300}>
-      <ToastProvider position="top-center">
+      <ToastProvider position="top-center" timeout={4000}>
         <App />
       </ToastProvider>
     </TooltipProvider>
