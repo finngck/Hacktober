@@ -6,7 +6,7 @@
  */
 
 :root {
-  /* Pivot palette: warm beige surfaces, deep green ink, sage for selection. Colour beyond that carries meaning (categories, status). */
+  /* Pivot palette: warm beige surfaces, deep green ink, sage green for actions, progress and selection. Colour beyond that carries meaning (categories, status). */
   --ink: #17211e;
   --sage: #647a6c;
 
@@ -24,13 +24,13 @@
   --card-foreground: var(--ink);
   --popover: #fffefa;
   --popover-foreground: var(--ink);
-  --primary: var(--ink);
+  --primary: #3f5d4b;
   --primary-foreground: #fffefa;
-  --secondary: color-mix(in srgb, var(--sage) 10%, transparent);
+  --secondary: color-mix(in srgb, var(--sage) 16%, transparent);
   --secondary-foreground: var(--ink);
-  --muted: color-mix(in srgb, var(--sage) 9%, transparent);
+  --muted: color-mix(in srgb, var(--sage) 14%, transparent);
   --muted-foreground: #5f6861;
-  --accent: color-mix(in srgb, var(--sage) 14%, transparent);
+  --accent: color-mix(in srgb, var(--sage) 22%, transparent);
   --accent-foreground: var(--ink);
   --destructive: #d4553f;
   --destructive-foreground: #a33a28;
@@ -41,8 +41,8 @@
   --info: #5b7f99;
   --info-foreground: #3b5d75;
   --border: color-mix(in srgb, var(--ink) 9%, transparent);
-  --input: color-mix(in srgb, var(--ink) 13%, transparent);
-  --ring: #8fa394;
+  --input: color-mix(in srgb, var(--sage) 28%, transparent);
+  --ring: var(--sage);
   --radius: 0.625rem;
 
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
