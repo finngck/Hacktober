@@ -6,7 +6,7 @@ Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [No
 
 **Your day changes. Your plan should too.** Pivot ist ein adaptiver Tagesplaner für Studierende und Young Professionals mit wechselnden Verpflichtungen. Er kombiniert Termine, Aufgaben, Präferenzen und das aktuelle Energielevel und plant den Tag nach einer unerwarteten Änderung neu: Du schreibst oder sagst, was sich geändert hat. Textvorschläge bestätigst du nach dem Vergleich; klare Sprachaufträge werden direkt umgesetzt und erklärt, mit Undo.
 
-Live: **https://hacktober-daylight.vercel.app** mit Landing Page unter `/` und Planer unter `/app` (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
+Live: **[Pivot öffnen](https://hackathon-pivot-v2.vercel.app/app)** mit Landing Page unter `/` und Planer unter `/app` (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
 
 Oberfläche, Landing Page und alle KI-Antworten (Gemma-Vorschläge, Screenshot-Import, Sprachagent) sind auf **Englisch**; Uhrzeiten bleiben im 24-Stunden-Format. Die Repository-Doku bleibt deutsch.
 
