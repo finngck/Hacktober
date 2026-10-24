@@ -6,6 +6,7 @@ import {
   validatePlan,
   hasItemChanged,
   type CheckIn,
+  type Plan,
   type ReplanResponse,
   type ScheduleItem,
 } from '../shared/contracts';
