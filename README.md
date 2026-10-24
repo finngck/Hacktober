@@ -96,3 +96,7 @@ Vier Instanzen arbeiten in getrennten lokalen Klonen und auf eigenen Branches. �
 - [Offene Entscheidungen](docs/open-questions.md)
 
 Produktideen und optionale Erweiterungen bleiben in Notion. Das Repository dokumentiert bestätigte Entscheidungen und den tatsächlich implementierten Stand.
+
+## Lizenz
+
+Das Projekt steht unter der [MIT-Lizenz](LICENSE).
