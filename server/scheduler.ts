@@ -1,41 +1,29 @@
-import { z } from 'zod';
 import {
-  energySchema,
   formatTime,
+  hasItemChanged,
   materializeProposal,
+  type Energy,
   type ModelResult,
   type Plan,
   type ReplanRequest,
   type ScheduleItem,
 } from '../shared/contracts.js';
-import { signalsSchema } from '../shared/measures.js';
+import type { Signals } from '../shared/measures.js';
 
-export const intentSchema = z.object({
-  status: z.enum(['ready', 'clarification']),
-  summary: z.string().min(1).max(900),
-  availabilityFrom: z.number().int().min(0).max(1440),
-  energy: energySchema,
-  sleepHours: z.number().min(0).max(16),
-  question: z.string().max(500).nullable(),
-  taskOrder: z.array(z.string().max(80)).max(40),
-  deferIds: z.array(z.string().max(80)).max(40),
-  // Only tasks the user explicitly asked to move; exactly one of start/shiftMinutes is set.
-  moves: z
-    .array(
-      z.object({
-        id: z.string().max(80),
-        start: z.number().int().min(0).max(1440).nullable(),
-        shiftMinutes: z.number().int().min(-1440).max(1440).nullable(),
-      }),
-    )
-    .max(40)
-    .optional(),
-  reasons: z
-    .array(z.object({ id: z.string().max(80), reason: z.string().min(1).max(400) }))
-    .max(40),
-  signals: signalsSchema.optional(),
-});
-export type PlanningIntent = z.infer<typeof intentSchema>;
+export type PlanningIntent = {
+  status: 'ready' | 'clarification';
+  summary: string;
+  availabilityFrom: number;
+  energy: Energy;
+  sleepHours: number;
+  question: string | null;
+  taskOrder: string[];
+  focusIds?: string[];
+  deferIds: string[];
+  moves?: { id: string; start: number | null; shiftMinutes: number | null }[];
+  reasons: { id: string; reason: string }[];
+  signals?: Signals;
+};
 type Occupied = { start: number; end: number };
 
 function findSlot(
@@ -63,6 +51,8 @@ function findSlot(
 export function scheduleFromIntent(
   request: ReplanRequest,
   intent: PlanningIntent,
+  originalPlan: Plan = request.plan,
+  compact = false,
 ): { result: ModelResult; proposedPlan: Plan | null } {
   const { plan, checkIn } = request;
   const base = {
@@ -146,7 +136,8 @@ export function scheduleFromIntent(
     );
 
   const lockedIds = new Set(locked.map((item) => item.id));
-  const reasons = new Map(intent.reasons.map((item) => [item.id, item.reason]));
+  const focusIds = new Set(intent.focusIds ?? []);
+  const deferIds = new Set(intent.deferIds);
   const placements = new Map(
     locked.map((item) => [
       item.id,
@@ -177,23 +168,23 @@ export function scheduleFromIntent(
     .toSorted((a, b) => (a.deadline ?? plan.dayEnd) - (b.deadline ?? plan.dayEnd));
 
   function place(item: ScheduleItem) {
-    const start = findSlot(
-      item,
-      occupied,
-      intent.availabilityFrom,
-      plan.dayEnd,
-      item.deadline === null,
-    );
+    const start = findSlot(item, occupied, intent.availabilityFrom, plan.dayEnd, !compact);
     if (start === null) return false;
     occupied.push({ start, end: start + item.duration });
-    const reason =
-      item.deadline !== null
-        ? `Heute vor ${formatTime(item.deadline)} fällig; dafür ist dieses Zeitfenster reserviert.`
-        : recovery(item)
-          ? 'Deine Erholungspause bleibt bei wenig Energie eingeplant.'
-          : start === item.start
-            ? 'Passt weiterhin in deinen Tag.'
-            : reasons.get(item.id) || 'In ein freies Zeitfenster verschoben.';
+    const before = originalPlan.items.find((source) => source.id === item.id);
+    const reason = !before
+      ? 'Neu angelegt und für dein Anliegen eingeplant.'
+      : before.title !== item.title || before.duration !== item.duration
+        ? `Wie angefragt bearbeitet: ${item.duration} Minuten${before.title === item.title ? '' : `, zuvor „${before.title}“`}.`
+        : item.deadline !== null
+          ? `Heute vor ${formatTime(item.deadline)} fällig; dafür ist dieses Zeitfenster reserviert.`
+          : recovery(item)
+            ? 'Deine Erholungspause bleibt bei wenig Energie eingeplant.'
+            : focusIds.has(item.id)
+              ? 'Für dein Anliegen vor optionalen Aufgaben eingeplant.'
+              : start === item.start
+                ? 'Passt weiterhin in deinen Tag.'
+                : 'In ein freies Zeitfenster verschoben.';
     placements.set(item.id, { id: item.id, start, reason });
     return true;
   }
@@ -202,14 +193,41 @@ export function scheduleFromIntent(
       return conflict(
         `„${item.title}“ hat eine heutige Frist, widerspricht aber einem Ausschluss. Kläre, welche Vorgabe gelten soll.`,
       );
-    if (!place(item))
+    if (!place(item)) {
+      if (!compact) return scheduleFromIntent(request, intent, originalPlan, true);
       return conflict(
         `Für „${item.title}“ (${item.duration} Minuten${item.deadline === null ? '' : `, Frist ${formatTime(item.deadline)}`}) wurde zwischen den festen Terminen kein passendes Zeitfenster gefunden. Passe Dauer, Verfügbarkeit oder Verpflichtungen an.`,
       );
+    }
+  }
+  // Keep existing breaks where possible before reserving newly requested work.
+  for (const item of flexible.filter(
+    (item) =>
+      item.category === 'recovery' &&
+      item.start !== null &&
+      !placements.has(item.id) &&
+      !deferIds.has(item.id) &&
+      !excluded(item) &&
+      !focusIds.has(item.id),
+  ))
+    place(item);
+  const focusOrder = new Map(intent.taskOrder.map((id, index) => [id, index]));
+  for (const item of flexible
+    .filter((item) => focusIds.has(item.id) && !placements.has(item.id))
+    .toSorted((a, b) => (focusOrder.get(a.id) ?? 40) - (focusOrder.get(b.id) ?? 40))) {
+    if (excluded(item))
+      return conflict(
+        `„${item.title}“ widerspricht einem Ausschluss. Kläre diese Vorgabe, bevor die Aufgabe eingeplant wird.`,
+      );
+    if (!place(item)) {
+      if (!compact) return scheduleFromIntent(request, intent, originalPlan, true);
+      return conflict(
+        `Für deine angeforderte Aufgabe „${item.title}“ (${item.duration} Minuten) ist kein passendes Zeitfenster frei. Verkürze die Aufgabe oder passe den Tagesrahmen an.`,
+      );
+    }
   }
   const priority = { high: 0, medium: 1, low: 2 };
   const order = new Map(intent.taskOrder.map((id, index) => [id, index]));
-  const deferIds = new Set(intent.deferIds);
   const optional = flexible
     .filter((item) => !placements.has(item.id))
     .toSorted(
@@ -222,8 +240,7 @@ export function scheduleFromIntent(
     if (excluded(item)) reason = 'Diese Aktivität ist in deinen Präferenzen ausgeschlossen.';
     else if (intent.energy === 'low' && item.effort === 'high')
       reason = 'Die anspruchsvolle Aufgabe bleibt bei wenig Energie heute offen.';
-    else if (deferIds.has(item.id))
-      reason = reasons.get(item.id) || 'Nach deiner Änderung bleibt diese Aufgabe heute offen.';
+    else if (deferIds.has(item.id)) reason = 'Auf deinen Wunsch bleibt diese Aufgabe heute offen.';
     else if (place(item)) continue;
     else reason = 'Heute ist kein ausreichend großes freies Zeitfenster mehr vorhanden.';
     placements.set(item.id, { id: item.id, start: null, reason });
@@ -233,8 +250,42 @@ export function scheduleFromIntent(
     status: 'proposal',
     placements: plan.items.map((item) => placements.get(item.id)!),
   };
-  return {
-    result,
-    proposedPlan: materializeProposal(request, result, new Set(movedStarts.keys())),
-  };
+  const proposedPlan = materializeProposal(request, result, new Set(movedStarts.keys()));
+  result.summary = describeProposal(originalPlan, proposedPlan);
+  return { result, proposedPlan };
+}
+
+/** Describe only committed draft operations and placements, never model claims. */
+function describeProposal(before: Plan, after: Plan): string {
+  const changed = after.items.filter((item) =>
+    hasItemChanged(
+      before.items.find((old) => old.id === item.id),
+      item,
+    ),
+  );
+  const added = changed.filter((item) => !before.items.some((old) => old.id === item.id));
+  const edited = changed.filter((item) => {
+    const old = before.items.find((source) => source.id === item.id);
+    return old && hasItemChanged({ ...old, start: item.start }, item);
+  });
+  const open = changed.filter((item) => item.start === null);
+  const moved = changed.filter(
+    (item) => item.start !== null && !added.includes(item) && !edited.includes(item),
+  );
+  const names = (items: ScheduleItem[]) =>
+    items
+      .slice(0, 2)
+      .map((item) => `„${item.title}“`)
+      .join(', ') + (items.length > 2 ? ` und ${items.length - 2} weitere` : '');
+  const parts: string[] = [];
+  if (added.length) parts.push(`Neu eingeplant: ${names(added)}.`);
+  if (edited.length) parts.push(`Bearbeitet und eingeplant: ${names(edited)}.`);
+  if (moved.length) parts.push(`Zeitlich angepasst: ${names(moved)}.`);
+  if (open.length) parts.push(`Heute offen: ${names(open)}. Diese Aufgaben bleiben erhalten.`);
+  if (before.availableFrom !== after.availableFrom)
+    parts.push(`Verfügbar ab ${formatTime(after.availableFrom)}.`);
+  return (
+    parts.join(' ').slice(0, 900) ||
+    'Deine Aufgaben passen weiterhin in den Tag; die Zeitblöcke bleiben unverändert.'
+  );
 }
