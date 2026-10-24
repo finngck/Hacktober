@@ -124,8 +124,9 @@ export async function generatePlan(
       const scheduled = scheduleFromIntent(request, intent);
       return {
         ...scheduled,
+        // Judge free time against the proposed day, not the one being replaced.
         measures: selectMeasures(
-          request,
+          { ...request, plan: scheduled.proposedPlan ?? request.plan },
           { energy: intent.energy, sleepHours: intent.sleepHours },
           intent.signals,
         ),
