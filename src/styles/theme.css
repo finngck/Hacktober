@@ -1,47 +1,48 @@
 /*
- * Daylight design tokens (coss ui neutral style). The single source for colour, type, radius and motion.
+ * Pivot design tokens (coss ui structure, Pivot beige-green palette). The single source for colour, type, radius and motion.
  * Semantic names follow coss ui, so every component in src/components/ui picks up the brand.
  * New UI uses these tokens (via Tailwind classes such as bg-primary or text-category-study),
  * never raw colour values. See docs/design-system.md.
  */
 
 :root {
-  /* Neutral coss ui palette. Colour is reserved for task categories and status. */
-  --ink: #171717;
+  /* Pivot palette: warm beige surfaces, deep green ink, sage green for actions, progress and selection. Colour beyond that carries meaning (categories, status). */
+  --ink: #17211e;
+  --sage: #647a6c;
 
-  /* Task categories: data colours for event tints, not decoration. */
-  --category-study: #7c3aed;
-  --category-work: #2563eb;
-  --category-recovery: #047857;
-  --category-movement: #c2410c;
-  --category-social: #be185d;
+  /* Task categories: data colours for event tints, muted to sit on the beige surface. */
+  --category-study: #6f5fa6;
+  --category-work: #3f6a8f;
+  --category-recovery: #4f7a5c;
+  --category-movement: #b0652f;
+  --category-social: #a8506f;
 
   /* coss ui semantic tokens */
-  --background: #f5f5f5;
+  --background: #f3f1ea;
   --foreground: var(--ink);
-  --card: #ffffff;
+  --card: #fffefa;
   --card-foreground: var(--ink);
-  --popover: #ffffff;
+  --popover: #fffefa;
   --popover-foreground: var(--ink);
-  --primary: #262626;
-  --primary-foreground: #fafafa;
-  --secondary: color-mix(in srgb, #000 4%, transparent);
+  --primary: #3f5d4b;
+  --primary-foreground: #fffefa;
+  --secondary: color-mix(in srgb, var(--sage) 16%, transparent);
   --secondary-foreground: var(--ink);
-  --muted: color-mix(in srgb, #000 4%, transparent);
-  --muted-foreground: #646464;
-  --accent: color-mix(in srgb, #000 5%, transparent);
+  --muted: color-mix(in srgb, var(--sage) 14%, transparent);
+  --muted-foreground: #5f6861;
+  --accent: color-mix(in srgb, var(--sage) 22%, transparent);
   --accent-foreground: var(--ink);
-  --destructive: #ef4444;
-  --destructive-foreground: #b91c1c;
-  --success: #10b981;
-  --success-foreground: #047857;
-  --warning: #f59e0b;
-  --warning-foreground: #b45309;
-  --info: #3b82f6;
-  --info-foreground: #1d4ed8;
-  --border: color-mix(in srgb, #000 8%, transparent);
-  --input: color-mix(in srgb, #000 10%, transparent);
-  --ring: #a3a3a3;
+  --destructive: #d4553f;
+  --destructive-foreground: #a33a28;
+  --success: #5f8f6a;
+  --success-foreground: #3f6b4a;
+  --warning: #d49a3a;
+  --warning-foreground: #95641b;
+  --info: #5b7f99;
+  --info-foreground: #3b5d75;
+  --border: color-mix(in srgb, var(--ink) 9%, transparent);
+  --input: color-mix(in srgb, var(--sage) 28%, transparent);
+  --ring: var(--sage);
   --radius: 0.625rem;
 
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;

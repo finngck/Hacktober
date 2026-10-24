@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { loadEnvFile } from 'node:process';
 
+const onboardEnv = resolve('.env.local');
+if (existsSync(onboardEnv)) loadEnvFile(onboardEnv);
 const localEnv = resolve('.env');
 if (existsSync(localEnv)) loadEnvFile(localEnv);
 
@@ -25,6 +27,9 @@ export function readApiKey(): string | undefined {
 export const config = {
   apiKey: readApiKey(),
   model: process.env.GEMMA_MODEL || 'gemma-4-26b-a4b-it',
+  elevenLabsApiKey: process.env.ELEVENLABS_API_KEY,
+  elevenLabsAgentId: process.env.ELEVENLABS_AGENT_ID,
+  voiceLlmSecret: process.env.VOICE_LLM_SECRET,
   port: Number(process.env.PORT || 3000),
   allowedHosts: [
     'localhost',
