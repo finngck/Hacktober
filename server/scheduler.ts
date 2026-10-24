@@ -137,9 +137,11 @@ export function scheduleFromIntent(
         ? `Heute vor ${formatTime(item.deadline)} fällig; dafür ist dieses Zeitfenster reserviert.`
         : recovery(item)
           ? 'Deine Erholungspause bleibt bei wenig Energie eingeplant.'
-          : start === item.start
-            ? 'Passt weiterhin in deinen Tag.'
-            : reasons.get(item.id) || 'In ein freies Zeitfenster verschoben.';
+          : item.id === checkIn.focusTaskId
+            ? 'Dein Fokus für heute bekommt das erste passende Zeitfenster.'
+            : start === item.start
+              ? 'Passt weiterhin in deinen Tag.'
+              : reasons.get(item.id) || 'In ein freies Zeitfenster verschoben.';
     placements.set(item.id, { id: item.id, start, reason });
     return true;
   }
@@ -154,7 +156,9 @@ export function scheduleFromIntent(
       );
   }
   const priority = { high: 0, medium: 1, low: 2 };
+  const focusId = checkIn.focusTaskId;
   const order = new Map(intent.taskOrder.map((id, index) => [id, index]));
+  if (focusId !== null) order.set(focusId, -1);
   const deferIds = new Set(intent.deferIds);
   const optional = flexible
     .filter((item) => !placements.has(item.id))
@@ -166,9 +170,9 @@ export function scheduleFromIntent(
   for (const item of optional) {
     let reason = '';
     if (excluded(item)) reason = 'Diese Aktivität ist in deinen Präferenzen ausgeschlossen.';
-    else if (intent.energy === 'low' && item.effort === 'high')
+    else if (item.id !== focusId && intent.energy === 'low' && item.effort === 'high')
       reason = 'Die anspruchsvolle Aufgabe bleibt bei wenig Energie heute offen.';
-    else if (deferIds.has(item.id))
+    else if (item.id !== focusId && deferIds.has(item.id))
       reason = reasons.get(item.id) || 'Nach deiner Änderung bleibt diese Aufgabe heute offen.';
     else if (place(item)) continue;
     else reason = 'Heute ist kein ausreichend großes freies Zeitfenster mehr vorhanden.';

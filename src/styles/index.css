@@ -1,0 +1,120 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/bricolage-grotesque';
+@import '@fontsource-variable/atkinson-hyperlegible-next';
+@import './theme.css';
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading text-balance;
+  }
+  button,
+  a,
+  [role='button'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  a,
+  input,
+  textarea,
+  label,
+  [role='button'],
+  [role='radio'],
+  [role='slider'] {
+    touch-action: manipulation;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  time,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* No rubber-band bounce with a mouse; touch keeps pull-to-refresh. */
+@media (pointer: fine) {
+  html {
+    overscroll-behavior: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * Daylight slider: coss Slider with a larger, tactile thumb and a tone gradient.
+ * Tones are set with data-tone on the root; colours come from theme tokens only.
+ */
+@layer components {
+  .dl-slider {
+    --dl-from: var(--sky-dawn);
+    --dl-to: var(--evening);
+  }
+  .dl-slider[data-tone='sleep'] {
+    --dl-from: var(--sky-dusk);
+    --dl-to: var(--evening);
+  }
+  .dl-slider[data-tone='sun'] {
+    --dl-from: var(--sky-morning);
+    --dl-to: var(--sun);
+  }
+  .dl-slider[data-tone='mood'] {
+    --dl-from: var(--sky-dusk);
+    --dl-to: var(--sky-noon);
+  }
+  .dl-slider[data-tone='stress'] {
+    --dl-from: var(--category-recovery);
+    --dl-to: var(--sky-afternoon);
+  }
+  .dl-slider [data-slot='slider-control'] {
+    padding-block: 0.75rem;
+    cursor: grab;
+  }
+  .dl-slider [data-slot='slider-control']:active {
+    cursor: grabbing;
+  }
+  .dl-slider [data-slot='slider-track'][data-orientation='horizontal'] {
+    height: 0.625rem;
+  }
+  .dl-slider [data-slot='slider-track']::before {
+    inset: 0;
+    background: var(--muted);
+  }
+  .dl-slider [data-slot='slider-indicator'] {
+    margin: 0;
+    background: linear-gradient(90deg, var(--dl-from), var(--dl-to));
+  }
+  .dl-slider [data-slot='slider-thumb'] {
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 3px solid var(--dl-to);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--ink) 18%, transparent);
+    transition:
+      scale 160ms var(--ease-spring),
+      border-color 160ms;
+  }
+  .dl-slider [data-slot='slider-thumb'][data-dragging] {
+    scale: 1.18;
+  }
+}

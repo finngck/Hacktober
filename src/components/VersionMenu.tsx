@@ -1,11 +1,18 @@
-import { useRef, useState } from 'react';
-import {
-  CodeSquareIcon,
-  Cancel01Icon,
-  GitBranchIcon,
-  GitCommitIcon,
-} from '@hugeicons/core-free-icons';
+import { useState } from 'react';
+import { CodeSquareIcon, GitBranchIcon, GitCommitIcon } from '@hugeicons/core-free-icons';
 import { versionsSchema, type Versions } from '../../shared/versions';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Icon } from './Icon';
 
 const build = __BUILD_INFO__;
@@ -18,12 +25,51 @@ const date = (value: string) =>
     timeZone: 'Europe/Berlin',
   }).format(new Date(value));
 
+function VersionList({
+  title,
+  entries,
+  empty,
+}: {
+  title: string;
+  entries: { key: string; title: string; detail: string; url: string; action: string }[];
+  empty: string;
+}) {
+  return (
+    <section className="grid gap-2">
+      <h3 className="font-semibold">{title}</h3>
+      {entries.length ? (
+        <ul className="grid gap-1">
+          {entries.map((entry) => (
+            <li
+              key={entry.key}
+              className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-muted"
+            >
+              <span className="grid min-w-0">
+                <span className="truncate font-medium">{entry.title}</span>
+                <span className="text-xs text-muted-foreground">{entry.detail}</span>
+              </span>
+              <a
+                href={entry.url}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 text-sm text-primary underline-offset-4 hover:underline"
+              >
+                {entry.action}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">{empty}</p>
+      )}
+    </section>
+  );
+}
+
 export function VersionMenu() {
-  const dialog = useRef<HTMLDialogElement>(null);
   const [versions, setVersions] = useState<Versions | null>(null);
   const [loading, setLoading] = useState(false);
-  async function open() {
-    dialog.current?.showModal();
+  async function load() {
     if (versions || loading) return;
     setLoading(true);
     try {
@@ -37,125 +83,97 @@ export function VersionMenu() {
     }
   }
   return (
-    <>
-      <button
-        className="button quiet versions-trigger"
-        aria-label="Versionen und Entwicklungsstand"
-        onClick={open}
+    <Dialog onOpenChange={(open) => open && void load()}>
+      <DialogTrigger
+        render={<Button variant="ghost" aria-label="Versionen und Entwicklungsstand" />}
       >
         <Icon icon={CodeSquareIcon} size={18} />
-        <span>Versionen</span>
-      </button>
-      <dialog ref={dialog} className="version-dialog" aria-labelledby="versions-title">
-        <div className="dialog-heading">
-          <div>
-            <h2 id="versions-title">Versionen & Entwicklung</h2>
-            <p>Der Stand, den du gerade geöffnet hast.</p>
+        Versionen
+      </DialogTrigger>
+      <DialogPopup className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Versionen & Entwicklung</DialogTitle>
+          <DialogDescription>Der Stand, den du gerade geöffnet hast.</DialogDescription>
+        </DialogHeader>
+        <DialogPanel className="grid gap-5">
+          <div className="grid gap-1 rounded-xl bg-muted p-3 text-sm">
+            <div className="flex items-center gap-2">
+              <strong className="font-heading text-base">Daylight {build.version}</strong>
+              <Badge variant="outline">
+                {build.environment === 'production'
+                  ? 'Live'
+                  : build.environment === 'preview'
+                    ? 'Vorschau'
+                    : 'Lokal'}
+              </Badge>
+            </div>
+            <p className="flex items-center gap-2">
+              <Icon icon={GitBranchIcon} size={16} />
+              {build.branch || 'Branch unbekannt'}
+            </p>
+            <p className="flex items-center gap-2">
+              <Icon icon={GitCommitIcon} size={16} />
+              {build.commit ? (
+                <a
+                  href={`${build.repository}/commit/${build.commit}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {build.commit.slice(0, 7)}
+                </a>
+              ) : (
+                'Commit unbekannt'
+              )}
+              {build.dirty && <span className="text-muted-foreground">mit lokalen Änderungen</span>}
+            </p>
+            <small className="text-muted-foreground">Gebaut am {date(build.builtAt)} Uhr</small>
           </div>
-          <button
-            className="icon-button"
-            aria-label="Versionsmenü schließen"
-            onClick={() => dialog.current?.close()}
-          >
-            <Icon icon={Cancel01Icon} />
-          </button>
-        </div>
-        <div className="current-version">
-          <div className="version-title">
-            <strong>Daylight {build.version}</strong>
-            <span>
-              {build.environment === 'production'
-                ? 'Live'
-                : build.environment === 'preview'
-                  ? 'Vorschau'
-                  : 'Lokal'}
-            </span>
-          </div>
-          <p>
-            <Icon icon={GitBranchIcon} size={16} />
-            {build.branch || 'Branch unbekannt'}
-          </p>
-          <p>
-            <Icon icon={GitCommitIcon} size={16} />
-            {build.commit ? (
-              <a
-                href={`${build.repository}/commit/${build.commit}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {build.commit.slice(0, 7)}
-              </a>
-            ) : (
-              'Commit unbekannt'
-            )}
-            {build.dirty && <span>mit lokalen Änderungen</span>}
-          </p>
-          <small>Gebaut am {date(build.builtAt)} Uhr</small>
-        </div>
-        <section className="version-section">
-          <h3>Verfügbare Deployments</h3>
           {loading ? (
-            <p role="status">Versionsverlauf wird geladen …</p>
-          ) : versions?.deployments.length ? (
-            <ul>
-              {versions.deployments.map((entry) => (
-                <li key={entry.id}>
-                  <div>
-                    <strong>{entry.environment}</strong>
-                    <span>
-                      {entry.sha.slice(0, 7)} · {date(entry.date)}
-                    </span>
-                  </div>
-                  <a href={entry.url} target="_blank" rel="noreferrer">
-                    Version öffnen
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>
-              {versions?.available
-                ? 'Noch keine erfolgreichen Deployments im GitHub-Verlauf.'
-                : 'Der Deployment-Verlauf ist gerade nicht verfügbar.'}
+            <p role="status" className="text-sm text-muted-foreground">
+              Versionsverlauf wird geladen …
             </p>
-          )}
-        </section>
-        <section className="version-section">
-          <h3>Neueste Änderungen auf main</h3>
-          {versions?.commits.length ? (
-            <ul>
-              {versions.commits.map((entry) => (
-                <li key={entry.sha}>
-                  <div>
-                    <strong>{entry.message}</strong>
-                    <span>
-                      {entry.sha.slice(0, 7)} · {date(entry.date)}
-                    </span>
-                  </div>
-                  <a href={entry.url} target="_blank" rel="noreferrer">
-                    Code ansehen
-                  </a>
-                </li>
-              ))}
-            </ul>
           ) : (
-            <p>
-              {loading
-                ? 'Änderungen werden geladen …'
-                : 'Den vollständigen Verlauf findest du auf GitHub.'}
-            </p>
+            <>
+              <VersionList
+                title="Verfügbare Deployments"
+                entries={(versions?.deployments ?? []).map((entry) => ({
+                  key: String(entry.id),
+                  title: entry.environment,
+                  detail: `${entry.sha.slice(0, 7)} · ${date(entry.date)}`,
+                  url: entry.url,
+                  action: 'Version öffnen',
+                }))}
+                empty={
+                  versions?.available
+                    ? 'Noch keine erfolgreichen Deployments im GitHub-Verlauf.'
+                    : 'Der Deployment-Verlauf ist gerade nicht verfügbar.'
+                }
+              />
+              <VersionList
+                title="Neueste Änderungen auf main"
+                entries={(versions?.commits ?? []).map((entry) => ({
+                  key: entry.sha,
+                  title: entry.message,
+                  detail: `${entry.sha.slice(0, 7)} · ${date(entry.date)}`,
+                  url: entry.url,
+                  action: 'Code ansehen',
+                }))}
+                empty="Den vollständigen Verlauf findest du auf GitHub."
+              />
+            </>
           )}
-        </section>
-        <a
-          className="button secondary version-repo-link"
-          href={build.repository}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <Icon icon={CodeSquareIcon} size={17} />
-          Repository öffnen
-        </a>
-      </dialog>
-    </>
+        </DialogPanel>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            render={<a href={build.repository} target="_blank" rel="noreferrer" />}
+          >
+            <Icon icon={CodeSquareIcon} size={17} />
+            Repository öffnen
+          </Button>
+        </DialogFooter>
+      </DialogPopup>
+    </Dialog>
   );
 }

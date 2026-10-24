@@ -6,7 +6,9 @@ Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [No
 
 Der lokale Daylight-Prototyp setzt den Textablauf aus **Chat Core Features** um: Beispieltag und Check-in → Änderung eingeben → Gemma-4-Vorschlag → Vorher/Nachher prüfen → übernehmen oder verwerfen. Aufgaben können ergänzt, Änderungen rückgängig gemacht und der Beispieltag zurückgesetzt werden.
 
-React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Die Icons kommen aus HugeIcons. Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
+Der Daily Check-in erfasst Schlafdauer und -qualität, Energie, Stimmung, Stress, den Fokus des Tages und Präferenzen. Er startet als kurzer Morgen-Flow, solange er am echten Kalendertag noch offen ist, und bleibt danach in der Sidebar per Popover änderbar. Gemma berücksichtigt Stimmung, Stress und Schlafqualität als weiche Signale. Die Fokusaufgabe setzt der Scheduler zuerst ein und schiebt sie nicht auf. Check-in-Serie und Abzeichen werden nur lokal im Browser gezählt (`daylight.progress.v1`), nach echten Kalendertagen, nicht nach dem Demo-Datum.
+
+React/TypeScript, Vite und Tailwind CSS 4 bilden die Oberfläche, Express das lokale Backend. Die Komponenten stammen aus [coss ui](https://coss.com/ui) (Base UI, MIT), die App-Icons aus HugeIcons. Farben, Schrift und Regeln für neue UI stehen im [Design-System](docs/design-system.md). Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
 
 Der ElevenLabs-Agent „DailyFlow Agent“ ist als offizielles Widget unten rechts eingebunden (`index.html`). Er läuft getrennt vom Planer: Gespräche ändern den Tagesplan nicht, und Gesprächsinhalte gehen an ElevenLabs. Das Widget-Skript wird von unpkg geladen. Speech-to-Text im Planer, Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
 
@@ -42,7 +44,7 @@ npm run build
 npm start
 ```
 
-`npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln und den Gemma-Adapter. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
+`npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln, den Gemma-Adapter und die Design-System-Regeln. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
 
 `npm run test:live` ruft mit dem lokal eingerichteten Key tatsächlich Gemma auf (synthetischer Zugverspätungs-Test, maximal ein Reparaturversuch) und verbraucht API-Kontingent.
 
@@ -63,9 +65,9 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `server/gemma.ts`: Google-REST-Adapter mit `gemma-4-26b-a4b-it` als Standard; über `GEMMA_MODEL` auf ein anderes freigegebenes Gemma-4-Modell umstellbar. [Offizielle Modell-Dokumentation](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
-- `src/components/Timeline.tsx`: Tagesansicht und Vergleich. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
+- `src/components/daylight/`: Tagesansicht mit Lichtleiste, Vergleich, Check-in-Flow und -Sidebar. `src/components/ui/`: unveränderte coss-ui-Komponenten. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
 
-Gemma interpretiert die Nachricht, priorisiert die Aufgaben und begründet Abwägungen. Der regelbasierte Scheduler setzt sie in freie Zeitfenster: zunächst heutige Fristen und bei wenig Energie bestehende Erholungspausen, danach die übrigen Aufgaben nach Modellpriorität. Bereits passende optionale Startzeiten bleiben erhalten. Der Server prüft den fertigen Vorschlag zusätzlich auf eindeutige Aufgaben-IDs, vollständige Erhaltung der Aufgaben, unveränderte Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und explizit ausgeschlossene Aktivitätstags. Eine ungültige Modellinterpretation erhält maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
+Gemma interpretiert die Nachricht, priorisiert die Aufgaben und begründet Abwägungen. Der regelbasierte Scheduler setzt sie in freie Zeitfenster: zunächst heutige Fristen und bei wenig Energie bestehende Erholungspausen, danach die übrigen Aufgaben nach Modellpriorität, die Fokusaufgabe aus dem Check-in zuerst. Bereits passende optionale Startzeiten bleiben erhalten. Der Server prüft den fertigen Vorschlag zusätzlich auf eindeutige Aufgaben-IDs, vollständige Erhaltung der Aufgaben, unveränderte Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und explizit ausgeschlossene Aktivitätstags. Eine ungültige Modellinterpretation erhält maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
 
 `start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Nur eine ausdrückliche Bestätigung ändert den aktiven Plan. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Das Verständnis natürlicher Sprache und die Qualität der Begründung bleiben Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet.
 

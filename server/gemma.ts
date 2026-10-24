@@ -23,6 +23,8 @@ Rules:
 - deferIds contains optional work the user should leave open today. At low energy, defer demanding work without a deadline; preserve recovery and commitments.
 - Do not defer fixed appointments, begun tasks, recovery breaks at low energy, or tasks with a deadline today.
 - User exclusions are hard constraints. Productive time preferences are soft. Do not recommend excluded activities or medical advice.
+- checkIn.mood (1 very low to 5 great), checkIn.stress (1 calm to 5 overwhelmed) and checkIn.sleepQuality are soft signals. With mood <= 2 or stress >= 4, keep the day lighter: defer optional demanding work without a deadline and keep recovery. Poor sleep quality counts like less sleep when judging energy, unless the message says otherwise.
+- checkIn.focusTaskId names the person's focus for today. If it is an existing flexible task, rank it first in taskOrder and do not defer it.
 - summary and reasons are in natural, concise German. Never claim to move something to tomorrow; deferred work is only unplanned.
 - If a decisive detail is ambiguous or the message is unrelated to planning, use status:clarification with one German question, empty taskOrder, deferIds and reasons. Otherwise status:ready and question:null.
 - Do not decide whether the timetable is mathematically feasible. The engine does that.`;
