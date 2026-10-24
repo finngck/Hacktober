@@ -109,9 +109,14 @@ test('the Gemma adapter returns engine-selected measures from the reported signa
                       args: {
                         energy: 'low',
                         sleepHours: 5,
-                        signals: { sekundenschlaf: true },
                         source: source.message,
                       },
+                    },
+                  },
+                  {
+                    functionCall: {
+                      name: 'update_day_context',
+                      args: { signals: { sekundenschlaf: true }, source: 'Ich nicke weg.' },
                     },
                   },
                 ],

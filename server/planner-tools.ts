@@ -97,7 +97,12 @@ const toolDefinitions = {
       availabilityFrom: z.number().int().min(0).max(1440).optional(),
       energy: energySchema.optional(),
       sleepHours: z.number().min(0).max(16).optional(),
-      signals: signalsSchema.strict().optional(),
+      signals: signalsSchema
+        .strict()
+        .optional()
+        .describe(
+          'Report EVERY explicitly stated signal. "Ich nicke weg" / "Sekundenschlaf" means sekundenschlaf:true; "schläfrig" means schlaefrig:true. Omit only signals not mentioned. Never infer caffeine consumption.',
+        ),
       source,
     }),
   },
@@ -222,7 +227,14 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
   }
   if (prepared.plan.items.length > 40)
     throw new Error('Der Tagesplan unterstützt maximal 40 Aufgaben.');
-  let contextUpdated = false;
+  const reportedContext = new Map<string, unknown>();
+  const recordContext = (key: string, value: unknown) => {
+    if (reportedContext.has(key) && reportedContext.get(key) !== value)
+      throw new Error(
+        `Widersprüchliche Angaben für ${key}; melde pro Feld einen eindeutigen Wert.`,
+      );
+    reportedContext.set(key, value);
+  };
   for (const call of calls) {
     if (call.name === 'move_task') {
       const { id: taskId, start, shiftMinutes } = call.args;
@@ -250,12 +262,14 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
       }
     }
     if (call.name === 'update_day_context') {
-      if (contextUpdated) throw new Error('Bündle Änderungen des Tageskontexts in einem Aufruf.');
-      contextUpdated = true;
-      const { source: _source, ...context } = call.args;
-      if (!Object.keys(context).length)
+      const { source: _source, signals, ...context } = call.args;
+      if (!Object.keys(context).length && !Object.keys(signals ?? {}).length)
         throw new Error('update_day_context braucht mindestens eine Änderung.');
+      for (const [key, value] of Object.entries(context)) recordContext(key, value);
+      for (const [key, value] of Object.entries(signals ?? {}))
+        recordContext(`signals.${key}`, value);
       Object.assign(intent, context);
+      if (signals) intent.signals = { ...intent.signals, ...signals };
     }
   }
   if (intent.availabilityFrom < request.plan.now)

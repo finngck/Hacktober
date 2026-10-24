@@ -593,3 +593,30 @@ test('native move tool preserves explicit fixed-appointment moves together with 
     assert.throws(() => prepareToolCalls(source, [invalid]));
   assert.throws(() => prepareToolCalls(source, [move, move]));
 });
+
+test('context tools merge compatible fields atomically and reject contradictory values', () => {
+  const source = request();
+  const context = (args: object) => ({
+    name: 'update_day_context',
+    args: { ...args, source: source.message },
+  });
+  const prepared = prepareToolCalls(source, [
+    context({ energy: 'low' }),
+    context({ sleepHours: 5 }),
+    context({ energy: 'low' }),
+  ]);
+  assert.equal(prepared.intent.energy, 'low');
+  assert.equal(prepared.intent.sleepHours, 5);
+  assert.throws(
+    () => prepareToolCalls(source, [context({ energy: 'low' }), context({ energy: 'high' })]),
+    /Widersprüchliche/,
+  );
+  assert.throws(
+    () =>
+      prepareToolCalls(source, [
+        context({ signals: { schlaefrig: true } }),
+        context({ signals: { schlaefrig: false } }),
+      ]),
+    /Widersprüchliche/,
+  );
+});
