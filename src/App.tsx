@@ -190,7 +190,9 @@ export default function App() {
     const context = conversation;
     requestController.current = controller;
     setBusy(true);
-    clearDraft();
+    setResponse(null);
+    setVoiceResult(null);
+    setError('');
     setMessage(change);
     try {
       return await executeVoiceReplan(change, {
@@ -216,6 +218,7 @@ export default function App() {
           workspaceRef.current = next;
           setWorkspace(next);
           setResponse(null);
+          setConversation([]);
           setMessage('');
           const recorded = recordAcceptedPlan(progress);
           setProgress(recorded.progress);
