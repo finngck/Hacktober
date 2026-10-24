@@ -1,0 +1,119 @@
+.voice-dialog {
+  max-height: min(90dvh, 900px);
+}
+.voice-orb-stage {
+  --voice-level: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  height: clamp(190px, 29dvh, 270px);
+  isolation: isolate;
+}
+.voice-orb {
+  position: relative;
+  width: clamp(145px, 22dvh, 195px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 25%,
+    var(--voice-light),
+    var(--voice-mid) 37%,
+    var(--primary) 70%,
+    var(--voice-deep)
+  );
+  box-shadow:
+    inset -12px -16px 28px color-mix(in srgb, var(--voice-deep) 60%, transparent),
+    inset 8px 8px 24px color-mix(in srgb, var(--voice-light) 80%, transparent),
+    0 18px 40px -18px var(--primary);
+  transform: scale(calc(1 + var(--voice-level) * 0.12));
+  transition: opacity 0.4s;
+}
+.voice-orb-flow {
+  position: absolute;
+  inset: -35%;
+  background: conic-gradient(
+    from 40deg,
+    transparent 8%,
+    var(--voice-light) 23%,
+    var(--voice-mid) 39%,
+    transparent 55%,
+    var(--voice-deep) 72%,
+    var(--voice-light) 91%,
+    transparent
+  );
+  filter: blur(20px);
+  mix-blend-mode: soft-light;
+  animation: voice-flow 12s linear infinite;
+  animation-play-state: paused;
+}
+.voice-orb-light {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      ellipse at 34% 22%,
+      color-mix(in srgb, var(--card) 80%, transparent),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 65% 90%,
+      color-mix(in srgb, var(--voice-light) 60%, transparent),
+      transparent 52%
+    );
+}
+.voice-orb-halo {
+  position: absolute;
+  width: 210px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--success) 25%, transparent),
+    transparent 69%
+  );
+  transform: scale(calc(1.1 + var(--voice-level) * 0.9));
+  opacity: calc(0.5 + var(--voice-level) * 0.5);
+  z-index: -1;
+}
+.voice-orb-stage:is(
+    [data-state='listening'],
+    [data-state='speaking'],
+    [data-state='planning'],
+    [data-state='connecting']
+  )
+  .voice-orb-flow {
+  animation-play-state: running;
+}
+.voice-orb-stage[data-state='speaking'] .voice-orb-flow {
+  animation-duration: 4s;
+}
+.voice-orb-stage:is([data-state='connecting'], [data-state='planning']) .voice-orb {
+  animation: voice-breathe 2.4s ease-in-out infinite;
+}
+.voice-orb-stage:is([data-state='muted'], [data-state='paused']) .voice-orb {
+  opacity: 0.55;
+}
+@keyframes voice-flow {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes voice-breathe {
+  50% {
+    transform: scale(0.94);
+    opacity: 0.75;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .voice-orb,
+  .voice-orb-halo {
+    transform: none;
+  }
+  .voice-orb-flow,
+  .voice-orb {
+    animation: none;
+  }
+}

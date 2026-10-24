@@ -1,6 +1,8 @@
 import { formatTime, replanResponseSchema, validatePlan } from '../shared/contracts';
 import type { Workspace } from './state';
 
+export type VoiceChange = { title: string; before: string; after: string; reason: string };
+
 export function describeDay(workspace: Workspace) {
   return {
     date: workspace.plan.date,
@@ -21,7 +23,10 @@ export async function executeVoiceReplan(
     request: (workspace: Workspace, message: string) => Promise<unknown>;
     commit: (workspace: Workspace) => void;
     showResult: (response: ReturnType<typeof replanResponseSchema.parse>) => void;
-    showApplied?: (response: ReturnType<typeof replanResponseSchema.parse>) => void;
+    showApplied?: (
+      response: ReturnType<typeof replanResponseSchema.parse>,
+      changes: VoiceChange[],
+    ) => void;
     signal: AbortSignal;
   },
 ) {
@@ -82,6 +87,6 @@ export async function executeVoiceReplan(
     history: [...source.history, { plan: source.plan, checkIn: source.checkIn }].slice(-5),
   };
   dependencies.commit(next);
-  dependencies.showApplied?.(response);
+  dependencies.showApplied?.(response, changes);
   return { status: 'applied', summary: response.result.summary, changes, plan: describeDay(next) };
 }

@@ -1,10 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Conversation, Status } from '@elevenlabs/react';
-import { Mic01Icon } from '@hugeicons/core-free-icons';
+import { Conversation, type Status } from '@elevenlabs/react';
+import {
+  ArrowUp02Icon,
+  CallEnd01Icon,
+  Mic01Icon,
+  MicOff01Icon,
+  PauseIcon,
+  PlayIcon,
+  Undo02Icon,
+} from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogPopup, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Icon } from './Icon';
 import { cn } from '@/lib/utils';
+import { voiceErrorMessage, waitForVoice } from '@/lib/voice-session';
 import { voiceToolArguments } from '../../shared/voice';
 
 type Props = {
@@ -14,270 +24,507 @@ type Props = {
   undo: () => unknown;
 };
 type Transcript = { key: string; role: 'user' | 'agent'; text: string };
+type Outcome = {
+  status?: string;
+  summary?: string;
+  question?: string | null;
+  changes?: { title: string; before: string; after: string }[];
+};
 
 export function VoicePanel(props: Props) {
-  const [configured, setConfigured] = useState<boolean | null>(null);
+  const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>('disconnected');
   const [speaking, setSpeaking] = useState(false);
   const [planning, setPlanning] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [stage, setStage] = useState('');
   const [error, setError] = useState('');
   const [messages, setMessages] = useState<Transcript[]>([]);
   const [reply, setReply] = useState('');
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
   const conversation = useRef<Conversation | null>(null);
   const session = useRef<AbortController | null>(null);
   const latest = useRef(props);
-  const connecting = useRef(false);
+  const orb = useRef<HTMLDivElement>(null);
+  const transcript = useRef<HTMLDivElement>(null);
+  latest.current = props;
 
-  useEffect(() => {
-    latest.current = props;
-  }, [props]);
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch('/api/voice/status', { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error();
-        return response.json();
-      })
-      .then((body) => setConfigured(body.configured === true))
-      .catch(() => {
-        if (!controller.signal.aborted) setConfigured(false);
-      });
-    return () => {
-      controller.abort();
+  useEffect(
+    () => () => {
       session.current?.abort();
-      void conversation.current?.endSession();
+      void conversation.current?.endSession().catch(() => {});
+    },
+    [],
+  );
+  useEffect(() => {
+    transcript.current?.scrollTo({ top: transcript.current.scrollHeight, behavior: 'instant' });
+  }, [messages]);
+  useEffect(() => {
+    if (status !== 'connected' || window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+      return;
+    let frame: number;
+    let smoothed = 0;
+    const animate = () => {
+      const current = conversation.current;
+      const level = paused
+        ? 0
+        : speaking
+          ? current?.getOutputVolume()
+          : muted
+            ? 0
+            : current?.getInputVolume();
+      smoothed += (Math.min(1, (level ?? 0) * 3) - smoothed) * 0.22;
+      orb.current?.style.setProperty('--voice-level', smoothed.toFixed(3));
+      frame = requestAnimationFrame(animate);
     };
-  }, []);
+    frame = requestAnimationFrame(animate);
+    return () => {
+      cancelAnimationFrame(frame);
+      orb.current?.style.setProperty('--voice-level', '0');
+    };
+  }, [status, speaking, muted, paused]);
 
   async function stop() {
     session.current?.abort();
-    connecting.current = false;
+    session.current = null;
     const current = conversation.current;
     conversation.current = null;
     setStatus('disconnected');
     setPlanning(false);
-    await current?.endSession();
+    setSpeaking(false);
+    setMuted(false);
+    setPaused(false);
+    await current?.endSession().catch(() => {});
   }
 
   async function start() {
-    if (connecting.current || conversation.current || latest.current.busy) return;
-    connecting.current = true;
+    if (session.current || latest.current.busy) return;
+    setOpen(true);
     const controller = new AbortController();
     session.current = controller;
+    const active = () => session.current === controller && !controller.signal.aborted;
     setError('');
     setMessages([]);
+    setReply('');
+    setOutcome(null);
+    setMuted(false);
+    setPaused(false);
+    setSpeaking(false);
     setStatus('connecting');
-    const active = () => !controller.signal.aborted;
+    setStage('Mikrofon freigeben …');
+    const timer = window.setTimeout(() => {
+      if (!active()) return;
+      setError(voiceErrorMessage(new DOMException('', 'TimeoutError')));
+      void stop();
+    }, 30000);
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('MIC_UNAVAILABLE');
-      const [sdk, response] = await Promise.all([
-        import('@elevenlabs/react'),
-        fetch('/api/voice/session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: '{}',
-          signal: controller.signal,
+      // Request permission immediately from the click, before fetching a session.
+      const stream = await waitForVoice(
+        navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         }),
-      ]);
-      const body = await response.json();
-      if (!response.ok || typeof body.signedUrl !== 'string')
-        throw new Error('SESSION_UNAVAILABLE');
+        controller.signal,
+        (late) => late.getTracks().forEach((track) => track.stop()),
+      );
+      stream.getTracks().forEach((track) => track.stop());
       if (!active()) return;
-      const current = await sdk.Conversation.startSession({
-        signedUrl: body.signedUrl,
-        connectionType: 'websocket',
-        clientTools: {
-          get_day_plan: () => JSON.stringify(latest.current.getDay()),
-          replan_day: async (args: unknown) => {
-            if (!active()) return JSON.stringify({ status: 'error', summary: 'Gespräch beendet.' });
-            const parsed = voiceToolArguments.replan_day.safeParse(args);
-            if (!parsed.success)
-              return JSON.stringify({ status: 'error', summary: 'Der Änderungswunsch fehlt.' });
-            setPlanning(true);
-            try {
-              return JSON.stringify(
-                await latest.current.replan(parsed.data.message, controller.signal),
-              );
-            } catch {
-              return JSON.stringify({
-                status: 'error',
-                summary: 'Die Planung ist fehlgeschlagen. Es wurde nichts übernommen.',
-              });
-            } finally {
-              if (active()) setPlanning(false);
-            }
-          },
-          undo_last_change: () =>
-            JSON.stringify(
-              active() ? latest.current.undo() : { status: 'error', summary: 'Gespräch beendet.' },
-            ),
-        },
-        onStatusChange: ({ status: next }) => {
-          if (active()) setStatus(next);
-        },
-        onModeChange: ({ mode }) => {
-          if (active()) setSpeaking(mode === 'speaking');
-        },
-        onMessage: ({ role, message, event_id }) => {
-          if (!active()) return;
-          const key = `${role}-${event_id}`;
-          setMessages((previous) =>
-            [...previous.filter((item) => item.key !== key), { key, role, text: message }].slice(
-              -8,
-            ),
-          );
-        },
-        onError: () => {
-          if (active())
-            setError('Die Sprachverbindung wurde unterbrochen. Bitte starte das Gespräch erneut.');
-        },
-        onDisconnect: (details) => {
-          if (!active()) return;
-          if (details.reason === 'error')
-            setError('Die Sprachverbindung wurde unterbrochen. Bitte starte das Gespräch erneut.');
-          controller.abort();
-          conversation.current = null;
-          connecting.current = false;
-          setStatus('disconnected');
-          setPlanning(false);
-        },
+      setStage('Verbinde mit Pivot …');
+      const response = await fetch('/api/voice/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ connectionType: 'webrtc' }),
+        signal: controller.signal,
       });
+      const body = await response.json();
+      if (!response.ok) {
+        setError(
+          typeof body.error === 'string'
+            ? body.error
+            : 'Die Sprachverbindung ist gerade nicht erreichbar.',
+        );
+        await stop();
+        return;
+      }
+      if (typeof body.conversationToken !== 'string') throw new Error('Missing conversation token');
+      if (!active()) return;
+      const current = await waitForVoice(
+        Conversation.startSession({
+          conversationToken: body.conversationToken,
+          connectionType: 'webrtc',
+          clientTools: {
+            get_day_plan: () =>
+              JSON.stringify(
+                active()
+                  ? latest.current.getDay()
+                  : { status: 'error', summary: 'Gespräch beendet.' },
+              ),
+            replan_day: async (args: unknown) => {
+              if (!active())
+                return JSON.stringify({ status: 'error', summary: 'Gespräch beendet.' });
+              const parsed = voiceToolArguments.replan_day.safeParse(args);
+              if (!parsed.success)
+                return JSON.stringify({ status: 'error', summary: 'Der Änderungswunsch fehlt.' });
+              setPlanning(true);
+              setOutcome(null);
+              try {
+                const result = (await latest.current.replan(
+                  parsed.data.message,
+                  controller.signal,
+                )) as Outcome;
+                if (active()) setOutcome(result);
+                return JSON.stringify(result);
+              } catch {
+                const result = {
+                  status: 'error',
+                  summary: 'Die Planung ist fehlgeschlagen. Es wurde nichts übernommen.',
+                };
+                if (active()) setOutcome(result);
+                return JSON.stringify(result);
+              } finally {
+                if (active()) setPlanning(false);
+              }
+            },
+            undo_last_change: () => {
+              const result = active()
+                ? (latest.current.undo() as Outcome)
+                : { status: 'error', summary: 'Gespräch beendet.' };
+              if (active()) setOutcome(result);
+              return JSON.stringify(result);
+            },
+          },
+          onStatusChange: ({ status: next }) => {
+            if (active() && next !== 'connected') setStatus(next);
+          },
+          onModeChange: ({ mode }) => {
+            if (active()) setSpeaking(mode === 'speaking');
+          },
+          onMessage: ({ role, message, event_id }) => {
+            if (!active()) return;
+            const key = `${role}-${event_id}`;
+            setMessages((previous) =>
+              [...previous.filter((item) => item.key !== key), { key, role, text: message }].slice(
+                -30,
+              ),
+            );
+          },
+          onError: (message) => {
+            if (!active()) return;
+            setError(voiceErrorMessage(message));
+            void stop();
+          },
+          onDisconnect: (details) => {
+            if (!active()) return;
+            if (details.reason === 'error') setError(voiceErrorMessage(details.message));
+            controller.abort();
+            session.current = null;
+            conversation.current = null;
+            setStatus('disconnected');
+            setPlanning(false);
+            setSpeaking(false);
+            setPaused(false);
+            setMuted(false);
+          },
+        }),
+        controller.signal,
+        (late) => {
+          void late.endSession().catch(() => {});
+        },
+      );
       if (!active()) {
         await current.endSession();
         return;
       }
       conversation.current = current;
+      current.setVolume({ volume: 1 });
+      setStatus('connected');
     } catch (cause) {
       if (!active()) return;
-      controller.abort();
-      setStatus('disconnected');
-      setError(
-        cause instanceof Error &&
-          /permission|denied|notallowed|mic_unavailable/i.test(cause.message)
-          ? 'Bitte erlaube den Mikrofonzugriff im Browser, um mit Pivot zu sprechen.'
-          : 'Die Sprachverbindung konnte nicht gestartet werden. Bitte versuche es erneut.',
-      );
+      setError(voiceErrorMessage(cause));
+      await stop();
     } finally {
-      connecting.current = false;
+      window.clearTimeout(timer);
     }
   }
 
   const connected = status === 'connected';
   const inProgress = status !== 'disconnected';
-  const label = planning
-    ? 'Dein Tag wird angepasst …'
-    : connected
-      ? speaking
-        ? 'Pivot spricht'
-        : 'Ich höre dir zu'
-      : status === 'connecting'
-        ? 'Verbinde …'
-        : 'Sag, was sich geändert hat.';
+  const state = paused
+    ? 'paused'
+    : planning
+      ? 'planning'
+      : connected
+        ? speaking
+          ? 'speaking'
+          : muted
+            ? 'muted'
+            : 'listening'
+        : inProgress
+          ? 'connecting'
+          : 'idle';
+  const label = paused
+    ? 'Gespräch pausiert'
+    : planning
+      ? 'Ich passe deinen Tag an'
+      : connected
+        ? speaking
+          ? 'Pivot spricht'
+          : muted
+            ? 'Mikrofon ist aus'
+            : 'Ich höre dir zu'
+        : inProgress
+          ? stage
+          : error
+            ? 'Lass uns neu verbinden'
+            : 'Sprich mit Pivot';
+  const lastAgent = messages.findLast((message) => message.role === 'agent');
 
   return (
-    <section
-      className={cn(
-        'grid gap-3 rounded-xl border bg-card p-4 shadow-xs/5',
-        connected && 'border-success/40',
-      )}
-      aria-labelledby="voice-title"
-    >
-      <div className="flex items-center gap-3">
-        <span
-          className={cn(
-            'grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground',
-            inProgress && 'bg-success/10 text-success',
-          )}
-          aria-hidden="true"
-        >
-          <Icon icon={Mic01Icon} size={23} />
-        </span>
-        <div>
-          <h2 id="voice-title" className="text-base font-semibold">
-            Sprich mit Pivot
-          </h2>
-          <p role="status" className="text-sm text-muted-foreground">
-            {label}
-          </p>
-        </div>
-      </div>
-      <p className="text-sm text-muted-foreground">
-        „Ich bin erst ab 14 Uhr da. Plane meinen Tag um.“
-      </p>
+    <>
       <Button
-        variant={inProgress ? 'secondary' : 'default'}
+        type="button"
+        variant="secondary"
+        className="w-full justify-center gap-2"
+        disabled={props.busy && !inProgress}
         onClick={() => {
-          void (inProgress ? stop() : start());
+          if (inProgress) setOpen(true);
+          else void start();
         }}
-        disabled={!inProgress && (configured !== true || props.busy)}
       >
-        {inProgress ? 'Gespräch beenden' : 'Gespräch starten'}
+        <Icon icon={Mic01Icon} size={18} />
+        {inProgress ? 'Zurück zum Gespräch' : 'Änderung besprechen'}
+        <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+          <span className="size-1.5 rounded-full bg-success" />
+          Live
+        </span>
       </Button>
-      {configured === false && (
-        <p className="text-xs text-muted-foreground">
-          Der Sprachdialog ist noch nicht eingerichtet. Du kannst Änderungen unten eingeben.
-        </p>
-      )}
-      {error && (
-        <p className="text-sm text-destructive-foreground" role="alert">
-          {error}
-        </p>
-      )}
-      {connected && (
-        <form
-          className="flex items-center gap-2"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!reply.trim() || planning || props.busy) return;
-            conversation.current?.sendUserMessage(reply.trim());
-            setReply('');
-          }}
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) void stop();
+        }}
+      >
+        <DialogPopup
+          className="voice-dialog max-w-xl overflow-y-auto"
+          bottomStickOnMobile={false}
+          closeProps={{ 'aria-label': 'Gespräch schließen und beenden' }}
         >
-          <label className="sr-only" htmlFor="voice-reply">
-            Nachricht im Gespräch
-          </label>
-          <Input
-            id="voice-reply"
-            value={reply}
-            onChange={(event) => setReply(event.target.value)}
-            maxLength={2000}
-            placeholder="Oder hier antworten …"
-            disabled={planning || props.busy}
-          />
-          <Button
-            variant="secondary"
-            type="submit"
-            disabled={!reply.trim() || planning || props.busy}
-          >
-            Senden
-          </Button>
-        </form>
-      )}
-      {messages.length > 0 && (
-        <div
-          className="grid max-h-64 gap-2 overflow-y-auto text-sm"
-          role="log"
-          aria-label="Gespräch mit Pivot"
-          aria-live="polite"
-        >
-          {messages.map((message) => (
-            <p
-              key={message.key}
-              className={cn(
-                'grid gap-0.5 rounded-lg bg-muted p-2.5',
-                message.role === 'agent' && 'bg-accent',
-              )}
-            >
-              <strong>{message.role === 'user' ? 'Du' : 'Pivot'}</strong>
-              <span>{message.text}</span>
+          <div className="px-6 pt-7 text-center">
+            <DialogTitle>Dein Tag. Im Gespräch.</DialogTitle>
+            <DialogDescription className="mt-2">
+              Sag, was sich geändert hat. Dein Plan passt sich live an.
+            </DialogDescription>
+          </div>
+          <div ref={orb} className="voice-orb-stage" data-state={state} aria-hidden="true">
+            <div className="voice-orb-halo" />
+            <div className="voice-orb">
+              <div className="voice-orb-flow" />
+              <div className="voice-orb-light" />
+            </div>
+          </div>
+          <div className="px-6 text-center">
+            <p className="text-lg font-semibold" role="status">
+              {label}
             </p>
-          ))}
-        </div>
-      )}
-      <p className="text-xs text-muted-foreground">
-        Sprachaufträge passen deinen Plan direkt an. Du kannst Änderungen rückgängig machen. Audio
-        wird an ElevenLabs gesendet; Gespräch und Tagesplan werden mit Google verarbeitet.
-      </p>
-    </section>
+            <p className="mt-2 min-h-10 text-sm leading-relaxed text-muted-foreground">
+              {paused
+                ? planning
+                  ? 'Mikrofon und Ton sind aus. Deine Planung läuft weiter.'
+                  : 'Mikrofon und Ton sind aus. Setze das Gespräch fort, wenn du bereit bist.'
+                : planning
+                  ? 'Die Änderungen erscheinen gleich in deinem Tagesplan.'
+                  : connected
+                    ? (lastAgent?.text ??
+                      'Du kannst ganz normal sprechen und mich jederzeit unterbrechen.')
+                    : inProgress
+                      ? 'Erlaube das Mikrofon, wenn dein Browser danach fragt.'
+                      : 'Zum Beispiel: „Ich bin erst ab 14 Uhr da. Plane meinen Tag um.“'}
+            </p>
+          </div>
+          {error && (
+            <p
+              role="alert"
+              className="mx-6 mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive-foreground"
+            >
+              {error}
+            </p>
+          )}
+          {outcome && (
+            <div className="mx-6 mt-4 rounded-xl border bg-background p-3" aria-live="polite">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">
+                  {outcome.status === 'applied'
+                    ? 'Dein Plan ist aktualisiert'
+                    : 'Eine kurze Rückmeldung'}
+                </p>
+                {outcome.status === 'applied' && outcome.changes && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={props.busy}
+                    onClick={() => {
+                      const result = latest.current.undo() as Outcome;
+                      setOutcome(result);
+                      conversation.current?.sendContextualUpdate(
+                        `Der Nutzer hat Rückgängig angeklickt. Ergebnis: ${JSON.stringify(result)}`,
+                      );
+                    }}
+                  >
+                    <Icon icon={Undo02Icon} size={16} />
+                    Rückgängig
+                  </Button>
+                )}
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {outcome.question || outcome.summary}
+              </p>
+              {!!outcome.changes?.length && (
+                <ul className="mt-3 grid gap-2 text-sm">
+                  {outcome.changes.map((change, index) => (
+                    <li
+                      key={`${change.title}-${index}`}
+                      className="flex flex-wrap justify-between gap-x-3 gap-y-0.5"
+                    >
+                      <span>{change.title}</span>
+                      <span className="tabular text-success-foreground">
+                        {change.before} → {change.after}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          <div className="flex flex-wrap justify-center gap-3 px-6 py-5">
+            {connected && (
+              <Button
+                className="rounded-full"
+                variant={paused ? 'default' : 'secondary'}
+                aria-pressed={paused}
+                onClick={() => {
+                  const next = !paused;
+                  conversation.current?.setMicMuted(next || muted);
+                  conversation.current?.setVolume({ volume: next ? 0 : 1 });
+                  setPaused(next);
+                }}
+              >
+                <Icon icon={paused ? PlayIcon : PauseIcon} size={20} />
+                {paused ? 'Fortsetzen' : 'Pause'}
+              </Button>
+            )}
+            {connected && (
+              <Button
+                variant={muted ? 'secondary' : 'outline'}
+                className="rounded-full"
+                aria-label={muted ? 'Mikrofon einschalten' : 'Mikrofon stummschalten'}
+                aria-pressed={muted}
+                disabled={paused}
+                onClick={() => {
+                  conversation.current?.setMicMuted(!muted);
+                  setMuted(!muted);
+                }}
+              >
+                <Icon icon={muted ? MicOff01Icon : Mic01Icon} size={20} />
+                {muted ? 'Mikrofon an' : 'Stummschalten'}
+              </Button>
+            )}
+            {inProgress ? (
+              <Button
+                variant="destructive"
+                className="rounded-full"
+                onClick={() => {
+                  void stop();
+                }}
+              >
+                <Icon icon={CallEnd01Icon} size={20} />
+                {connected ? 'Beenden' : 'Abbrechen'}
+              </Button>
+            ) : (
+              <Button
+                className="rounded-full"
+                disabled={props.busy}
+                onClick={() => {
+                  void start();
+                }}
+              >
+                <Icon icon={Mic01Icon} size={20} />
+                {error ? 'Erneut verbinden' : 'Gespräch starten'}
+              </Button>
+            )}
+          </div>
+          {connected && (
+            <form
+              className="mx-6 mb-4 flex items-center gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!reply.trim() || planning || props.busy || paused) return;
+                const text = reply.trim();
+                conversation.current?.sendUserMessage(text);
+                setMessages((previous) =>
+                  [
+                    ...previous,
+                    { key: `typed-${crypto.randomUUID()}`, role: 'user' as const, text },
+                  ].slice(-30),
+                );
+                setReply('');
+              }}
+            >
+              <label className="sr-only" htmlFor="voice-reply">
+                Nachricht im Gespräch
+              </label>
+              <Input
+                id="voice-reply"
+                value={reply}
+                onChange={(event) => {
+                  setReply(event.target.value);
+                  conversation.current?.sendUserActivity();
+                }}
+                maxLength={2000}
+                placeholder="Oder kurz tippen …"
+                disabled={planning || props.busy || paused}
+              />
+              <Button
+                size="icon"
+                type="submit"
+                aria-label="Nachricht senden"
+                disabled={!reply.trim() || planning || props.busy || paused}
+              >
+                <Icon icon={ArrowUp02Icon} size={20} />
+              </Button>
+            </form>
+          )}
+          {messages.length > 0 && (
+            <details className="mx-6 mb-4 text-sm">
+              <summary className="cursor-pointer text-muted-foreground">Gespräch mitlesen</summary>
+              <div
+                ref={transcript}
+                className="mt-3 grid max-h-44 gap-3 overflow-y-auto"
+                role="log"
+                aria-label="Gespräch mit Pivot"
+              >
+                {messages.map((message) => (
+                  <p
+                    key={message.key}
+                    className={cn(
+                      'grid gap-0.5',
+                      message.role === 'user' && 'text-muted-foreground',
+                    )}
+                  >
+                    <strong className="text-xs">{message.role === 'user' ? 'Du' : 'Pivot'}</strong>
+                    <span>{message.text}</span>
+                  </p>
+                ))}
+              </div>
+            </details>
+          )}
+          <p className="border-t px-6 py-4 text-center text-xs leading-relaxed text-muted-foreground">
+            Änderungen werden direkt übernommen und lassen sich rückgängig machen. Audio:
+            ElevenLabs. Gespräch und Planung: Google.
+          </p>
+        </DialogPopup>
+      </Dialog>
+    </>
   );
 }

@@ -9,6 +9,10 @@
   /* Pivot palette: warm beige surfaces, deep green ink, sage green for actions, progress and selection. Colour beyond that carries meaning (categories, status). */
   --ink: #17211e;
   --sage: #647a6c;
+  /* Voice orb: light, middle and shadow tones of Pivot's green. */
+  --voice-light: #dcf9bc;
+  --voice-mid: #83b98c;
+  --voice-deep: #244d3d;
 
   /* Task categories: data colours for event tints, muted to sit on the beige surface. */
   --category-study: #6f5fa6;

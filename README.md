@@ -26,7 +26,7 @@ Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/styles/land
 - Maßnahmen bei wenig Schlaf oder Energie aus einem Pool (Koffein, Nap, Bewegung) mit Sperren und Ausschlüssen. Gemma meldet nur Signale, die Auswahl trifft der Code.
 - Screenshot-Import: Aufgaben, Termine und Fristen aus einem Bild lesen, prüfen und korrigieren, erst dann hinzufügen. Mit einem synthetischen Stundenplan in der Vorschau getestet; die Erkennungsqualität bei echten Screenshots ist nicht breit geprüft.
 - Aufgaben von Hand hinzufügen.
-- „Sprich mit Pivot“: Ein klarer Sprachauftrag übernimmt den validierten Plan direkt. Der Agent erklärt danach die tatsächlichen Änderungen; Rückfragen und Konflikte verändern den Plan nicht. Undo funktioniert per Stimme oder Schaltfläche.
+- „Änderung besprechen“ direkt bei der Texteingabe öffnet den Sprachdialog mit einer grünen, auf Audio reagierenden Kugel. Ein klarer Sprachauftrag übernimmt den validierten Plan direkt. ElevenLabs spricht die tatsächlichen Änderungen aus; ein Toast zeigt vorherige und neue Zeiten mit Undo. Rückfragen und Konflikte verändern den Plan nicht. „Pause“ schaltet Mikrofon und Ton aus, lässt eine laufende Planung fertig werden und hält die Sitzung offen. „Fortsetzen“ aktiviert den Ton und den vorherigen Mikrofonzustand; während der Pause ausgegebene Antworten bleiben im Transkript lesbar. „Beenden“, Escape und Schließen stoppen die Sitzung.
 
 ### Noch nicht umgesetzt
 
@@ -76,7 +76,7 @@ Der Befehl erstellt einen privaten ElevenLabs-Agenten im Konto des Keys, registr
 
 Die App-Adresse muss für ElevenLabs öffentlich über HTTPS erreichbar sein; in ElevenLabs wird die Basis `/api/voice/v1` eingetragen. ElevenLabs ergänzt daraus den Custom-LLM-Endpunkt `/api/voice/v1/chat/completions`. Für lokale Entwicklung denselben Code öffentlich hosten oder einen eigenen HTTPS-Tunnel konfigurieren. Browser benötigen Mikrofonfreigabe und HTTPS oder localhost. Während eines Gesprächs ist auch eine Texteingabe möglich.
 
-Audio und Transkripte werden durch ElevenLabs verarbeitet; Gespräch, Tool-Ergebnisse und für die Planung benötigte Tagesdaten gehen an Google. Die Schlüssel bleiben serverseitig. Der Browser erhält nur eine zeitlich begrenzte signierte Gesprächsadresse. Die App hält den aktuellen Plan und den Undo-Verlauf weiterhin lokal.
+Audio und Transkripte werden durch ElevenLabs verarbeitet; Gespräch, Tool-Ergebnisse und für die Planung benötigte Tagesdaten gehen an Google. Die Schlüssel bleiben serverseitig. Der Browser erhält einen kurzlebigen WebRTC-Token. Die signierte WebSocket-Adresse bleibt für bestehende Clients und den synthetischen Audiotest verfügbar. Der Start fragt sofort nach dem Mikrofon und endet nach 30 Sekunden mit einer sichtbaren Fehlermeldung, falls keine Verbindung zustande kommt. Die App hält den aktuellen Plan und den Undo-Verlauf weiterhin lokal.
 
 ```sh
 npm test
@@ -89,6 +89,8 @@ npm start
 `npm run test:live` prüft fünf synthetische Fälle mit dem lokal eingerichteten Gemma-Key: ausdrücklich verschobener fester Termin, Zugverspätung mit wenig Energie, zusätzliche Marketing-Klausur, Bearbeitung vorhandener Marketing-Lernzeit und neue Aufgabe zusammen mit geänderter Verfügbarkeit. Jeder Fall erlaubt maximal einen Reparaturversuch; der Befehl verbraucht API-Kontingent.
 
 `npm run test:voice:live` prüft den Gemma-Gesprächszyklus einschließlich Tool Call, tatsächlicher Planänderung und anschließender Erklärung mit synthetischen Daten. Der Test benötigt den Google-Key und verbraucht API-Kontingent. `npm test` prüft zusätzlich Streaming, Tool-Rückgaben, Authentifizierung sowie Abbruch- und Konfliktfälle ohne externe Modellaufrufe.
+
+`node --import tsx scripts/check-elevenlabs.ts https://DEINE-APP-ADRESSE` prüft zusätzlich die echte ElevenLabs-Spracherkennung und Audioantwort: synthetischen deutschen Satz erzeugen, Audio senden, Transkript empfangen, den Plan im Arbeitsspeicher ändern und die gesprochene Erklärung empfangen. Benötigt ElevenLabs-Konfiguration und eine erreichbare App mit Gemma; verbraucht API-Kontingent, verwendet kein Mikrofon und ändert keine Browserdaten.
 
 ## GitHub und Vercel
 
@@ -111,7 +113,7 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Vorübergehende Providerfehler und ungültige Antworten teilen sich ein Limit von insgesamt zwei Modellaufrufen. Das konfigurierte Modell hat in der Vorschau einen synthetischen Stundenplan korrekt gelesen.
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `GET /api/voice/status`: meldet, ob die Sprachkonfiguration vorhanden ist, ohne Schlüssel auszugeben.
-- `POST /api/voice/session`: erstellt serverseitig eine kurzlebige signierte ElevenLabs-Gesprächsadresse.
+- `POST /api/voice/session`: mit `{ connectionType: "webrtc" }` ein kurzlebiger ElevenLabs-Token; ohne Auswahl eine signierte WebSocket-Adresse.
 - `POST /api/voice/v1/chat/completions`: authentifizierter Custom-LLM-Adapter, der Gemma-Text und Tool Calls als SSE an ElevenLabs streamt. Dieser Server-Aufruf benötigt `Authorization: Bearer VOICE_LLM_SECRET`.
 - `server/gemma.ts`: Google-REST-Adapter mit `gemma-4-26b-a4b-it` als Standard; über `GEMMA_MODEL` auf ein anderes freigegebenes Gemma-4-Modell umstellbar. [Offizielle Modell-Dokumentation](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
