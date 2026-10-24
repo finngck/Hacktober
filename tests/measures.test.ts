@@ -130,3 +130,57 @@ test('the Gemma adapter returns engine-selected measures from the reported signa
   assert.ok(response.measures.restrictions.some((item) => item.id === 'KOF_NICHT_UEBERDECKEN'));
   assert.ok(response.measures.actions.length > 0);
 });
+
+test('nap advice follows the proposed plan, not the replaced one', async () => {
+  const state = { energy: 'low' as const, sleepHours: 5 };
+  const source = request();
+  source.message =
+    'Ich habe fünf Stunden geschlafen, bin schläfrig und habe wenig Energie. Bitte Statistik-Lernen auf 13 Uhr vorziehen.';
+  const before = ids(selectMeasures(source, state, { schlaefrig: true }));
+  assert.ok(before.actions.includes('NAP_KURZ'));
+  const response = await generatePlan(source, {
+    apiKey: 'test',
+    model: 'gemma-4-26b-a4b-it',
+    fetcher: async () =>
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    functionCall: {
+                      name: 'update_day_context',
+                      args: {
+                        ...state,
+                        signals: { schlaefrig: true },
+                        source:
+                          'Ich habe fünf Stunden geschlafen, bin schläfrig und habe wenig Energie.',
+                      },
+                    },
+                  },
+                  {
+                    functionCall: {
+                      name: 'move_task',
+                      args: {
+                        id: 'study',
+                        start: 780,
+                        shiftMinutes: null,
+                        source: 'Statistik-Lernen auf 13 Uhr vorziehen.',
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+  });
+  assert.equal(response.proposedPlan?.items.find((item) => item.id === 'study')?.start, 780);
+  assert.equal(
+    response.measures.actions.some((item) => item.id === 'NAP_KURZ'),
+    false,
+  );
+});
