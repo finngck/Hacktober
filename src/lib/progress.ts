@@ -22,17 +22,17 @@ export type Progress = z.infer<typeof progressSchema>;
 
 export const badges: Record<BadgeId, { title: string; description: string }> = {
   'first-check-in': {
-    title: 'Erster Sonnenaufgang',
-    description: 'Deinen ersten Check-in gemacht.',
+    title: 'First sunrise',
+    description: 'You did your first check-in.',
   },
-  'early-bird': { title: 'Früher Vogel', description: 'Vor 9 Uhr eingecheckt.' },
-  'streak-3': { title: 'Drei Tage Licht', description: 'Drei Tage in Folge eingecheckt.' },
-  'streak-7': { title: 'Eine Woche Licht', description: 'Sieben Tage in Folge eingecheckt.' },
+  'early-bird': { title: 'Early bird', description: 'You checked in before 9 a.m.' },
+  'streak-3': { title: 'Three days of light', description: 'You checked in three days in a row.' },
+  'streak-7': { title: 'A week of light', description: 'You checked in seven days in a row.' },
   'first-plan': {
-    title: 'Neu sortiert',
-    description: 'Den ersten angepassten Plan übernommen.',
+    title: 'Rearranged',
+    description: 'You applied your first updated plan.',
   },
-  'plans-5': { title: 'Beweglicher Kopf', description: 'Fünf angepasste Pläne übernommen.' },
+  'plans-5': { title: 'Flexible mind', description: 'You applied five updated plans.' },
 };
 export const badgeOrder = badgeIds;
 

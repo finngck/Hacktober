@@ -7,14 +7,14 @@ import { PlannerError } from '../server/gemma';
 
 const image = { image: 'A'.repeat(200), mimeType: 'image/jpeg' as const };
 const task = {
-  title: 'Statistik Vorlesung',
+  title: 'Statistics lecture',
   category: 'study',
   duration: 90,
   start: 600,
   deadline: null,
   priority: 'medium',
   fixed: true,
-  when: 'Mo 10:00-11:30',
+  when: 'Mon 10:00-11:30',
 };
 const providerResponse = (text: string) =>
   new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] }), {
@@ -30,9 +30,9 @@ test('parses extracted tasks, also when wrapped in a markdown fence', () => {
 
 test('reads the JSON object even when the model adds text around it', () => {
   const body = JSON.stringify({ tasks: [task], note: null });
-  assert.equal(parseExtractText(`Hier ist das Ergebnis:\n${body}\nViel Erfolg!`).tasks.length, 1);
-  assert.equal(parseExtractText(`\`\`\`json\n${body}\n\`\`\` Fertig.`).tasks.length, 1);
-  assert.throws(() => parseExtractText('Ich kann das Bild leider nicht lesen.'));
+  assert.equal(parseExtractText(`Here is the result:\n${body}\nGood luck!`).tasks.length, 1);
+  assert.equal(parseExtractText(`\`\`\`json\n${body}\n\`\`\` Done.`).tasks.length, 1);
+  assert.throws(() => parseExtractText("Sorry, I can't read the image."));
 });
 
 test('sends the image as inline data and returns reviewable tasks', async () => {
@@ -57,21 +57,21 @@ test('retries once after an invalid answer and then gives up with a clear error'
     apiKey: 'test-key',
     model: 'gemma-4-test',
     fetcher: async () =>
-      providerResponse(++calls === 1 ? 'kein json' : JSON.stringify({ tasks: [], note: 'leer' })),
+      providerResponse(++calls === 1 ? 'no json' : JSON.stringify({ tasks: [], note: 'empty' })),
   });
   assert.equal(recovered.meta.attempts, 2);
   await assert.rejects(
     extractTasks(image, {
       apiKey: 'test-key',
       model: 'gemma-4-test',
-      fetcher: async () => providerResponse('kein json'),
+      fetcher: async () => providerResponse('no json'),
     }),
     PlannerError,
   );
 });
 
 test('requires a configured key and never leaks provider error bodies', async () => {
-  await assert.rejects(extractTasks(image, { model: 'gemma-4-test' }), /nicht eingerichtet/);
+  await assert.rejects(extractTasks(image, { model: 'gemma-4-test' }), /isn't set up/);
   await assert.rejects(
     extractTasks(image, {
       apiKey: 'secret-key',

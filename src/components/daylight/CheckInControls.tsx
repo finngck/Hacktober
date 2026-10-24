@@ -30,7 +30,7 @@ export function SleepControl({ checkIn, onChange }: ControlProps) {
   return (
     <div className="grid gap-4">
       <DaylightSlider
-        label="Schlaf letzte Nacht"
+        label="Sleep last night"
         tone="sleep"
         min={3}
         max={11}
@@ -39,11 +39,11 @@ export function SleepControl({ checkIn, onChange }: ControlProps) {
         onValueChange={(sleepHours) => onChange({ sleepHours })}
         display={formatHours(checkIn.sleepHours)}
         hint={sleepVerdict(checkIn.sleepHours)}
-        startLabel="3 Std."
-        endLabel="11 Std."
+        startLabel="3 h"
+        endLabel="11 h"
       />
       <div className="grid gap-2">
-        <span className="text-sm text-muted-foreground">Wie erholsam war die Nacht?</span>
+        <span className="text-sm text-muted-foreground">How restful was your night?</span>
         <ChoiceGroup
           value={[checkIn.sleepQuality]}
           onValueChange={(value) => {
@@ -67,7 +67,7 @@ export function EnergyControl({ checkIn, onChange }: ControlProps) {
   return (
     <div className="grid gap-3">
       <DaylightSlider
-        label="Energie gerade"
+        label="Energy right now"
         tone="sun"
         min={1}
         max={5}
@@ -76,8 +76,8 @@ export function EnergyControl({ checkIn, onChange }: ControlProps) {
           onChange({ energyLevel, energy: energyFromLevel(energyLevel) })
         }
         display={energyLevelLabels[level - 1]}
-        startLabel="Sehr niedrig"
-        endLabel="Sehr hoch"
+        startLabel="Very low"
+        endLabel="Very high"
       />
     </div>
   );
@@ -86,7 +86,7 @@ export function EnergyControl({ checkIn, onChange }: ControlProps) {
 export function MoodControl({ checkIn, onChange }: ControlProps) {
   return (
     <DaylightSlider
-      label="Stimmung"
+      label="Mood"
       tone="mood"
       min={1}
       max={5}
@@ -98,8 +98,8 @@ export function MoodControl({ checkIn, onChange }: ControlProps) {
           {moodLabels[checkIn.mood - 1]}
         </span>
       }
-      startLabel="Mies"
-      endLabel="Richtig gut"
+      startLabel="Awful"
+      endLabel="Really good"
     />
   );
 }
@@ -107,15 +107,15 @@ export function MoodControl({ checkIn, onChange }: ControlProps) {
 export function StressControl({ checkIn, onChange }: ControlProps) {
   return (
     <DaylightSlider
-      label="Wie voll ist dein Kopf?"
+      label="How stressed are you?"
       tone="stress"
       min={1}
       max={5}
       value={checkIn.stress}
       onValueChange={(stress) => onChange({ stress })}
       display={stressLabels[checkIn.stress - 1]}
-      startLabel="Entspannt"
-      endLabel="Überladen"
+      startLabel="Relaxed"
+      endLabel="Overloaded"
     />
   );
 }
@@ -154,25 +154,25 @@ export function FocusControl({ checkIn, onChange, plan }: ControlProps & { plan:
     );
   };
   return (
-    <div className="grid gap-2" role="radiogroup" aria-label="Fokus für heute">
+    <div className="grid gap-2" role="radiogroup" aria-label="Focus for today">
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
         <Icon icon={Target02Icon} size={16} />
-        Was ist heute das Eine?
+        What's the one thing today?
       </p>
       {candidates.map((item) =>
         option(
           item.id,
           item.title,
           [
-            `${item.duration}\u00a0Min.`,
-            item.start === null ? 'noch offen' : `ab ${formatTime(item.start)}`,
-            item.deadline !== null ? `Frist ${formatTime(item.deadline)}` : '',
+            `${item.duration}\u00a0min`,
+            item.start === null ? 'still open' : `from ${formatTime(item.start)}`,
+            item.deadline !== null ? `Deadline ${formatTime(item.deadline)}` : '',
           ]
             .filter(Boolean)
             .join(' · '),
         ),
       )}
-      {option(null, 'Kein Fokus', 'Pivot gewichtet alles nach Priorität.')}
+      {option(null, 'No focus', 'Pivot weighs everything by priority.')}
     </div>
   );
 }
@@ -181,7 +181,7 @@ export function PreferencesControl({ checkIn, onChange }: ControlProps) {
   return (
     <div className="grid gap-4">
       <div className="grid gap-2">
-        <span className="text-sm text-muted-foreground">Am produktivsten</span>
+        <span className="text-sm text-muted-foreground">Most productive</span>
         <ChoiceGroup
           value={[checkIn.productiveTime]}
           onValueChange={(value) => {
@@ -196,7 +196,7 @@ export function PreferencesControl({ checkIn, onChange }: ControlProps) {
         </ChoiceGroup>
       </div>
       <div className="grid gap-2">
-        <span className="text-sm text-muted-foreground">Was passt heute nicht?</span>
+        <span className="text-sm text-muted-foreground">What's off the table today?</span>
         <div className="flex flex-wrap gap-2">
           {exclusionOptions.map((exclusion) => (
             <ChoiceChip

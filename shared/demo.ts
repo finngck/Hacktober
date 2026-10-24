@@ -22,7 +22,7 @@ export const demoPlan: Plan = {
   items: [
     {
       id: 'lunch',
-      title: 'Mittagessen & kurz abschalten',
+      title: 'Lunch & a quick reset',
       category: 'recovery',
       start: 720,
       duration: 45,
@@ -34,7 +34,7 @@ export const demoPlan: Plan = {
     },
     {
       id: 'study',
-      title: 'Für die Statistik-Klausur lernen',
+      title: 'Study for the statistics exam',
       category: 'study',
       start: 810,
       duration: 90,
@@ -46,7 +46,7 @@ export const demoPlan: Plan = {
     },
     {
       id: 'team',
-      title: 'Team-Meeting',
+      title: 'Team meeting',
       category: 'work',
       start: 930,
       duration: 60,
@@ -58,7 +58,7 @@ export const demoPlan: Plan = {
     },
     {
       id: 'break',
-      title: 'Eine Pause an der frischen Luft',
+      title: 'A break in the fresh air',
       category: 'recovery',
       start: 990,
       duration: 15,
@@ -70,7 +70,7 @@ export const demoPlan: Plan = {
     },
     {
       id: 'project',
-      title: 'Am eigenen Projekt weiterarbeiten',
+      title: 'Work on my side project',
       category: 'work',
       start: 1005,
       duration: 90,
@@ -82,7 +82,7 @@ export const demoPlan: Plan = {
     },
     {
       id: 'gym',
-      title: 'Krafttraining im Gym',
+      title: 'Strength training at the gym',
       category: 'movement',
       start: 1110,
       duration: 45,
@@ -94,7 +94,7 @@ export const demoPlan: Plan = {
     },
     {
       id: 'friends',
-      title: 'Abendessen mit Freunden',
+      title: 'Dinner with friends',
       category: 'social',
       start: 1170,
       duration: 60,
@@ -106,7 +106,7 @@ export const demoPlan: Plan = {
     },
     {
       id: 'inbox',
-      title: 'Mails & kleine To-dos',
+      title: 'Emails & small to-dos',
       category: 'work',
       start: 1245,
       duration: 30,
@@ -121,23 +121,23 @@ export const demoPlan: Plan = {
 
 export const demoPrompts = [
   {
-    label: 'Morgen eine Marketing-Klausur',
+    label: 'Marketing exam tomorrow',
     message:
-      'Ich schreibe morgen noch eine Marketing-Klausur und muss noch lernen. Kannst du das einplanen und irrelevante Sachen austauschen?',
+      "I have a marketing exam tomorrow and still need to study. Can you fit that in and swap out things that don't matter?",
   },
   {
-    label: 'Mein Zug hat Verspätung',
+    label: 'My train is delayed',
     message:
-      'Mein Zug hat eine Stunde Verspätung. Ich bin erst um 14:00 verfügbar. Ich habe nur fünf Stunden geschlafen und wenig Energie. Bitte plane meinen restlichen Tag realistisch um.',
+      "My train is an hour late. I'm only available from 14:00. I only slept five hours and have little energy. Please replan the rest of my day realistically.",
   },
   {
-    label: 'Heute weniger schaffen',
+    label: 'Do less today',
     message:
-      'Ich bin heute erschöpft. Plane nur die wichtigsten Aufgaben und genug Erholung. Feste Termine und die Statistik-Frist bleiben bestehen. Alles andere darf offen bleiben.',
+      "I'm exhausted today. Only plan the most important tasks and enough recovery. Fixed appointments and the statistics deadline stay. Everything else can stay open.",
   },
   {
-    label: 'Ein voller Nachmittag',
+    label: 'A packed afternoon',
     message:
-      'Ich kann heute erst ab 18 Uhr mit meinen Aufgaben und Terminen beginnen. Die festen Termine kann ich nicht verschieben. Ist das machbar?',
+      "I can only start on my tasks and appointments at 18:00 today. I can't move the fixed appointments. Is that doable?",
   },
 ];

@@ -10,7 +10,7 @@ import { MAX_IMAGE_BASE64_LENGTH, type ExtractResponse } from '../../shared/cont
 const extracted: ExtractResponse = {
   tasks: [
     {
-      title: 'Statistik lernen',
+      title: 'Study statistics',
       category: 'study',
       duration: 45,
       start: null,
@@ -107,7 +107,7 @@ async function fixture(page: Page, mimeType = 'image/png', transparent = false, 
       context.fillStyle = 'black';
       context.font = '32px sans-serif';
       context.fillText('Aufgabenliste', 45, 65);
-      context.fillText('Statistik lernen - 45 Minuten', 45, 135);
+      context.fillText('Study statistics - 45 minutes', 45, 135);
       return canvas.toDataURL(mimeType).split(',')[1];
     },
     { mimeType, transparent, noise },
@@ -125,18 +125,16 @@ for (const mimeType of ['image/png', 'image/jpeg', 'image/webp']) {
     try {
       const before = await page.evaluate(() => localStorage.getItem('daylight.workspace.v1'));
       await page.locator('input[type=file]').setInputFiles(await fixture(page, mimeType));
-      const title = page.getByRole('textbox', { name: 'Titel', exact: true });
+      const title = page.getByRole('textbox', { name: 'Title', exact: true });
       await title.waitFor();
-      assert.equal(await title.inputValue(), 'Statistik lernen');
+      assert.equal(await title.inputValue(), 'Study statistics');
       assert.equal(
         await page.evaluate(() => localStorage.getItem('daylight.workspace.v1')),
         before,
       );
-      await title.fill('Geprüfte Lernaufgabe');
-      await page.getByRole('button', { name: 'Ausgewählte hinzufügen' }).click();
-      await page
-        .getByRole('dialog', { name: 'Screenshot importieren' })
-        .waitFor({ state: 'hidden' });
+      await title.fill('Reviewed study task');
+      await page.getByRole('button', { name: 'Add selected' }).click();
+      await page.getByRole('dialog', { name: 'Import screenshot' }).waitFor({ state: 'hidden' });
       await page.reload();
       await page.getByRole('button', { name: 'Screenshot', exact: true }).waitFor();
       const titles = await page.evaluate(() =>
@@ -144,7 +142,7 @@ for (const mimeType of ['image/png', 'image/jpeg', 'image/webp']) {
           (item: { title: string }) => item.title,
         ),
       );
-      assert.equal(titles.filter((title: string) => title === 'Geprüfte Lernaufgabe').length, 1);
+      assert.equal(titles.filter((title: string) => title === 'Reviewed study task').length, 1);
     } finally {
       await page.close();
     }
@@ -187,7 +185,7 @@ test('large noisy screenshots fit the API limit after compression', async () => 
     await page.locator('input[type=file]').setInputFiles(file);
     const payload = (await request).postDataJSON();
     assert.ok(payload.image.length <= MAX_IMAGE_BASE64_LENGTH);
-    await page.getByRole('textbox', { name: 'Titel', exact: true }).waitFor();
+    await page.getByRole('textbox', { name: 'Title', exact: true }).waitFor();
   } finally {
     await page.close();
   }
@@ -222,11 +220,11 @@ test('closing an in-flight upload allows a new one and ignores the late result',
     await page.getByRole('button', { name: 'Screenshot', exact: true }).click();
     assert.equal(await page.locator('input[type=file]').isEnabled(), true);
     await page.locator('input[type=file]').setInputFiles(file);
-    await page.getByRole('textbox', { name: 'Titel', exact: true }).waitFor();
+    await page.getByRole('textbox', { name: 'Title', exact: true }).waitFor();
     release();
     await lateResponse;
     assert.equal(
-      await page.getByRole('textbox', { name: 'Titel', exact: true }).inputValue(),
+      await page.getByRole('textbox', { name: 'Title', exact: true }).inputValue(),
       'Neues Ergebnis',
     );
   } finally {
@@ -260,7 +258,7 @@ test('closing during image decoding prevents the old file from being uploaded', 
     await page.getByRole('button', { name: 'Close', exact: true }).click();
     await page.getByRole('button', { name: 'Screenshot', exact: true }).click();
     await page.locator('input[type=file]').setInputFiles(file);
-    await page.getByRole('textbox', { name: 'Titel', exact: true }).waitFor();
+    await page.getByRole('textbox', { name: 'Title', exact: true }).waitFor();
     await page.evaluate(() =>
       (window as typeof window & { finishDecoding: () => void }).finishDecoding(),
     );
@@ -279,8 +277,8 @@ test('empty recognition leaves the plan unchanged and offers no add action', asy
       route.fulfill({ json: { ...extracted, tasks: [] } }),
     );
     await page.locator('input[type=file]').setInputFiles(await fixture(page));
-    await page.getByText('Im Bild wurden keine Aufgaben oder Termine erkannt.').waitFor();
-    assert.equal(await page.getByRole('button', { name: 'Ausgewählte hinzufügen' }).count(), 0);
+    await page.getByText('No tasks or appointments were found in the image.').waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Add selected' }).count(), 0);
     assert.equal(await page.evaluate(() => localStorage.getItem('daylight.workspace.v1')), before);
   } finally {
     await page.close();
@@ -308,7 +306,7 @@ test('bad files fail before upload and the same valid file can be selected again
     const file = await fixture(page);
     for (let i = 0; i < 2; i++) {
       await page.locator('input[type=file]').setInputFiles(file);
-      await page.getByRole('textbox', { name: 'Titel', exact: true }).waitFor();
+      await page.getByRole('textbox', { name: 'Title', exact: true }).waitFor();
     }
     assert.equal(requests, 2);
   } finally {
@@ -324,7 +322,7 @@ test('HTTP, non-JSON, invalid model and network errors are readable and retryabl
       await page.route('**/api/extract', async (route) => {
         if (failure === 'network') return route.abort('failed');
         if (failure === 'http')
-          return route.fulfill({ status: 429, json: { error: 'Bitte später erneut versuchen.' } });
+          return route.fulfill({ status: 429, json: { error: 'Please try again later.' } });
         if (failure === 'html')
           return route.fulfill({
             status: 504,
@@ -335,12 +333,12 @@ test('HTTP, non-JSON, invalid model and network errors are readable and retryabl
       });
       await page.locator('input[type=file]').setInputFiles(file);
       await page.getByRole('alert').waitFor();
-      assert.match(await page.getByRole('alert').innerText(), /erneut/);
+      assert.match(await page.getByRole('alert').innerText(), /again/i);
       assert.equal(await page.locator('input[type=file]').isEnabled(), true);
       await page.unroute('**/api/extract');
     }
     await page.locator('input[type=file]').setInputFiles(file);
-    await page.getByRole('textbox', { name: 'Titel', exact: true }).waitFor();
+    await page.getByRole('textbox', { name: 'Title', exact: true }).waitFor();
   } finally {
     await page.close();
   }
@@ -356,7 +354,7 @@ test('a hanging upload times out and allows retry', async () => {
     await request;
     await page.clock.fastForward(65_001);
     await page.getByRole('alert').waitFor();
-    assert.match(await page.getByRole('alert').innerText(), /zu lange/);
+    assert.match(await page.getByRole('alert').innerText(), /too long/);
     assert.equal(await page.locator('input[type=file]').isEnabled(), true);
   } finally {
     await page.close();

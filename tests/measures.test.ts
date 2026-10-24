@@ -9,7 +9,7 @@ const request = (patch: Partial<ReplanRequest['checkIn']> = {}): ReplanRequest =
   structuredClone({
     plan: demoPlan,
     checkIn: { ...demoCheckIn, ...patch },
-    message: 'Ich habe schlecht geschlafen.',
+    message: 'I slept badly.',
   });
 const ids = (measures: EnergyMeasures) => ({
   actions: measures.actions.map((item) => item.id),
@@ -92,7 +92,7 @@ test('caffeine respects the daily maximum and the cutoff before bedtime', () => 
 
 test('the Gemma adapter returns engine-selected measures from the reported signals', async () => {
   const source = request();
-  source.message = 'Ich habe nur fünf Stunden geschlafen und wenig Energie. Ich nicke weg.';
+  source.message = 'I only slept five hours and have little energy. I keep nodding off.';
   const response = await generatePlan(source, {
     apiKey: 'test',
     model: 'gemma-4-26b-a4b-it',
@@ -116,7 +116,7 @@ test('the Gemma adapter returns engine-selected measures from the reported signa
                   {
                     functionCall: {
                       name: 'update_day_context',
-                      args: { signals: { sekundenschlaf: true }, source: 'Ich nicke weg.' },
+                      args: { signals: { sekundenschlaf: true }, source: 'I keep nodding off.' },
                     },
                   },
                 ],
@@ -135,7 +135,7 @@ test('nap advice follows the proposed plan, not the replaced one', async () => {
   const state = { energy: 'low' as const, sleepHours: 5 };
   const source = request();
   source.message =
-    'Ich habe fünf Stunden geschlafen, bin schläfrig und habe wenig Energie. Bitte Statistik-Lernen auf 13 Uhr vorziehen.';
+    'I slept five hours, I’m sleepy and have little energy. Please move statistics study up to 1 pm.';
   const before = ids(selectMeasures(source, state, { schlaefrig: true }));
   assert.ok(before.actions.includes('NAP_KURZ'));
   const response = await generatePlan(source, {
@@ -154,8 +154,7 @@ test('nap advice follows the proposed plan, not the replaced one', async () => {
                       args: {
                         ...state,
                         signals: { schlaefrig: true },
-                        source:
-                          'Ich habe fünf Stunden geschlafen, bin schläfrig und habe wenig Energie.',
+                        source: 'I slept five hours, I’m sleepy and have little energy.',
                       },
                     },
                   },
@@ -166,7 +165,7 @@ test('nap advice follows the proposed plan, not the replaced one', async () => {
                         id: 'study',
                         start: 780,
                         shiftMinutes: null,
-                        source: 'Statistik-Lernen auf 13 Uhr vorziehen.',
+                        source: 'move statistics study up to 1 pm',
                       },
                     },
                   },

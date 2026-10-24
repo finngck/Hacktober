@@ -7,7 +7,7 @@ import { fitIntoDay } from '../shared/fit';
 const plan = () => structuredClone(demoPlan);
 const task = (patch: Partial<ScheduleItem>): ScheduleItem => ({
   id: crypto.randomUUID(),
-  title: 'Meeting mit Freunden',
+  title: 'Meeting with friends',
   category: 'social',
   start: 1380,
   duration: 59,
@@ -59,5 +59,5 @@ test('a task that cannot fit anywhere stays open instead of failing', () => {
   const { items, notes } = fitIntoDay(source, [task({ start: 1400, duration: 480 })]);
   assert.equal(items[0].start, null);
   assert.equal(items[0].fixed, false);
-  assert.match(notes[0], /offen/);
+  assert.match(notes[0], /stays open/);
 });

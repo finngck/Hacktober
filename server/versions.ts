@@ -10,7 +10,7 @@ export async function getVersions(fetcher: typeof fetch = fetch): Promise<Versio
       headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Pivot-Version-Panel' },
       signal: AbortSignal.timeout(6000),
     });
-    if (!response.ok) throw new Error('Versionsverlauf nicht verfügbar.');
+    if (!response.ok) throw new Error('Version history not available.');
     return response.json();
   };
   try {

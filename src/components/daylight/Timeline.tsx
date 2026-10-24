@@ -85,22 +85,22 @@ function TimeBlock({
         {item.fixed && (
           <span className={cn('inline-flex items-center gap-1', subtle)}>
             <Icon icon={LockKeyIcon} size={12} />
-            Fest
+            Fixed
           </span>
         )}
         {focus && (
           <Badge variant="outline" size="sm">
             <Icon icon={Target02Icon} size={12} />
-            Fokus
+            Focus
           </Badge>
         )}
       </div>
       <h3 className="text-sm leading-snug font-semibold">{item.title}</h3>
       <p className={cn('text-xs', subtle)}>
         {[
-          `${item.duration}\u00a0Min.`,
-          item.priority === 'high' ? 'Hohe Priorität' : '',
-          item.deadline !== null ? `Frist ${formatTime(item.deadline)}` : '',
+          `${item.duration}\u00a0min`,
+          item.priority === 'high' ? 'High priority' : '',
+          item.deadline !== null ? `Deadline ${formatTime(item.deadline)}` : '',
         ]
           .filter(Boolean)
           .join(' · ')}
@@ -111,12 +111,12 @@ function TimeBlock({
 }
 
 function changeLabel(before: ScheduleItem | undefined, item: ScheduleItem) {
-  if (!before) return 'Neu hinzugefügt';
-  if (before.title !== item.title) return `Vorher „${before.title}“`;
-  if (before.duration !== item.duration) return `Vorher ${before.duration}\u00a0Min.`;
-  if (before.start === null) return 'Neu eingeplant';
-  if (before.start !== item.start) return `Vorher ${formatTime(before.start)}`;
-  return 'Aufgabe bearbeitet';
+  if (!before) return 'Newly added';
+  if (before.title !== item.title) return `Previously "${before.title}"`;
+  if (before.duration !== item.duration) return `Previously ${before.duration}\u00a0min`;
+  if (before.start === null) return 'Newly scheduled';
+  if (before.start !== item.start) return `Previously ${formatTime(before.start)}`;
+  return 'Task edited';
 }
 
 export function Timeline({
@@ -159,7 +159,7 @@ export function Timeline({
                   <time className="text-right text-xs font-semibold">{formatTime(plan.now)}</time>
                   <span className="size-2 justify-self-center rounded-full bg-foreground" />
                   <span className="flex items-center gap-2 text-xs font-medium">
-                    Jetzt
+                    Now
                     <span className="flex-1 border-t border-dotted border-foreground/50" />
                   </span>
                 </div>
@@ -168,7 +168,7 @@ export function Timeline({
                 <div className="grid grid-cols-[3rem_0.75rem_1fr] gap-x-3">
                   <span />
                   <RailSegment from={gapStart} to={item.start!} />
-                  <span className="py-2 text-sm text-muted-foreground">{gap}&nbsp;Min. frei</span>
+                  <span className="py-2 text-sm text-muted-foreground">{gap}&nbsp;min free</span>
                 </div>
               )}
               <div className="grid grid-cols-[3rem_0.75rem_1fr] gap-x-3">
@@ -197,15 +197,15 @@ export function Timeline({
       <div className="grid grid-cols-[3rem_0.75rem_1fr] items-center gap-x-3 py-2">
         <time className="text-right text-sm text-muted-foreground">{formatTime(plan.dayEnd)}</time>
         <Icon icon={SunsetIcon} size={18} className="justify-self-center text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">Feierabend</span>
+        <span className="text-sm text-muted-foreground">Day ends</span>
       </div>
       {deferred.length > 0 && (
         <div className="mt-4 rounded-xl border border-dashed p-4">
           <h3 className="font-semibold">
-            Heute offen <span className="text-muted-foreground">{deferred.length}</span>
+            Open today <span className="text-muted-foreground">{deferred.length}</span>
           </h3>
           <p className="mb-3 text-sm text-muted-foreground">
-            Noch ohne Zeitfenster und für keinen anderen Tag eingeplant.
+            No time slot yet and not scheduled for another day.
           </p>
           <ul className="grid gap-2">
             {deferred.map((item) => (
@@ -218,7 +218,7 @@ export function Timeline({
                 <span className="grid">
                   <span className="font-medium">{item.title}</span>
                   <span className="text-sm text-muted-foreground">
-                    {[`${item.duration}\u00a0Min.`, result ? reasonFor(item.id) : '']
+                    {[`${item.duration}\u00a0min`, result ? reasonFor(item.id) : '']
                       .filter(Boolean)
                       .join(' · ')}
                   </span>
