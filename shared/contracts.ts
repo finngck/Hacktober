@@ -121,7 +121,12 @@ export function validatePlan(plan: Plan): string[] {
   return errors;
 }
 
-export function materializeProposal(request: ReplanRequest, result: ModelResult): Plan {
+/** `movedIds` lists tasks the user explicitly asked to move; only those may leave their fixed time. */
+export function materializeProposal(
+  request: ReplanRequest,
+  result: ModelResult,
+  movedIds: ReadonlySet<string> = new Set(),
+): Plan {
   if (result.status !== 'proposal') throw new Error('Es liegt noch kein Planvorschlag vor.');
   const source = request.plan;
   const errors: string[] = [];
@@ -139,7 +144,11 @@ export function materializeProposal(request: ReplanRequest, result: ModelResult)
     const placement = placements.get(item.id);
     if (!placement) return item;
     const started = item.start !== null && item.start < source.now;
-    if ((item.fixed || started) && placement.start !== item.start)
+    if (
+      (item.fixed || started) &&
+      placement.start !== item.start &&
+      (started || !movedIds.has(item.id))
+    )
       errors.push(`„${item.title}“ darf nicht verschoben werden.`);
     if (!started && placement.start !== null && placement.start < result.availabilityFrom)
       errors.push(`„${item.title}“ liegt vor der Verfügbarkeit.`);
