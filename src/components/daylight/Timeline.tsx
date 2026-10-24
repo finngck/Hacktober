@@ -109,9 +109,10 @@ function TimeBlock({
       style={drag ? { translate: `0 ${drag.offset}px` } : undefined}
     >
       {actions && (
-        <button
+        <Button
+          variant="ghost"
           type="button"
-          className="absolute inset-0 cursor-pointer rounded-lg"
+          className="absolute inset-0 h-full w-full cursor-pointer rounded-lg p-0 hover:bg-transparent"
           aria-label={`Edit “${item.title}”`}
           onClick={() => actions.onEdit(item)}
         />

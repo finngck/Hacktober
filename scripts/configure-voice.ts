@@ -91,7 +91,7 @@ async function configure() {
     },
     tts: {
       voiceId: process.env.ELEVENLABS_VOICE_ID || 'EXAVITQu4vr4xnSDxMaL',
-      modelId: 'eleven_flash_v2_5' as const,
+      modelId: 'eleven_flash_v2' as const,
     },
   };
   const platformSettings = { auth: { enableAuth: true } };

@@ -6,10 +6,12 @@ import {
   validatePlan,
   hasItemChanged,
   type CheckIn,
+  type Plan,
   type ReplanResponse,
   type ScheduleItem,
 } from '../shared/contracts';
 import { fitIntoDay } from '../shared/fit';
+import { editTaskInPlan } from '../shared/edit';
 import { freshWorkspace, loadWorkspace, saveWorkspace } from './state';
 import { continueConversation, type PlanningConversation } from '../shared/conversation';
 import {
@@ -149,12 +151,12 @@ export default function App() {
     return undefined;
   }
   function updateTask(item: ScheduleItem) {
-    const nextPlan = {
-      ...plan,
-      items: plan.items.map((existing) => (existing.id === item.id ? item : existing)),
-    };
-    const issues = validatePlan(nextPlan);
-    if (issues.length) return issues.join(' ');
+    let nextPlan: Plan;
+    try {
+      nextPlan = editTaskInPlan(plan, item);
+    } catch (problem) {
+      return problem instanceof Error ? problem.message : 'Could not save this change.';
+    }
     clearDraft();
     setWorkspace((previous) => ({
       ...previous,
