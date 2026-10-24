@@ -6,9 +6,8 @@ import { voiceSystemPrompt, voiceTools } from '../shared/voice.js';
 
 async function configure() {
   const publicUrl = new URL(process.argv[2] || process.env.VOICE_PUBLIC_URL || '');
-  if (publicUrl.protocol !== 'https:')
-    throw new Error('Eine öffentliche HTTPS-App-Adresse ist nötig.');
-  if (!config.elevenLabsApiKey) throw new Error('ElevenLabs ist noch nicht angemeldet.');
+  if (publicUrl.protocol !== 'https:') throw new Error('A public HTTPS app address is required.');
+  if (!config.elevenLabsApiKey) throw new Error("ElevenLabs isn't signed in yet.");
   const client = new ElevenLabsClient();
   const secret = config.voiceLlmSecret || randomBytes(32).toString('hex');
   const save = (name: string, value: string) => {
@@ -25,7 +24,7 @@ async function configure() {
       signal: AbortSignal.timeout(30000),
     });
     if (!response.ok)
-      throw new Error(`ElevenLabs-Einrichtung fehlgeschlagen (${path}, HTTP ${response.status}).`);
+      throw new Error(`ElevenLabs setup failed (${path}, HTTP ${response.status}).`);
     return response.json();
   }
   let secretId = process.env.ELEVENLABS_LLM_SECRET_ID;
@@ -36,7 +35,7 @@ async function configure() {
       value: secret,
     });
     secretId = result.secret_id;
-    if (!secretId) throw new Error('ElevenLabs hat keine Secret-ID zurückgegeben.');
+    if (!secretId) throw new Error("ElevenLabs didn't return a secret ID.");
     save('ELEVENLABS_LLM_SECRET_ID', secretId);
   }
   let toolIds = process.env.ELEVENLABS_VOICE_TOOL_IDS?.split(',').filter(Boolean);
@@ -54,15 +53,15 @@ async function configure() {
           interruption_mode: tool.name === 'replan_day' ? 'disable_during_tool' : 'allow',
         },
       });
-      if (!created.id) throw new Error('ElevenLabs hat keine Tool-ID zurückgegeben.');
+      if (!created.id) throw new Error("ElevenLabs didn't return a tool ID.");
       toolIds.push(created.id);
     }
     save('ELEVENLABS_VOICE_TOOL_IDS', toolIds.join(','));
   }
   const conversationConfig = {
     agent: {
-      firstMessage: 'Hi, ich bin Pivot. Was hat sich an deinem Tag geändert?',
-      language: 'de',
+      firstMessage: "Hi, I'm Pivot. What's changed about your day?",
+      language: 'en',
       prompt: {
         prompt: voiceSystemPrompt,
         llm: 'custom-llm' as const,
@@ -102,7 +101,7 @@ async function configure() {
     await client.conversationalAi.agents.update(agentId, { conversationConfig, platformSettings });
   } else {
     const agent = await client.conversationalAi.agents.create({
-      name: 'Pivot · Gemma Tagescopilot',
+      name: 'Pivot · Gemma day copilot',
       conversationConfig,
       platformSettings,
     });
@@ -124,7 +123,7 @@ configure().catch((error) => {
   console.error(
     error instanceof Error && !('statusCode' in error)
       ? error.message
-      : 'ElevenLabs konnte den Agenten nicht einrichten. Prüfe Konto und Berechtigungen.',
+      : "ElevenLabs couldn't set up the agent. Check the account and permissions.",
   );
   process.exitCode = 1;
 });

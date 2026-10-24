@@ -89,10 +89,14 @@ export function VoicePanel(props: Props) {
         clientTools: {
           get_day_plan: () => JSON.stringify(latest.current.getDay()),
           replan_day: async (args: unknown) => {
-            if (!active()) return JSON.stringify({ status: 'error', summary: 'Gespräch beendet.' });
+            if (!active())
+              return JSON.stringify({ status: 'error', summary: 'Conversation ended.' });
             const parsed = voiceToolArguments.replan_day.safeParse(args);
             if (!parsed.success)
-              return JSON.stringify({ status: 'error', summary: 'Der Änderungswunsch fehlt.' });
+              return JSON.stringify({
+                status: 'error',
+                summary: 'The requested change is missing.',
+              });
             setPlanning(true);
             try {
               return JSON.stringify(
@@ -101,7 +105,7 @@ export function VoicePanel(props: Props) {
             } catch {
               return JSON.stringify({
                 status: 'error',
-                summary: 'Die Planung ist fehlgeschlagen. Es wurde nichts übernommen.',
+                summary: 'Planning failed. Nothing was applied.',
               });
             } finally {
               if (active()) setPlanning(false);
@@ -109,7 +113,9 @@ export function VoicePanel(props: Props) {
           },
           undo_last_change: () =>
             JSON.stringify(
-              active() ? latest.current.undo() : { status: 'error', summary: 'Gespräch beendet.' },
+              active()
+                ? latest.current.undo()
+                : { status: 'error', summary: 'Conversation ended.' },
             ),
         },
         onStatusChange: ({ status: next }) => {
@@ -129,12 +135,12 @@ export function VoicePanel(props: Props) {
         },
         onError: () => {
           if (active())
-            setError('Die Sprachverbindung wurde unterbrochen. Bitte starte das Gespräch erneut.');
+            setError('The voice connection was interrupted. Please start the conversation again.');
         },
         onDisconnect: (details) => {
           if (!active()) return;
           if (details.reason === 'error')
-            setError('Die Sprachverbindung wurde unterbrochen. Bitte starte das Gespräch erneut.');
+            setError('The voice connection was interrupted. Please start the conversation again.');
           controller.abort();
           conversation.current = null;
           connecting.current = false;
@@ -154,8 +160,8 @@ export function VoicePanel(props: Props) {
       setError(
         cause instanceof Error &&
           /permission|denied|notallowed|mic_unavailable/i.test(cause.message)
-          ? 'Bitte erlaube den Mikrofonzugriff im Browser, um mit Pivot zu sprechen.'
-          : 'Die Sprachverbindung konnte nicht gestartet werden. Bitte versuche es erneut.',
+          ? 'Allow microphone access in your browser to talk to Pivot.'
+          : "Couldn't start the voice connection. Please try again.",
       );
     } finally {
       connecting.current = false;
@@ -165,14 +171,14 @@ export function VoicePanel(props: Props) {
   const connected = status === 'connected';
   const inProgress = status !== 'disconnected';
   const label = planning
-    ? 'Dein Tag wird angepasst …'
+    ? 'Updating your day …'
     : connected
       ? speaking
-        ? 'Pivot spricht'
-        : 'Ich höre dir zu'
+        ? 'Pivot is speaking'
+        : "I'm listening"
       : status === 'connecting'
-        ? 'Verbinde …'
-        : 'Sag, was sich geändert hat.';
+        ? 'Connecting …'
+        : 'Say what changed.';
 
   return (
     <section
@@ -194,7 +200,7 @@ export function VoicePanel(props: Props) {
         </span>
         <div>
           <h2 id="voice-title" className="text-base font-semibold">
-            Sprich mit Pivot
+            Talk to Pivot
           </h2>
           <p role="status" className="text-sm text-muted-foreground">
             {label}
@@ -202,7 +208,7 @@ export function VoicePanel(props: Props) {
         </div>
       </div>
       <p className="text-sm text-muted-foreground">
-        „Ich bin erst ab 14 Uhr da. Plane meinen Tag um.“
+        &ldquo;I won&rsquo;t be in until 2 p.m. Replan my day.&rdquo;
       </p>
       <Button
         variant={inProgress ? 'secondary' : 'default'}
@@ -211,11 +217,11 @@ export function VoicePanel(props: Props) {
         }}
         disabled={!inProgress && (configured !== true || props.busy)}
       >
-        {inProgress ? 'Gespräch beenden' : 'Gespräch starten'}
+        {inProgress ? 'End conversation' : 'Start conversation'}
       </Button>
       {configured === false && (
         <p className="text-xs text-muted-foreground">
-          Der Sprachdialog ist noch nicht eingerichtet. Du kannst Änderungen unten eingeben.
+          Voice isn't set up yet. You can type changes below.
         </p>
       )}
       {error && (
@@ -234,14 +240,14 @@ export function VoicePanel(props: Props) {
           }}
         >
           <label className="sr-only" htmlFor="voice-reply">
-            Nachricht im Gespräch
+            Message in conversation
           </label>
           <Input
             id="voice-reply"
             value={reply}
             onChange={(event) => setReply(event.target.value)}
             maxLength={2000}
-            placeholder="Oder hier antworten …"
+            placeholder="Or reply here …"
             disabled={planning || props.busy}
           />
           <Button
@@ -249,7 +255,7 @@ export function VoicePanel(props: Props) {
             type="submit"
             disabled={!reply.trim() || planning || props.busy}
           >
-            Senden
+            Send
           </Button>
         </form>
       )}
@@ -257,7 +263,7 @@ export function VoicePanel(props: Props) {
         <div
           className="grid max-h-64 gap-2 overflow-y-auto text-sm"
           role="log"
-          aria-label="Gespräch mit Pivot"
+          aria-label="Conversation with Pivot"
           aria-live="polite"
         >
           {messages.map((message) => (
@@ -268,15 +274,15 @@ export function VoicePanel(props: Props) {
                 message.role === 'agent' && 'bg-accent',
               )}
             >
-              <strong>{message.role === 'user' ? 'Du' : 'Pivot'}</strong>
+              <strong>{message.role === 'user' ? 'You' : 'Pivot'}</strong>
               <span>{message.text}</span>
             </p>
           ))}
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        Sprachaufträge passen deinen Plan direkt an. Du kannst Änderungen rückgängig machen. Audio
-        wird an ElevenLabs gesendet; Gespräch und Tagesplan werden mit Google verarbeitet.
+        Voice requests update your plan directly. You can undo changes. Audio is sent to ElevenLabs;
+        the conversation and day plan are processed with Google.
       </p>
     </section>
   );

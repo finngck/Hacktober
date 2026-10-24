@@ -17,7 +17,7 @@ import { Icon } from './Icon';
 
 const build = __BUILD_INFO__;
 const date = (value: string) =>
-  new Intl.DateTimeFormat('de-DE', {
+  new Intl.DateTimeFormat('en-US', {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
@@ -74,7 +74,7 @@ export function VersionMenu() {
     setLoading(true);
     try {
       const response = await fetch('/api/versions');
-      if (!response.ok) throw new Error('Verlauf nicht verfügbar.');
+      if (!response.ok) throw new Error('History unavailable.');
       setVersions(versionsSchema.parse(await response.json()));
     } catch {
       setVersions({ commits: [], deployments: [], available: false });
@@ -85,15 +85,15 @@ export function VersionMenu() {
   return (
     <Dialog onOpenChange={(open) => open && void load()}>
       <DialogTrigger
-        render={<Button variant="ghost" aria-label="Versionen und Entwicklungsstand" />}
+        render={<Button variant="ghost" aria-label="Versions and development status" />}
       >
         <Icon icon={CodeSquareIcon} size={18} />
-        Versionen
+        Versions
       </DialogTrigger>
       <DialogPopup className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Versionen & Entwicklung</DialogTitle>
-          <DialogDescription>Der Stand, den du gerade geöffnet hast.</DialogDescription>
+          <DialogTitle>Versions & development</DialogTitle>
+          <DialogDescription>The version you have open right now.</DialogDescription>
         </DialogHeader>
         <DialogPanel className="grid gap-5">
           <div className="grid gap-1 rounded-xl bg-muted p-3 text-sm">
@@ -103,13 +103,13 @@ export function VersionMenu() {
                 {build.environment === 'production'
                   ? 'Live'
                   : build.environment === 'preview'
-                    ? 'Vorschau'
-                    : 'Lokal'}
+                    ? 'Preview'
+                    : 'Local'}
               </Badge>
             </div>
             <p className="flex items-center gap-2">
               <Icon icon={GitBranchIcon} size={16} />
-              {build.branch || 'Branch unbekannt'}
+              {build.branch || 'Unknown branch'}
             </p>
             <p className="flex items-center gap-2">
               <Icon icon={GitCommitIcon} size={16} />
@@ -123,43 +123,43 @@ export function VersionMenu() {
                   {build.commit.slice(0, 7)}
                 </a>
               ) : (
-                'Commit unbekannt'
+                'Unknown commit'
               )}
-              {build.dirty && <span className="text-muted-foreground">mit lokalen Änderungen</span>}
+              {build.dirty && <span className="text-muted-foreground">with local changes</span>}
             </p>
-            <small className="text-muted-foreground">Gebaut am {date(build.builtAt)} Uhr</small>
+            <small className="text-muted-foreground">Built {date(build.builtAt)}</small>
           </div>
           {loading ? (
             <p role="status" className="text-sm text-muted-foreground">
-              Versionsverlauf wird geladen …
+              Loading version history …
             </p>
           ) : (
             <>
               <VersionList
-                title="Verfügbare Deployments"
+                title="Available deployments"
                 entries={(versions?.deployments ?? []).map((entry) => ({
                   key: String(entry.id),
                   title: entry.environment,
                   detail: `${entry.sha.slice(0, 7)} · ${date(entry.date)}`,
                   url: entry.url,
-                  action: 'Version öffnen',
+                  action: 'Open version',
                 }))}
                 empty={
                   versions?.available
-                    ? 'Noch keine erfolgreichen Deployments im GitHub-Verlauf.'
-                    : 'Der Deployment-Verlauf ist gerade nicht verfügbar.'
+                    ? 'No successful deployments in the GitHub history yet.'
+                    : 'Deployment history is unavailable right now.'
                 }
               />
               <VersionList
-                title="Neueste Änderungen auf main"
+                title="Latest changes on main"
                 entries={(versions?.commits ?? []).map((entry) => ({
                   key: entry.sha,
                   title: entry.message,
                   detail: `${entry.sha.slice(0, 7)} · ${date(entry.date)}`,
                   url: entry.url,
-                  action: 'Code ansehen',
+                  action: 'View code',
                 }))}
-                empty="Den vollständigen Verlauf findest du auf GitHub."
+                empty="Find the full history on GitHub."
               />
             </>
           )}
@@ -170,7 +170,7 @@ export function VersionMenu() {
             render={<a href={build.repository} target="_blank" rel="noreferrer" />}
           >
             <Icon icon={CodeSquareIcon} size={17} />
-            Repository öffnen
+            Open repository
           </Button>
         </DialogFooter>
       </DialogPopup>

@@ -57,7 +57,7 @@ export function EditTask({
   function submit(event: FormEvent) {
     event.preventDefault();
     if (!item || !form) return;
-    if (form.fixed && !form.start) return setError('Ein fester Termin braucht eine Startzeit.');
+    if (form.fixed && !form.start) return setError('A fixed appointment needs a start time.');
     const parsed = itemSchema.safeParse({
       ...item,
       title: form.title,
@@ -66,7 +66,7 @@ export function EditTask({
       fixed: form.fixed,
       start: started ? item.start : form.start ? parseTime(form.start) : null,
     });
-    if (!parsed.success) return setError('Gib der Aufgabe einen Titel.');
+    if (!parsed.success) return setError('Give the task a title.');
     const problem = onSave(parsed.data);
     if (problem) return setError(problem);
     onClose();
@@ -78,16 +78,16 @@ export function EditTask({
         {form && (
           <form onSubmit={submit} className="contents" noValidate>
             <DialogHeader>
-              <DialogTitle>Aufgabe bearbeiten</DialogTitle>
+              <DialogTitle>Edit task</DialogTitle>
               <DialogDescription>
                 {started
-                  ? 'Der Block hat schon begonnen. Uhrzeit und Dauer bleiben, Titel und Priorität kannst du ändern.'
-                  : 'Ohne Startzeit bleibt die Aufgabe heute offen, bis Pivot sie einplant.'}
+                  ? 'This block has already started. Time and duration stay; you can change the title and priority.'
+                  : 'Without a start time, the task stays open today until Pivot schedules it.'}
               </DialogDescription>
             </DialogHeader>
             <DialogPanel className="grid gap-5">
               <div className="grid gap-2">
-                <Label htmlFor="edit-title">Aufgabe</Label>
+                <Label htmlFor="edit-title">Task</Label>
                 <Input
                   id="edit-title"
                   maxLength={100}
@@ -113,27 +113,27 @@ export function EditTask({
                           variant="outline"
                           onClick={() => update({ start: '' })}
                         >
-                          Heute offen lassen
+                          Leave open today
                         </Button>
                       )}
                     </div>
                   </div>
                   <DaylightSlider
-                    label="Dauer"
+                    label="Duration"
                     tone="sun"
                     min={5}
                     max={240}
                     step={5}
                     value={form.duration}
                     onValueChange={(duration) => update({ duration })}
-                    display={`${form.duration} Min.`}
-                    startLabel="5 Min."
-                    endLabel="4 Std."
+                    display={`${form.duration}\u00a0min`}
+                    startLabel="5 min"
+                    endLabel="4 h"
                   />
                 </>
               )}
               <div className="grid gap-2">
-                <span className="text-sm font-medium">Priorität</span>
+                <span className="text-sm font-medium">Priority</span>
                 <ChoiceGroup
                   value={[form.priority]}
                   onValueChange={(value) =>
@@ -153,7 +153,7 @@ export function EditTask({
                     checked={form.fixed}
                     onCheckedChange={(checked) => update({ fixed: checked === true })}
                   />
-                  Fester Termin, Pivot verschiebt ihn nicht
+                  Fixed appointment, Pivot won't move it
                 </Label>
               )}
               {error && (
@@ -164,9 +164,9 @@ export function EditTask({
             </DialogPanel>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>
-                Abbrechen
+                Cancel
               </Button>
-              <Button type="submit">Änderung speichern</Button>
+              <Button type="submit">Save changes</Button>
             </DialogFooter>
           </form>
         )}

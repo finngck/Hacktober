@@ -18,14 +18,14 @@ if (process.argv.includes('--production')) {
   app.use(vite.middlewares);
 }
 const server = app.listen(config.port, '127.0.0.1', () => {
-  console.log(`Pivot läuft auf http://localhost:${config.port}`);
+  console.log(`Pivot is running at http://localhost:${config.port}`);
   console.log(
     config.apiKey
-      ? `Gemma konfiguriert: ${config.model}`
-      : 'Gemma-Key fehlt. Konfiguration: siehe README.md.',
+      ? `Gemma configured: ${config.model}`
+      : 'Gemma key missing. For setup, see README.md.',
   );
 });
 server.on('error', () => {
-  console.error('Der lokale Server konnte nicht starten. Prüfe, ob der Port bereits belegt ist.');
+  console.error("The local server couldn't start. Check whether the port is already in use.");
   process.exit(1);
 });

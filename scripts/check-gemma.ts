@@ -18,7 +18,7 @@ const marketingPlan: Plan = structuredClone(demoPlan);
 marketingPlan.items.push({
   ...marketingPlan.items.find((item) => item.id === 'study')!,
   id: 'marketing',
-  title: 'Für die Marketing-Klausur lernen',
+  title: 'Study for the marketing exam',
   start: null,
   deadline: null,
 });
@@ -32,7 +32,7 @@ const scenarios: {
     request: {
       plan: demoPlan,
       checkIn: demoCheckIn,
-      message: 'Ich habe keinen Kopf mehr für Statistik und will das lieber länger machen.',
+      message: "My head is done for statistics and I'd rather work on it longer.",
     },
     verify: (response) => {
       assert.equal(response.result.energy, 'low');
@@ -45,7 +45,7 @@ const scenarios: {
     request: {
       plan: { ...demoPlan, now: 840, availableFrom: 840 },
       checkIn: demoCheckIn,
-      message: 'Ich brauche für die aktuelle Aufgabe eine halbe Stunde länger.',
+      message: 'I need half an hour longer for the current task.',
     },
     verify: (response) => {
       const study = response.proposedPlan!.items.find((item) => item.id === 'study')!;
@@ -60,11 +60,11 @@ const scenarios: {
       checkIn: demoCheckIn,
       conversation: [
         {
-          message: 'Ich habe keinen Kopf mehr dafür und will lieber länger machen.',
-          reply: 'Welche Aufgabe meinst du?',
+          message: "My head is done for it and I'd rather work on it longer.",
+          reply: 'Which task do you mean?',
         },
       ],
-      message: 'Statistik',
+      message: 'Statistics',
     },
     verify: (response) => {
       assert.equal(response.result.energy, 'low');
@@ -76,7 +76,7 @@ const scenarios: {
     request: {
       plan: demoPlan,
       checkIn: demoCheckIn,
-      message: 'Bitte das Team-Meeting 15 Minuten früher.',
+      message: 'Please move the team meeting 15 minutes earlier.',
     },
     verify: (response) => {
       assert.equal(response.proposedPlan!.items.find((item) => item.id === 'team')?.start, 915);
@@ -88,7 +88,7 @@ const scenarios: {
     request: {
       plan: demoPlan,
       checkIn: demoCheckIn,
-      message: demoPrompts.find((prompt) => prompt.label === 'Mein Zug hat Verspätung')!.message,
+      message: demoPrompts.find((prompt) => prompt.label === 'My train is delayed')!.message,
     },
     verify: (response) => {
       assert.equal(response.result.availabilityFrom, 840);
@@ -102,7 +102,7 @@ const scenarios: {
       plan: demoPlan,
       checkIn: demoCheckIn,
       message:
-        'Ich schreib morgen noch eine marketing Klausur und muss noch lernen kannst du das einplanen und irrelevante sachen austauschen',
+        'i have a marketing exam tomorrow and still need to study can you fit that in and swap out stuff that doesnt matter',
     },
     verify: (response) => {
       const marketing = response.proposedPlan!.items.find((item) => /marketing/i.test(item.title));
@@ -121,7 +121,7 @@ const scenarios: {
     request: {
       plan: marketingPlan,
       checkIn: demoCheckIn,
-      message: 'Bitte die Marketing-Lernzeit auf 60 Minuten kürzen.',
+      message: 'Please cut the marketing study time to 60 minutes.',
     },
     verify: (response) => {
       const marketing = response.proposedPlan!.items.find((item) => item.id === 'marketing');
@@ -136,7 +136,7 @@ const scenarios: {
       plan: demoPlan,
       checkIn: demoCheckIn,
       message:
-        'Ich muss heute 45 Minuten für die Marketing-Klausur lernen und bin erst ab 14 Uhr da.',
+        'I need to study 45 minutes for the marketing exam today and I am only around from 14:00.',
     },
     verify: (response) => {
       const marketing = response.proposedPlan!.items.find((item) => /marketing/i.test(item.title));

@@ -8,6 +8,8 @@ Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [No
 
 Live: **https://hacktober-daylight.vercel.app** mit Landing Page unter `/` und Planer unter `/app` (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
 
+Oberfläche, Landing Page und alle KI-Antworten (Gemma-Vorschläge, Screenshot-Import, Sprachagent) sind auf **Englisch**; Uhrzeiten bleiben im 24-Stunden-Format. Die Repository-Doku bleibt deutsch.
+
 Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/styles/landing.css`, der Planer aus `app.html` und `src/main.tsx`. Logo-Dateien liegen in `brand/`; `public/favicon.svg` ist das App-Icon.
 
 ### Technologien
