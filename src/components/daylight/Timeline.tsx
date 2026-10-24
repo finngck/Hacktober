@@ -7,7 +7,9 @@ import {
   LockKeyIcon,
   Target02Icon,
   SunsetIcon,
+  DragDropVerticalIcon,
 } from '@hugeicons/core-free-icons';
+import { useState } from 'react';
 import { cva } from 'class-variance-authority';
 import {
   categoryLabels,
@@ -19,6 +21,7 @@ import {
   type ScheduleItem,
 } from '../../../shared/contracts';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Icon } from '../Icon';
 
@@ -45,8 +48,16 @@ function RailSegment({ past }: { from?: number; to?: number; past?: boolean }) {
   );
 }
 
+/** Dragging the handle by this many pixels moves a block by 15 minutes. */
+const dragStep = 16;
+
+export type BlockActions = {
+  onEdit: (item: ScheduleItem) => void;
+  onMove: (id: string, start: number) => void;
+};
+
 const timeBlock = cva(
-  'relative grid gap-0.5 overflow-hidden rounded-lg border px-3 py-2.5 transition-[opacity,box-shadow]',
+  'relative grid gap-0.5 overflow-hidden rounded-lg border px-3 py-2.5 transition-[opacity,box-shadow,filter]',
   {
     variants: {
       state: {
@@ -64,20 +75,79 @@ function TimeBlock({
   state,
   focus,
   note,
+  actions,
+  bounds,
 }: {
   item: ScheduleItem;
   state: 'upcoming' | 'past' | 'changed';
   focus: boolean;
   note?: string;
+  actions?: BlockActions;
+  /** Earliest and latest start a drag may reach; absent for blocks that already started. */
+  bounds?: { min: number; max: number };
 }) {
+  const [drag, setDrag] = useState<{ from: number; offset: number } | null>(null);
   const subtle = {
     high: 'text-priority-high-foreground/75',
     medium: 'text-foreground/70',
     low: 'text-muted-foreground',
   }[item.priority];
+  const clamp = (start: number) =>
+    bounds ? Math.min(bounds.max, Math.max(bounds.min, start)) : start;
+  const target = drag ? clamp(item.start! + Math.round(drag.offset / dragStep) * 15) : item.start;
+  const move = (start: number) => {
+    if (actions && start !== item.start) actions.onMove(item.id, start);
+  };
   return (
-    <article className={cn(timeBlock({ state }), priorityTint[item.priority])}>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+    <article
+      className={cn(
+        timeBlock({ state }),
+        priorityTint[item.priority],
+        actions && 'hover:brightness-95',
+        drag && 'z-20 shadow-lg',
+      )}
+      style={drag ? { translate: `0 ${drag.offset}px` } : undefined}
+    >
+      {actions && (
+        <button
+          type="button"
+          className="absolute inset-0 cursor-pointer rounded-lg"
+          aria-label={`Edit “${item.title}”`}
+          onClick={() => actions.onEdit(item)}
+        />
+      )}
+      {actions && bounds && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="absolute top-1.5 right-1.5 z-10 cursor-grab touch-none text-current active:cursor-grabbing"
+          aria-label={`Move “${item.title}”. Arrow keys move it by 15 minutes.`}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            setDrag({ from: event.clientY, offset: 0 });
+          }}
+          onPointerMove={(event) => drag && setDrag({ ...drag, offset: event.clientY - drag.from })}
+          onPointerUp={() => {
+            if (drag && target !== null) move(target);
+            setDrag(null);
+          }}
+          onPointerCancel={() => setDrag(null)}
+          onKeyDown={(event) => {
+            if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+            event.preventDefault();
+            move(clamp(item.start! + (event.key === 'ArrowDown' ? 15 : -15)));
+          }}
+        >
+          <Icon icon={DragDropVerticalIcon} size={16} />
+        </Button>
+      )}
+      <div
+        className={cn(
+          'pointer-events-none flex flex-wrap items-center gap-x-2 gap-y-1 text-xs',
+          actions && bounds && 'pr-8',
+        )}
+      >
         <span className="inline-flex items-center gap-1 font-medium">
           <Icon icon={categoryIcons[item.category]} size={14} />
           {categoryLabels[item.category]}
@@ -106,6 +176,11 @@ function TimeBlock({
           .join(' · ')}
       </p>
       {note && <p className="text-xs font-medium">{note}</p>}
+      {drag && target !== null && target !== item.start && (
+        <p className="text-xs font-semibold" aria-live="polite">
+          New: {formatTime(target)}–{formatTime(target + item.duration)}
+        </p>
+      )}
     </article>
   );
 }
@@ -125,13 +200,17 @@ export function Timeline({
   result,
   focusTaskId,
   label,
+  actions,
 }: {
   plan: Plan;
   original?: Plan;
   result?: ModelResult;
   focusTaskId: string | null;
   label: string;
+  /** Makes blocks of the active plan editable and draggable; proposals stay read-only. */
+  actions?: BlockActions;
 }) {
+  const earliest = Math.max(plan.now, plan.availableFrom, plan.dayStart);
   const scheduled = plan.items
     .filter((item) => item.start !== null)
     .toSorted((a, b) => a.start! - b.start!);
@@ -182,6 +261,12 @@ export function Timeline({
                     item={item}
                     state={past ? 'past' : changed ? 'changed' : 'upcoming'}
                     focus={item.id === focusTaskId}
+                    actions={actions}
+                    bounds={
+                      item.start! >= plan.now
+                        ? { min: earliest, max: plan.dayEnd - item.duration }
+                        : undefined
+                    }
                     note={
                       changed
                         ? `${changeLabel(before, item)}. ${reasonFor(item.id) ?? ''}`

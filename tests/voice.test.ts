@@ -228,6 +228,10 @@ test('voice endpoints protect server-to-server calls, sign sessions and finish s
       assert.equal(id, 'agent_test');
       return 'wss://api.elevenlabs.io/v1/convai/conversation?signed=test';
     },
+    sessionTokenIssuer: async (id) => {
+      assert.equal(id, 'agent_test');
+      return 'synthetic-webrtc-token';
+    },
     fetcher: async () => googleStream([{ text: 'Your study block now starts at 14:00.' }]),
   });
   const server = app.listen(0, '127.0.0.1');
@@ -239,6 +243,12 @@ test('voice endpoints protect server-to-server calls, sign sessions and finish s
     assert.deepEqual(await (await fetch(`${base}/api/voice/status`)).json(), { configured: true });
     const session = await (await fetch(`${base}/api/voice/session`, { method: 'POST' })).json();
     assert.match(session.signedUrl, /^wss:\/\/api.elevenlabs.io/);
+    const rtc = await fetch(`${base}/api/voice/session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ connectionType: 'webrtc' }),
+    });
+    assert.deepEqual(await rtc.json(), { conversationToken: 'synthetic-webrtc-token' });
     const badSession = await fetch(`${base}/api/voice/session`, {
       method: 'POST',
       headers: { origin: 'https://evil.example' },

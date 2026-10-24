@@ -30,6 +30,7 @@ import { toastManager } from '@/components/ui/toast';
 import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip';
 import { Icon } from './components/Icon';
 import { AddTask } from './components/daylight/AddTask';
+import { EditTask } from './components/daylight/EditTask';
 import { AppHeader } from './components/daylight/AppHeader';
 import { CheckInFlow } from './components/daylight/CheckInFlow';
 import { CheckInSidebar } from './components/daylight/CheckInSidebar';
@@ -60,6 +61,7 @@ export default function App() {
   const [conversation, setConversation] = useState<PlanningConversation>([]);
   const [voiceResult, setVoiceResult] = useState<ReplanResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<ScheduleItem | null>(null);
   const [error, setError] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [health, setHealth] = useState<{ configured: boolean; model: string } | null>(null);
@@ -145,6 +147,41 @@ export default function App() {
       description: [items.map((item) => item.title).join(', '), ...notes].join(' '),
     });
     return undefined;
+  }
+  function updateTask(item: ScheduleItem) {
+    const nextPlan = {
+      ...plan,
+      items: plan.items.map((existing) => (existing.id === item.id ? item : existing)),
+    };
+    const issues = validatePlan(nextPlan);
+    if (issues.length) return issues.join(' ');
+    clearDraft();
+    setWorkspace((previous) => ({
+      ...previous,
+      plan: nextPlan,
+      history: [...previous.history, { plan: previous.plan, checkIn: previous.checkIn }].slice(-5),
+    }));
+    return undefined;
+  }
+  function saveTask(item: ScheduleItem) {
+    const problem = updateTask(item);
+    if (!problem)
+      toastManager.add({ type: 'success', title: 'Changes saved', description: item.title });
+    return problem;
+  }
+  function moveTask(id: string, start: number) {
+    const item = plan.items.find((existing) => existing.id === id);
+    if (!item) return;
+    const problem = updateTask({ ...item, start });
+    toastManager.add(
+      problem
+        ? { type: 'error', title: 'Not moved', description: problem }
+        : {
+            type: 'success',
+            title: 'Task moved',
+            description: `${item.title}: ${formatTime(start)}–${formatTime(start + item.duration)}`,
+          },
+    );
   }
   async function runReplan(text: string, context = conversation) {
     if (busy || !text.trim()) return;
@@ -239,11 +276,6 @@ export default function App() {
           setMessage('');
           const recorded = recordAcceptedPlan(progress);
           setProgress(recorded.progress);
-          toastManager.add({
-            type: 'success',
-            title: 'Plan updated',
-            description: 'Your day plan was updated in the conversation.',
-          });
           celebrate(recorded.unlocked);
         },
         showResult: (next) => {
@@ -251,7 +283,23 @@ export default function App() {
           setConversation(continueConversation({ message: change, conversation: context }, next));
           setMessage('');
         },
-        showApplied: setVoiceResult,
+        showApplied: (applied, changes) => {
+          setVoiceResult(applied);
+          toastManager.add({
+            type: 'success',
+            title: 'Plan updated in conversation',
+            description: changes.length
+              ? changes
+                  .slice(0, 3)
+                  .map((change) => `${change.title}: ${change.before} → ${change.after}`)
+                  .join(' · ') +
+                (changes.length > 3
+                  ? ` · ${changes.length - 3} more changes in the conversation.`
+                  : '')
+              : applied.result.summary,
+            actionProps: { children: 'Undo', onClick: voiceUndo },
+          });
+        },
       });
     } catch (problem) {
       const summary = signal.aborted
@@ -344,6 +392,7 @@ export default function App() {
       plan={plan}
       focusTaskId={checkIn.focusTaskId}
       label={proposal ? 'Current plan' : 'Your day plan'}
+      actions={busy ? undefined : { onEdit: setEditing, onMove: moveTask }}
     />
   );
 
@@ -379,12 +428,6 @@ export default function App() {
           />
         </div>
         <div className="grid content-start gap-4 lg:[grid-area:copilot] xl:sticky xl:top-20 xl:self-start">
-          <VoicePanel
-            busy={busy}
-            getDay={() => describeDay(workspaceRef.current)}
-            replan={voiceReplan}
-            undo={voiceUndo}
-          />
           {voiceResult && (
             <section
               className="grid gap-3 rounded-xl border bg-card p-4 shadow-xs/5"
@@ -396,6 +439,14 @@ export default function App() {
             </section>
           )}
           <CopilotPanel
+            voiceControl={
+              <VoicePanel
+                busy={busy}
+                getDay={() => describeDay(workspaceRef.current)}
+                replan={voiceReplan}
+                undo={voiceUndo}
+              />
+            }
             message={message}
             onMessageChange={(text) => {
               setMessage(text);
@@ -502,6 +553,7 @@ export default function App() {
         onPlanDay={planFromCheckIn}
         planningDisabled={busy}
       />
+      <EditTask item={editing} plan={plan} onSave={saveTask} onClose={() => setEditing(null)} />
     </div>
   );
 }
