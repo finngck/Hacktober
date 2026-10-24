@@ -10,6 +10,7 @@ import {
   type ScheduleItem,
 } from '../shared/contracts';
 import { fitIntoDay } from '../shared/fit';
+import { editTaskInPlan } from '../shared/edit';
 import { freshWorkspace, loadWorkspace, saveWorkspace } from './state';
 import { continueConversation, type PlanningConversation } from '../shared/conversation';
 import {
@@ -29,6 +30,7 @@ import { toastManager } from '@/components/ui/toast';
 import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip';
 import { Icon } from './components/Icon';
 import { AddTask } from './components/daylight/AddTask';
+import { EditTask } from './components/daylight/EditTask';
 import { AppHeader } from './components/daylight/AppHeader';
 import { CheckInFlow } from './components/daylight/CheckInFlow';
 import { CheckInSidebar } from './components/daylight/CheckInSidebar';
@@ -58,6 +60,7 @@ export default function App() {
   const [conversation, setConversation] = useState<PlanningConversation>([]);
   const [voiceResult, setVoiceResult] = useState<ReplanResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<ScheduleItem | null>(null);
   const [error, setError] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [health, setHealth] = useState<{ configured: boolean; model: string } | null>(null);
@@ -143,6 +146,41 @@ export default function App() {
       description: [items.map((item) => item.title).join(', '), ...notes].join(' '),
     });
     return undefined;
+  }
+  function updateTask(item: ScheduleItem) {
+    let nextPlan: Plan;
+    try {
+      nextPlan = editTaskInPlan(plan, item);
+    } catch (problem) {
+      return problem instanceof Error ? problem.message : 'Could not save this change.';
+    }
+    clearDraft();
+    setWorkspace((previous) => ({
+      ...previous,
+      plan: nextPlan,
+      history: [...previous.history, { plan: previous.plan, checkIn: previous.checkIn }].slice(-5),
+    }));
+    return undefined;
+  }
+  function saveTask(item: ScheduleItem) {
+    const problem = updateTask(item);
+    if (!problem)
+      toastManager.add({ type: 'success', title: 'Change saved', description: item.title });
+    return problem;
+  }
+  function moveTask(id: string, start: number) {
+    const item = plan.items.find((existing) => existing.id === id);
+    if (!item) return;
+    const problem = updateTask({ ...item, start });
+    toastManager.add(
+      problem
+        ? { type: 'error', title: 'Could not move task', description: problem }
+        : {
+            type: 'success',
+            title: 'Task moved',
+            description: `${item.title}: ${formatTime(start)}–${formatTime(start + item.duration)}`,
+          },
+    );
   }
   async function runReplan(text: string, context = conversation) {
     if (busy || !text.trim()) return;
@@ -344,6 +382,7 @@ export default function App() {
       plan={plan}
       focusTaskId={checkIn.focusTaskId}
       label={proposal ? 'Current plan' : 'Your day plan'}
+      actions={busy ? undefined : { onEdit: setEditing, onMove: moveTask }}
     />
   );
 
@@ -493,6 +532,7 @@ export default function App() {
         onPlanDay={planFromCheckIn}
         planningDisabled={busy}
       />
+      <EditTask item={editing} plan={plan} onSave={saveTask} onClose={() => setEditing(null)} />
     </div>
   );
 }
