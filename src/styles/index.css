@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import './theme.css';
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading text-balance;
+  }
+  button,
+  a,
+  [role='button'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  a,
+  input,
+  textarea,
+  label,
+  [role='button'],
+  [role='radio'],
+  [role='slider'] {
+    touch-action: manipulation;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  time,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* No rubber-band bounce with a mouse; touch keeps pull-to-refresh. */
+@media (pointer: fine) {
+  html {
+    overscroll-behavior: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Daylight slider: coss Slider with a slightly larger thumb for touch. */
+@layer components {
+  .dl-slider [data-slot='slider-control'] {
+    padding-block: 0.5rem;
+  }
+  .dl-slider [data-slot='slider-track'][data-orientation='horizontal'] {
+    height: 0.375rem;
+  }
+  .dl-slider [data-slot='slider-thumb'] {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}

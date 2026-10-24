@@ -4,9 +4,27 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/replan.ts": { "maxDuration": 70 },
-    "api/extract.ts": { "maxDuration": 60 },
-    "api/voice/[...path].ts": { "maxDuration": 70 }
+    "api/replan.ts": {
+      "maxDuration": 70
+    },
+    "api/extract.ts": {
+      "maxDuration": 60
+    },
+    "api/voice/[...path].ts": {
+      "maxDuration": 70
+    },
+    "api/voice/v1/chat/completions.ts": {
+      "maxDuration": 70
+    }
   },
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/app",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/app/(.*)",
+      "destination": "/app.html"
+    }
+  ]
 }

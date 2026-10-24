@@ -32,7 +32,7 @@ async function configure() {
   if (!secretId) {
     const result = await provision('secrets', {
       type: 'new',
-      name: 'Daylight Gemma endpoint',
+      name: 'Pivot Gemma endpoint',
       value: secret,
     });
     secretId = result.secret_id;
@@ -61,7 +61,7 @@ async function configure() {
   }
   const conversationConfig = {
     agent: {
-      firstMessage: 'Hi, ich bin Daylight. Was hat sich an deinem Tag geändert?',
+      firstMessage: 'Hi, ich bin Pivot. Was hat sich an deinem Tag geändert?',
       language: 'de',
       prompt: {
         prompt: voiceSystemPrompt,
@@ -101,7 +101,7 @@ async function configure() {
     await client.conversationalAi.agents.update(agentId, { conversationConfig, platformSettings });
   } else {
     const agent = await client.conversationalAi.agents.create({
-      name: 'Daylight · Gemma Tagescopilot',
+      name: 'Pivot · Gemma Tagescopilot',
       conversationConfig,
       platformSettings,
     });

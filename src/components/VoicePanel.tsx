@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Conversation, Status } from '@elevenlabs/react';
+import { Mic01Icon } from '@hugeicons/core-free-icons';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Icon } from './Icon';
+import { cn } from '@/lib/utils';
 import { voiceToolArguments } from '../../shared/voice';
 
 type Props = {
@@ -149,7 +154,7 @@ export function VoicePanel(props: Props) {
       setError(
         cause instanceof Error &&
           /permission|denied|notallowed|mic_unavailable/i.test(cause.message)
-          ? 'Bitte erlaube den Mikrofonzugriff im Browser, um mit Daylight zu sprechen.'
+          ? 'Bitte erlaube den Mikrofonzugriff im Browser, um mit Pivot zu sprechen.'
           : 'Die Sprachverbindung konnte nicht gestartet werden. Bitte versuche es erneut.',
       );
     } finally {
@@ -163,7 +168,7 @@ export function VoicePanel(props: Props) {
     ? 'Dein Tag wird angepasst …'
     : connected
       ? speaking
-        ? 'Daylight spricht'
+        ? 'Pivot spricht'
         : 'Ich höre dir zu'
       : status === 'connecting'
         ? 'Verbinde …'
@@ -171,51 +176,56 @@ export function VoicePanel(props: Props) {
 
   return (
     <section
-      className={`voice-panel ${connected ? 'is-connected' : ''}`}
+      className={cn(
+        'grid gap-3 rounded-xl border bg-card p-4 shadow-xs/5',
+        connected && 'border-success/40',
+      )}
       aria-labelledby="voice-title"
     >
-      <div className="voice-heading">
-        <span className={`voice-indicator ${inProgress ? 'active' : ''}`} aria-hidden="true">
-          <svg
-            width="23"
-            height="23"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-          >
-            <rect x="9" y="3" width="6" height="12" rx="3" />
-            <path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8" />
-          </svg>
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            'grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground',
+            inProgress && 'bg-success/10 text-success',
+          )}
+          aria-hidden="true"
+        >
+          <Icon icon={Mic01Icon} size={23} />
         </span>
         <div>
-          <h2 id="voice-title">Sprich mit Daylight</h2>
-          <p role="status">{label}</p>
+          <h2 id="voice-title" className="text-base font-semibold">
+            Sprich mit Pivot
+          </h2>
+          <p role="status" className="text-sm text-muted-foreground">
+            {label}
+          </p>
         </div>
       </div>
-      <p className="voice-description">„Ich bin erst ab 14 Uhr da. Plane meinen Tag um.“</p>
-      <button
-        className={`button ${inProgress ? 'secondary' : 'primary'} voice-button`}
+      <p className="text-sm text-muted-foreground">
+        „Ich bin erst ab 14 Uhr da. Plane meinen Tag um.“
+      </p>
+      <Button
+        variant={inProgress ? 'secondary' : 'default'}
         onClick={() => {
           void (inProgress ? stop() : start());
         }}
         disabled={!inProgress && (configured !== true || props.busy)}
       >
         {inProgress ? 'Gespräch beenden' : 'Gespräch starten'}
-      </button>
+      </Button>
       {configured === false && (
-        <p className="voice-hint">
+        <p className="text-xs text-muted-foreground">
           Der Sprachdialog ist noch nicht eingerichtet. Du kannst Änderungen unten eingeben.
         </p>
       )}
       {error && (
-        <p className="inline-error" role="alert">
+        <p className="text-sm text-destructive-foreground" role="alert">
           {error}
         </p>
       )}
       {connected && (
         <form
-          className="voice-reply"
+          className="flex items-center gap-2"
           onSubmit={(event) => {
             event.preventDefault();
             if (!reply.trim() || planning || props.busy) return;
@@ -226,7 +236,7 @@ export function VoicePanel(props: Props) {
           <label className="sr-only" htmlFor="voice-reply">
             Nachricht im Gespräch
           </label>
-          <input
+          <Input
             id="voice-reply"
             value={reply}
             onChange={(event) => setReply(event.target.value)}
@@ -234,31 +244,37 @@ export function VoicePanel(props: Props) {
             placeholder="Oder hier antworten …"
             disabled={planning || props.busy}
           />
-          <button
-            className="button secondary"
+          <Button
+            variant="secondary"
             type="submit"
             disabled={!reply.trim() || planning || props.busy}
           >
             Senden
-          </button>
+          </Button>
         </form>
       )}
       {messages.length > 0 && (
         <div
-          className="voice-transcript"
+          className="grid max-h-64 gap-2 overflow-y-auto text-sm"
           role="log"
-          aria-label="Gespräch mit Daylight"
+          aria-label="Gespräch mit Pivot"
           aria-live="polite"
         >
           {messages.map((message) => (
-            <p key={message.key} className={message.role}>
-              <strong>{message.role === 'user' ? 'Du' : 'Daylight'}</strong>
+            <p
+              key={message.key}
+              className={cn(
+                'grid gap-0.5 rounded-lg bg-muted p-2.5',
+                message.role === 'agent' && 'bg-accent',
+              )}
+            >
+              <strong>{message.role === 'user' ? 'Du' : 'Pivot'}</strong>
               <span>{message.text}</span>
             </p>
           ))}
         </div>
       )}
-      <p className="voice-hint">
+      <p className="text-xs text-muted-foreground">
         Sprachaufträge passen deinen Plan direkt an. Du kannst Änderungen rückgängig machen. Audio
         wird an ElevenLabs gesendet; Gespräch und Tagesplan werden mit Google verarbeitet.
       </p>

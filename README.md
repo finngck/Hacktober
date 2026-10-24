@@ -2,29 +2,31 @@
 
 Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [Notion-Teamseite](https://app.notion.com/p/q-summit/Hacktoberfest-403024b9b73b80c2be88d09ff91a9d08).
 
-## Daylight im Überblick
+## Pivot im Überblick
 
-**Your day changes. Your plan should too.** Daylight ist ein adaptiver Tagesplaner für Studierende und Young Professionals mit wechselnden Verpflichtungen. Er kombiniert Termine, Aufgaben, Präferenzen und das aktuelle Energielevel und plant den Tag nach einer unerwarteten Änderung neu: Du schreibst oder sagst, was sich geändert hat. Textvorschläge bestätigst du nach dem Vergleich; klare Sprachaufträge werden direkt umgesetzt und erklärt, mit Undo.
+**Your day changes. Your plan should too.** Pivot ist ein adaptiver Tagesplaner für Studierende und Young Professionals mit wechselnden Verpflichtungen. Er kombiniert Termine, Aufgaben, Präferenzen und das aktuelle Energielevel und plant den Tag nach einer unerwarteten Änderung neu: Du schreibst oder sagst, was sich geändert hat. Textvorschläge bestätigst du nach dem Vergleich; klare Sprachaufträge werden direkt umgesetzt und erklärt, mit Undo.
 
-Live: **https://hacktober-daylight.vercel.app** (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
+Live: **https://hacktober-daylight.vercel.app** mit Landing Page unter `/` und Planer unter `/app` (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
+
+Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/landing.css`, der Planer aus `app.html` und `src/main.tsx`. Logo-Dateien liegen in `brand/`; `public/favicon.svg` ist das App-Icon.
 
 ### Technologien
 
 - **Gemma 4** (`gemma-4-26b-a4b-it`, offenes Modell über die Google-API) übernimmt die Sprachverarbeitung: Es versteht die Änderung („Zug verspätet, schlecht geschlafen“), priorisiert Aufgaben, begründet Abwägungen, erkennt Signale für Maßnahmen und liest Aufgaben und Zeiten aus Screenshots. Die Uhrzeiten rechnet der regelbasierte Scheduler; der Server prüft jeden Vorschlag, bevor er angezeigt wird.
-- **React, TypeScript, Vite** für die Oberfläche, **Express** als Backend, **Zod** für die Schemas, **Vercel** fürs Hosting.
+- **React, TypeScript, Vite, Tailwind CSS 4** und Komponenten aus [coss ui](https://coss.com/ui) (Base UI, MIT) für die Oberfläche, **Express** als Backend, **Zod** für die Schemas, **Vercel** fürs Hosting. Farben, Schrift und Regeln für neue UI stehen im [Design-System](docs/design-system.md).
 - **ElevenLabs** übernimmt Spracherkennung, Sprachausgabe und Gesprächswechsel. Gemma führt das Gespräch und ruft die Planungswerkzeuge auf. Der private Agent ist über einen authentifizierten Custom-LLM-Endpunkt mit dem Planer verbunden.
 - **Lizenz:** MIT.
 
 ### Was funktioniert
 
 - Tagesansicht mit festen Terminen, flexiblen Aufgaben, Pausen, Dauer, Priorität und Fristen.
-- Manueller Check-in (Schlaf, Energie, produktive Zeit) und Ausschlüsse (kein Kaffee, kein Joggen, kein Gym) als harte Regeln.
+- Daily Check-in als Morgen-Flow und in der Sidebar per Popover: Schlafdauer und -qualität, Energie, Stimmung, Stress, Fokus des Tages, produktive Zeit und Ausschlüsse (kein Kaffee, kein Joggen, kein Gym) als harte Regeln. Die Fokusaufgabe plant der Scheduler zuerst ein; Stimmung, Stress und Schlafqualität gehen als Kontext an Gemma. Check-in-Serie und Abzeichen zählen nur lokal (`daylight.progress.v1`).
 - Änderung als Text eingeben → Gemma-4-Vorschlag → Vorher/Nachher mit Erklärung → übernehmen oder verwerfen, mit Undo.
 - Feste Termine bleiben für den Planer unverändert und lassen sich nur auf ausdrücklichen Wunsch verschieben („Team-Meeting 15 Minuten früher“).
 - Maßnahmen bei wenig Schlaf oder Energie aus einem Pool (Koffein, Nap, Bewegung) mit Sperren und Ausschlüssen. Gemma meldet nur Signale, die Auswahl trifft der Code.
 - Screenshot-Import: Aufgaben, Termine und Fristen aus einem Bild lesen, prüfen und korrigieren, erst dann hinzufügen. Mit einem synthetischen Stundenplan in der Vorschau getestet; die Erkennungsqualität bei echten Screenshots ist nicht breit geprüft.
 - Aufgaben von Hand hinzufügen.
-- „Sprich mit Daylight“: Ein klarer Sprachauftrag übernimmt den validierten Plan direkt. Der Agent erklärt danach die tatsächlichen Änderungen; Rückfragen und Konflikte verändern den Plan nicht. Undo funktioniert per Stimme oder Schaltfläche.
+- „Sprich mit Pivot“: Ein klarer Sprachauftrag übernimmt den validierten Plan direkt. Der Agent erklärt danach die tatsächlichen Änderungen; Rückfragen und Konflikte verändern den Plan nicht. Undo funktioniert per Stimme oder Schaltfläche.
 
 ### Noch nicht umgesetzt
 
@@ -82,7 +84,7 @@ npm run build
 npm start
 ```
 
-`npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln und den Gemma-Adapter. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
+`npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln, den Gemma-Adapter und die Design-System-Regeln. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
 
 `npm run test:live` prüft fünf synthetische Fälle mit dem lokal eingerichteten Gemma-Key: ausdrücklich verschobener fester Termin, Zugverspätung mit wenig Energie, zusätzliche Marketing-Klausur, Bearbeitung vorhandener Marketing-Lernzeit und neue Aufgabe zusammen mit geänderter Verfügbarkeit. Jeder Fall erlaubt maximal einen Reparaturversuch; der Befehl verbraucht API-Kontingent.
 
@@ -92,8 +94,7 @@ npm start
 
 Das Vercel-Projekt `hacktober-daylight` ist mit `finngck/Hacktober` verbunden. `main` ist der gemeinsame Produktionsstand; Featurebranches erhalten Vorschau-Deployments über die Git-Verbindung. Änderungen weiterhin per geprüftem PR integrieren.
 
-Vercel baut die Vite-Oberfläche aus `dist/` und führt die Dateien unter `api/` als Node-Funktionen aus, einschließlich des Voice-Catch-all-Endpunkts. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. Umplanung und Sprachendpunkt haben maximal 70 Sekunden Laufzeit. Der Screenshot-Import begrenzt seine höchstens zwei Modellversuche auf jeweils 25 Sekunden, damit sie innerhalb seiner 60 Sekunden Funktionslaufzeit abschließen.
-
+Vercel baut die Vite-Oberfläche aus `dist/` und führt die Dateien unter `api/` als Node-Funktionen aus. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. `vercel.json` enthält die Build-Konfiguration; die Umplanungsfunktion hat maximal 70 Sekunden Laufzeit. Der Screenshot-Import begrenzt seine höchstens zwei Modellversuche auf jeweils 25 Sekunden, damit sie innerhalb seiner 60 Sekunden Funktionslaufzeit abschließen.
 
 Relative Imports im von Node geladenen Servercode verwenden explizite `.js`-Endungen. Bei Fork-PRs kann der Vercel-Check zunächst eine Freigabe durch ein Teammitglied verlangen; der Link steht im Bot-Kommentar am PR. Vor der Integration Build und betroffene API in der Preview prüfen, danach den Produktionsstand. Der konkrete Ablauf steht im [Arbeitsablauf](docs/workflow.md#vercel-vor-und-nach-dem-merge).
 
@@ -114,14 +115,13 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `POST /api/voice/v1/chat/completions`: authentifizierter Custom-LLM-Adapter, der Gemma-Text und Tool Calls als SSE an ElevenLabs streamt. Dieser Server-Aufruf benötigt `Authorization: Bearer VOICE_LLM_SECRET`.
 - `server/gemma.ts`: Google-REST-Adapter mit `gemma-4-26b-a4b-it` als Standard; über `GEMMA_MODEL` auf ein anderes freigegebenes Gemma-4-Modell umstellbar. [Offizielle Modell-Dokumentation](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
-- `src/components/Timeline.tsx`: Tagesansicht und Vergleich. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
+- `src/components/daylight/`: Tagesansicht, Vergleich, Check-in-Flow und -Sidebar. `src/components/ui/`: unveränderte coss-ui-Komponenten. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
 
-Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task`, `update_task`, `move_task`, `prioritize_tasks`, `defer_tasks`, `update_day_context`, `replan_day` und `ask_clarification`. Der Server prüft die vollständige Aufrufserie und führt sie auf einer Kopie aus. Aufgabenänderungen brauchen ein wörtliches Zitat aus der Nachricht; unbekannte Tools, Argumente, IDs sowie Änderungen an begonnenen Blöcken werden abgelehnt. Feste zukünftige Termine lassen sich ausschließlich über `move_task` auf ausdrücklichen Nutzerwunsch verschieben. Neue Aufgaben verwenden feste Bausteine (z. B. Klausurvorbereitung: 90 Minuten, hohe Priorität), wenn keine Dauer genannt wurde. Eine weitere Klausur erzeugt eine eigene Lernaufgabe; explizite Korrekturen bearbeiten die passende bestehende Aufgabe.
+Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task`, `update_task`, `move_task`, `prioritize_tasks`, `defer_tasks`, `update_day_context`, `replan_day` und `ask_clarification`. Der Server prüft die vollständige Aufrufserie und führt sie auf einer Kopie aus. Aufgabenänderungen brauchen ein wörtliches Zitat aus der Nachricht; unbekannte Tools, Argumente, IDs sowie Änderungen an begonnenen Blöcken werden abgelehnt. Feste zukünftige Termine lassen sich ausschließlich über `move_task` auf ausdrücklichen Nutzerwunsch verschieben. Neue Aufgaben verwenden feste Bausteine (z. B. Klausurvorbereitung: 90 Minuten, hohe Priorität), wenn keine Dauer genannt wurde. Eine weitere Klausur erzeugt eine eigene Lernaufgabe; explizite Korrekturen bearbeiten die passende bestehende Aufgabe. Die im Check-in gewählte Fokusaufgabe setzt der Scheduler unter der optionalen Arbeit zuerst ein und stellt sie bei wenig Energie nicht zurück.
 
 Der regelbasierte Scheduler reserviert zuerst heutige Fristen und Erholung, dann neu angeforderte oder bearbeitete Aufgaben, danach optionale Arbeit. Bereits passende Startzeiten bleiben möglichst erhalten; bei Platzproblemen folgt ein verdichteter Versuch. Eine angeforderte Aufgabe wird eingeplant oder erzeugt einen sichtbaren Konflikt. Zusammenfassung und Änderungsgründe entstehen aus dem tatsächlich berechneten Vorschlag. Alle bestehenden Aufgaben bleiben erhalten, auch wenn sie heute offen sind. Der Server prüft zusätzlich Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und Ausschlüsse. Ungültige Tool-Aufrufe erhalten maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
 
-`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Textvorschläge brauchen eine Bestätigung; ein ausdrücklicher Sprachauftrag übernimmt den validierten Plan direkt mit Undo. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Die Auswahl der passenden Tools und Argumente bleibt Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet. Die Anbindung folgt Googles [Gemma Function-Calling-Schnittstelle](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api#function-calling).
-
+`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Ein ausdrücklicher Sprachauftrag übernimmt den validierten Plan direkt mit Undo. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Nur eine ausdrückliche Bestätigung ändert den aktiven Plan. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Die Auswahl der passenden Tools und Argumente bleibt Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet. Die Anbindung folgt Googles [Gemma Function-Calling-Schnittstelle](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api#function-calling).
 
 ## Saubere Arbeitskopie aktualisieren
 

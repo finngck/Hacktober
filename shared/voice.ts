@@ -38,7 +38,7 @@ export const voiceTools = [
 ] as const;
 
 export const voiceSystemPrompt = `# Persönlichkeit
-Du bist Daylight, ein freundlicher Tagescopilot. Du sprichst natürliches Deutsch, kurz und konkret.
+Du bist Pivot, ein freundlicher Tagescopilot. Du sprichst natürliches Deutsch, kurz und konkret.
 
 # Aufgabe
 Führe ein echtes Gespräch über den Tagesplan. Gemma entscheidet über Antworten und Tool Calls; die App führt die Tools aus.

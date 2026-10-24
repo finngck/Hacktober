@@ -5,6 +5,10 @@ export const demoCheckIn: CheckIn = {
   energy: 'medium',
   productiveTime: 'morning',
   exclusions: ['coffee', 'running'],
+  sleepQuality: 'okay',
+  mood: 3,
+  stress: 2,
+  focusTaskId: null,
 };
 
 // A deliberately fixed, synthetic day makes the demo repeatable at any real time.

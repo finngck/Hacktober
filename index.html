@@ -3,16 +3,149 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#315de3" />
+    <meta name="theme-color" content="#f5f5f5" />
     <meta
       name="description"
-      content="Ein adaptiver Tagesplaner. Änderungen eingeben, Vorschläge prüfen und den Tag neu sortieren."
+      content="Pivot ist ein KI-Tagesplaner: Änderung in eigenen Worten schildern, Vorschlag prüfen und den restlichen Tag neu sortieren."
     />
-    <title>Daylight · Dein Tag bleibt beweglich</title>
+    <title>Pivot · Große Ziele. Flexible Pläne.</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script type="module" src="/src/landing.ts"></script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <nav class="landing-nav">
+      <a href="/" class="logo"><img src="/favicon.svg" alt="" />Pivot</a>
+      <div class="nav-links">
+        <a href="#features">Funktionen</a>
+        <a href="#how">So funktioniert’s</a>
+        <a href="/app" class="button">Demo öffnen ↗</a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="hero">
+        <div>
+          <div class="eyebrow">Dein KI-Tagesplaner</div>
+          <h1>Große Ziele.<br /><span>Flexible Pläne.</span></h1>
+          <p class="intro">
+            Dein Tag hält sich nicht an den Plan? Schreib Pivot einfach, was sich geändert hat.
+            Pivot schlägt einen neuen Ablauf für den restlichen Tag vor – du prüfst und
+            entscheidest.
+          </p>
+          <a href="/app" class="button">Demo ausprobieren ↗</a>
+          <p class="microcopy">Synthetischer Beispieltag · ohne Login</p>
+        </div>
+
+        <div class="preview" aria-hidden="true">
+          <div class="phone">
+            <div class="phone-top"><span>13:00</span><span>● ● ●</span></div>
+            <div class="status">WAS HAT SICH GEÄNDERT?</div>
+            <div class="message">Mein Zug ist verspätet und ich habe schlecht geschlafen …</div>
+
+            <div class="task">
+              <strong>14:00 · Team-Meeting</strong>
+              <small>Fester Termin bleibt</small>
+            </div>
+
+            <div class="task adapt">
+              <strong>↗ Vorschlag für deinen restlichen Tag</strong>
+              <small>Deep Work nach hinten, kurze Erholungspause vorher.</small>
+              <span class="choices"><b>Übernehmen</b><i>Verwerfen</i></span>
+            </div>
+
+            <div class="task">
+              <strong>17:30 · Abgabe vorbereiten</strong>
+              <small>Heutige Frist bleibt im Blick</small>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="features" id="features">
+        <div class="section-inner">
+          <div class="eyebrow">Was Pivot heute schon kann</div>
+          <h2 class="section-title">Deine Ziele bleiben.<br />Dein Plan darf sich ändern.</h2>
+
+          <div class="feature-grid">
+            <article class="feature">
+              <div class="symbol">◐</div>
+              <h3>Check-in</h3>
+              <p>
+                Energie, Schlaf und Verfügbarkeit angeben, damit der Vorschlag zu deinem Tag passt.
+              </p>
+            </article>
+
+            <article class="feature">
+              <div class="symbol">✎</div>
+              <h3>In eigenen Worten</h3>
+              <p>
+                „Zug verspätet“ oder „Meeting 15 Minuten früher“: Gemma versteht die Änderung und
+                priorisiert deine Aufgaben neu.
+              </p>
+            </article>
+
+            <article class="feature">
+              <div class="symbol">⇄</div>
+              <h3>Vorher und nachher</h3>
+              <p>Vergleiche den Vorschlag mit deinem Plan. Erst deine Bestätigung ändert ihn.</p>
+            </article>
+
+            <article class="feature">
+              <div class="symbol">◎</div>
+              <h3>Feste Termine geschützt</h3>
+              <p>
+                Fristen, begonnene Blöcke und feste Termine bleiben, Überschneidungen werden
+                geprüft.
+              </p>
+            </article>
+
+            <article class="feature">
+              <div class="symbol">▣</div>
+              <h3>Screenshot-Import</h3>
+              <p>Aufgaben und Termine aus einem Bild lesen, prüfen und dann übernehmen.</p>
+            </article>
+
+            <article class="feature">
+              <div class="symbol">↺</div>
+              <h3>Rückgängig</h3>
+              <p>Bis zu fünf Schritte zurück. Dein Plan bleibt lokal in deinem Browser.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="how" id="how">
+        <div class="section-inner">
+          <div class="eyebrow">So funktioniert’s</div>
+          <h2 class="section-title">Drei Schritte zum neuen Plan.</h2>
+          <ol class="steps">
+            <li>
+              <strong>Einchecken</strong>
+              <span>Wie viel Energie hast du, wann bist du verfügbar?</span>
+            </li>
+            <li>
+              <strong>Änderung schildern</strong>
+              <span>Schreib, was passiert ist – so, wie du es jemandem erzählen würdest.</span>
+            </li>
+            <li>
+              <strong>Vorschlag prüfen</strong>
+              <span>Übernehmen, verwerfen oder später rückgängig machen.</span>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="closing">
+        <div class="eyebrow">Für alle, die gern improvisieren</div>
+        <h2>Das Leben ändert sich.<br />Gute Pläne passen sich an.</h2>
+        <p>Probier Pivot mit einem Beispieltag aus – ohne Konto und ohne Installation.</p>
+        <a href="/app" class="button">Demo öffnen ↗</a>
+      </section>
+    </main>
+
+    <footer>
+      Pivot · Hacktober-Prototyp mit synthetischen Beispieldaten. Beim Planen werden Aufgaben,
+      Check-in und Nachricht an die Gemma-API von Google gesendet.
+    </footer>
   </body>
 </html>

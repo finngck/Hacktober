@@ -1,0 +1,164 @@
+/*
+ * Daylight design tokens (coss ui neutral style). The single source for colour, type, radius and motion.
+ * Semantic names follow coss ui, so every component in src/components/ui picks up the brand.
+ * New UI uses these tokens (via Tailwind classes such as bg-primary or text-category-study),
+ * never raw colour values. See docs/design-system.md.
+ */
+
+:root {
+  /* Neutral coss ui palette. Colour is reserved for task categories and status. */
+  --ink: #171717;
+
+  /* Task categories: data colours for event tints, not decoration. */
+  --category-study: #7c3aed;
+  --category-work: #2563eb;
+  --category-recovery: #047857;
+  --category-movement: #c2410c;
+  --category-social: #be185d;
+
+  /* coss ui semantic tokens */
+  --background: #f5f5f5;
+  --foreground: var(--ink);
+  --card: #ffffff;
+  --card-foreground: var(--ink);
+  --popover: #ffffff;
+  --popover-foreground: var(--ink);
+  --primary: #262626;
+  --primary-foreground: #fafafa;
+  --secondary: color-mix(in srgb, #000 4%, transparent);
+  --secondary-foreground: var(--ink);
+  --muted: color-mix(in srgb, #000 4%, transparent);
+  --muted-foreground: #646464;
+  --accent: color-mix(in srgb, #000 5%, transparent);
+  --accent-foreground: var(--ink);
+  --destructive: #ef4444;
+  --destructive-foreground: #b91c1c;
+  --success: #10b981;
+  --success-foreground: #047857;
+  --warning: #f59e0b;
+  --warning-foreground: #b45309;
+  --info: #3b82f6;
+  --info-foreground: #1d4ed8;
+  --border: color-mix(in srgb, #000 8%, transparent);
+  --input: color-mix(in srgb, #000 10%, transparent);
+  --ring: #a3a3a3;
+  --radius: 0.625rem;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: ui-monospace, monospace;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-heading: var(--font-heading);
+  --font-mono: var(--font-mono);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-category-study: var(--category-study);
+  --color-category-work: var(--category-work);
+  --color-category-recovery: var(--category-recovery);
+  --color-category-movement: var(--category-movement);
+  --color-category-social: var(--category-social);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+
+  /* Motion: short for feedback, one longer moment for the morning check-in. */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --animate-skeleton: skeleton 2s -1s infinite linear;
+  --animate-toast-success-odd: toast-pop 0.32s var(--ease-out-soft);
+  --animate-toast-success-even: toast-pop 0.32s var(--ease-out-soft);
+  --animate-toast-error-odd: toast-shake 0.28s var(--ease-out-soft);
+  --animate-toast-error-even: toast-shake 0.28s var(--ease-out-soft);
+  --animate-pop: pop 0.28s var(--ease-spring);
+  --animate-rise: rise 0.5s var(--ease-out-soft) both;
+  --animate-sunburst: sunburst 0.6s var(--ease-out-soft) both;
+
+  @keyframes skeleton {
+    to {
+      background-position: -200% 0;
+    }
+  }
+  @keyframes toast-pop {
+    30% {
+      scale: 1.025;
+    }
+    60% {
+      scale: 0.99;
+    }
+  }
+  @keyframes toast-shake {
+    25% {
+      translate: -3px 0;
+    }
+    75% {
+      translate: 3px 0;
+    }
+  }
+  @keyframes pop {
+    0% {
+      scale: 0.82;
+      opacity: 0.4;
+    }
+    100% {
+      scale: 1;
+      opacity: 1;
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 14px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+  @keyframes sunburst {
+    0% {
+      scale: 0.4;
+      opacity: 0;
+      rotate: -30deg;
+    }
+    60% {
+      opacity: 1;
+    }
+    100% {
+      scale: 1;
+      opacity: 1;
+      rotate: 0deg;
+    }
+  }
+}
