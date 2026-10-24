@@ -72,7 +72,8 @@ async function configure() {
         enableParallelToolCalls: false,
         backupLlmConfig: { preference: 'disabled' as const },
         customLlm: {
-          url: `${publicUrl.origin}/api/voice/v1/chat/completions`,
+          // ElevenLabs appends /chat/completions to this OpenAI-compatible base URL.
+          url: `${publicUrl.origin}/api/voice/v1`,
           modelId: config.model,
           apiKey: { secretId },
           apiType: 'chat_completions' as const,

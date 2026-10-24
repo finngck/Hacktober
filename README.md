@@ -74,7 +74,7 @@ npm run voice:setup -- https://DEINE-APP-ADRESSE
 
 Der Befehl erstellt einen privaten ElevenLabs-Agenten im Konto des Keys, registriert `get_day_plan`, `replan_day` und `undo_last_change` mit Ergebniserwartung und verbindet Gemma als Custom LLM. Agent-ID und ein zufälliges gemeinsames Endpoint-Secret landen ausschließlich in der ignorierten `.env`. Erneutes Ausführen aktualisiert den dort konfigurierten Agenten. Ein fremder Agent aus einem anderen Konto wird nicht verwendet. `ELEVENLABS_VOICE_ID` kann vor der Einrichtung eine andere verfügbare Stimme wählen.
 
-Die App-Adresse muss für ElevenLabs öffentlich über HTTPS erreichbar sein; der Custom-LLM-Endpunkt ist `/api/voice/v1/chat/completions`. Für lokale Entwicklung denselben Code öffentlich hosten oder einen eigenen HTTPS-Tunnel konfigurieren. Browser benötigen Mikrofonfreigabe und HTTPS oder localhost. Während eines Gesprächs ist auch eine Texteingabe möglich.
+Die App-Adresse muss für ElevenLabs öffentlich über HTTPS erreichbar sein; in ElevenLabs wird die Basis `/api/voice/v1` eingetragen. ElevenLabs ergänzt daraus den Custom-LLM-Endpunkt `/api/voice/v1/chat/completions`. Für lokale Entwicklung denselben Code öffentlich hosten oder einen eigenen HTTPS-Tunnel konfigurieren. Browser benötigen Mikrofonfreigabe und HTTPS oder localhost. Während eines Gesprächs ist auch eine Texteingabe möglich.
 
 Audio und Transkripte werden durch ElevenLabs verarbeitet; Gespräch, Tool-Ergebnisse und für die Planung benötigte Tagesdaten gehen an Google. Die Schlüssel bleiben serverseitig. Der Browser erhält nur eine zeitlich begrenzte signierte Gesprächsadresse. Die App hält den aktuellen Plan und den Undo-Verlauf weiterhin lokal.
 
