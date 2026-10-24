@@ -127,7 +127,7 @@ export const measureBlocks: Block[] = [
     id: 'SPAET_WICHTIGE_AUFGABE',
     type: 'massnahme',
     title: 'Direkt eine wichtige Aufgabe',
-    text: 'Bearbeite danach direkt eine wichtige Aufgabe für 25–50 Minuten.',
+    text: 'Starte direkt mit einer wichtigen Aufgabe und bearbeite sie 25–50 Minuten am Stück.',
     priority: 1,
     when: (c) => c.spaetAufgewacht && c.minSeitAufwachen > 15 && c.minSeitAufwachen <= 120,
   },
