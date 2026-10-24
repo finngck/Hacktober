@@ -16,6 +16,7 @@ import {
   badges,
   checkedInToday,
   loadProgress,
+  localDay,
   recordAcceptedPlan,
   recordCheckIn,
   saveProgress,
@@ -37,6 +38,7 @@ import { CopilotPanel } from './components/daylight/CopilotPanel';
 import { ScreenshotImport } from './components/daylight/ScreenshotImport';
 import { Timeline } from './components/daylight/Timeline';
 import { EnergyMeasures } from './components/daylight/EnergyMeasures';
+import { TipsCard } from './components/daylight/TipsCard';
 import { VoicePanel } from './components/VoicePanel';
 import { describeDay, executeVoiceReplan } from './voice-tools';
 
@@ -188,6 +190,15 @@ export default function App() {
     setMessage(text);
     clearDraft();
     void runReplan(text, []);
+  }
+  function planBreak(text: string) {
+    setMessage(text);
+    clearDraft();
+    void runReplan(text, []);
+  }
+  function dismissTips() {
+    setWorkspace((previous) => ({ ...previous, tipsDismissedOn: localDay() }));
+    toastManager.add({ title: 'Tip hidden for today' });
   }
   async function voiceReplan(change: string, signal: AbortSignal) {
     if (requestController.current || busy)
@@ -354,6 +365,17 @@ export default function App() {
             disabled={busy}
             onChange={changeCheckIn}
             onStartFlow={() => setFlowOpen(true)}
+            tips={
+              workspace.tipsDismissedOn !== localDay() ? (
+                <TipsCard
+                  plan={plan}
+                  checkIn={checkIn}
+                  disabled={busy}
+                  onPlanBreak={planBreak}
+                  onDismiss={dismissTips}
+                />
+              ) : null
+            }
           />
         </div>
         <div className="grid content-start gap-4 lg:[grid-area:copilot] xl:sticky xl:top-20 xl:self-start">

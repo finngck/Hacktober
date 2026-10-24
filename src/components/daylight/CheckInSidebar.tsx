@@ -91,6 +91,7 @@ export function CheckInSidebar({
   disabled,
   onChange,
   onStartFlow,
+  tips,
 }: {
   checkIn: CheckIn;
   plan: Plan;
@@ -98,13 +99,14 @@ export function CheckInSidebar({
   disabled: boolean;
   onChange: (patch: Partial<CheckIn>) => void;
   onStartFlow: () => void;
+  tips?: ReactNode;
 }) {
   const summary = checkInSummary(checkIn, plan);
   const done = checkedInToday(progress);
   const days = streak(progress);
   const goal = nextStreakGoal(days);
   return (
-    <aside className="grid content-start gap-4" aria-label="Daily Check-in and achievements">
+    <aside className="grid content-start gap-4" aria-label="Daily Check-in, tips and achievements">
       <section
         className="rounded-xl border bg-card p-2 shadow-xs/5"
         aria-labelledby="check-in-title"
@@ -188,6 +190,8 @@ export function CheckInSidebar({
           {done ? 'Redo check-in' : 'Start check-in'}
         </Button>
       </section>
+
+      {tips}
 
       <section className="rounded-xl border bg-card p-4 shadow-xs/5" aria-labelledby="streak-title">
         <div className="flex items-center gap-3">

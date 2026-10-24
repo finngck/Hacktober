@@ -26,6 +26,7 @@ Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/styles/land
 - Änderung als Text eingeben → Gemma-4-Vorschlag → Vorher/Nachher mit Erklärung → übernehmen oder verwerfen, mit Undo.
 - Feste Termine bleiben für den Planer unverändert und lassen sich nur auf ausdrücklichen Wunsch verschieben („Team-Meeting 15 Minuten früher“).
 - Maßnahmen bei wenig Schlaf oder Energie aus einem Pool (Koffein, Nap, Bewegung) mit Sperren und Ausschlüssen. Gemma meldet nur Signale, die Auswahl trifft der Code.
+- Tippskarte direkt unter dem Daily Check-in: Ein passender Tipp aus dem gespeicherten Check-in bleibt auch nach Planübernahme und Neuladen sichtbar. „Pause einplanen“ fordert einen überprüfbaren Planvorschlag an; „Heute ausblenden“ merkt sich das Ausblenden lokal bis zum nächsten Kalendertag.
 - Screenshot-Import: Aufgaben, Termine und Fristen aus PNG, JPEG oder WebP bis 20 MB lesen, prüfen und korrigieren, erst dann hinzufügen. Der Browser verkleinert große Bilder und erhält dunklen Text auf transparentem Hintergrund. Schließen bricht den Upload ab; verspätete Ergebnisse werden ignoriert. Die Erkennungsqualität bei beliebigen echten Screenshots ist nicht breit geprüft.
 - Aufgaben von Hand hinzufügen.
 - „Sprich mit Pivot“: Ein klarer Sprachauftrag übernimmt den validierten Plan direkt. Der Agent erklärt danach die tatsächlichen Änderungen; Rückfragen und Konflikte verändern den Plan nicht. Undo funktioniert per Stimme oder Schaltfläche.
