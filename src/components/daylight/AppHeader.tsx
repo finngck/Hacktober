@@ -23,9 +23,9 @@ export function Logo() {
   return (
     <span
       translate="no"
-      className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight"
+      className="inline-flex items-center gap-2 text-xl leading-none font-semibold tracking-tight"
     >
-      <img src="/favicon.svg" alt="" className="size-7" />
+      <img src="/favicon.svg" alt="" className="size-7.5 shrink-0" />
       Pivot
     </span>
   );
@@ -43,14 +43,18 @@ export function AppHeader({
   const [confirmReset, setConfirmReset] = useState(false);
   return (
     <header className="sticky top-0 z-30 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
-        <a href="#day-plan" aria-label="Pivot, zum Tagesplan" className="rounded-full">
+      <div className="mx-auto flex h-20 max-w-7xl items-center gap-3 px-4 sm:px-6">
+        <a
+          href="#day-plan"
+          aria-label="Pivot, zum Tagesplan"
+          className="inline-flex shrink-0 items-center rounded-full"
+        >
           <Logo />
         </a>
         <Badge variant="outline" className="ml-1 max-sm:hidden">
           Beispieltag
         </Badge>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center">
           <Menu>
             <MenuTrigger
               render={<Button variant="ghost" size="icon" aria-label="Weitere Aktionen" />}
