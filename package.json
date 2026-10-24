@@ -13,10 +13,14 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
     "test:live": "node --import tsx scripts/check-gemma.ts",
+    "voice:setup": "node --import tsx scripts/configure-voice.ts",
+    "test:voice:live": "node --import tsx scripts/check-voice.ts",
     "format": "prettier --write src server api shared tests scripts public index.html package.json tsconfig.json vite.config.ts vercel.json",
     "format:check": "prettier --check src server api shared tests scripts public index.html package.json tsconfig.json vite.config.ts vercel.json"
   },
   "dependencies": {
+    "@elevenlabs/elevenlabs-js": "^2.74.0",
+    "@elevenlabs/react": "^1.19.1",
     "@fontsource-variable/manrope": "^5.3.0",
     "@hugeicons/core-free-icons": "^3.0.0",
     "@hugeicons/react": "^1.0.0",

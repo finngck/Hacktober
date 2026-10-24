@@ -8,7 +8,9 @@ Der lokale Daylight-Prototyp setzt den Textablauf aus **Chat Core Features** um:
 
 React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Die Icons kommen aus HugeIcons. Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
 
-Der ElevenLabs-Agent „DailyFlow Agent“ ist als offizielles Widget unten rechts eingebunden (`index.html`). Er läuft getrennt vom Planer: Gespräche ändern den Tagesplan nicht, und Gesprächsinhalte gehen an ElevenLabs. Das Widget-Skript wird von unpkg geladen. Speech-to-Text im Planer, Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
+„Sprich mit Daylight“ verbindet ElevenLabs für Spracherkennung und Sprachausgabe mit Gemma 4 für Gespräch und Tool Calls. Ein klarer Sprachauftrag plant den Tag um und übernimmt einen gültigen Plan direkt; der Agent erklärt danach die tatsächlichen Änderungen. Rückfragen und Konflikte verändern den Plan nicht. Änderungen können per Stimme oder Schaltfläche rückgängig gemacht werden. Der bisherige Textablauf mit Vorschau und Bestätigung bleibt verfügbar. Das frühere, getrennte Widget wurde entfernt.
+
+Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
 
 ## Einstieg
 
@@ -36,6 +38,20 @@ npm run dev
 
 App: **http://localhost:3000**. Der lokale Server bindet ausschließlich an `127.0.0.1`. Optional `PORT` in `.env` ändern. Nach Änderungen der Konfiguration den Server neu starten.
 
+## Sprachdialog einrichten
+
+Mit `npx -y @elevenlabs/cli@latest onboard init` anmelden. Die CLI speichert `ELEVENLABS_API_KEY` in der ignorierten `.env.local`; der Server lädt diese Datei vor `.env`. Google/Gemma und ElevenLabs dürfen unterschiedliche Konten verwenden. Der konfigurierte ElevenLabs-Agent und dessen Key müssen dagegen zum selben ElevenLabs-Konto gehören.
+
+```sh
+npm run voice:setup -- https://DEINE-APP-ADRESSE
+```
+
+Der Befehl erstellt einen privaten ElevenLabs-Agenten im Konto des Keys, registriert `get_day_plan`, `replan_day` und `undo_last_change` mit Ergebniserwartung und verbindet Gemma als Custom LLM. Agent-ID und ein zufälliges gemeinsames Endpoint-Secret landen ausschließlich in der ignorierten `.env`. Erneutes Ausführen aktualisiert den dort konfigurierten Agenten. Ein fremder Agent aus einem anderen Konto wird nicht verwendet. `ELEVENLABS_VOICE_ID` kann vor der Einrichtung eine andere verfügbare Stimme wählen.
+
+Die App-Adresse muss für ElevenLabs öffentlich über HTTPS erreichbar sein; der Custom-LLM-Endpunkt ist `/api/voice/v1/chat/completions`. Für lokale Entwicklung denselben Code öffentlich hosten oder einen eigenen HTTPS-Tunnel konfigurieren. Browser benötigen Mikrofonfreigabe und HTTPS oder localhost. Während eines Gesprächs ist auch eine Texteingabe möglich.
+
+Audio und Transkripte werden durch ElevenLabs verarbeitet; Gespräch, Tool-Ergebnisse und für die Planung benötigte Tagesdaten gehen an Google. Die Schlüssel bleiben serverseitig. Der Browser erhält nur eine zeitlich begrenzte signierte Gesprächsadresse. Die App hält den aktuellen Plan und den Undo-Verlauf weiterhin lokal.
+
 ```sh
 npm test
 npm run build
@@ -46,13 +62,17 @@ npm start
 
 `npm run test:live` ruft mit dem lokal eingerichteten Key tatsächlich Gemma auf (synthetischer Zugverspätungs-Test, maximal ein Reparaturversuch) und verbraucht API-Kontingent.
 
+`npm run test:voice:live` prüft den Gemma-Gesprächszyklus einschließlich Tool Call, tatsächlicher Planänderung und anschließender Erklärung mit synthetischen Daten. Der Test benötigt den Google-Key und verbraucht API-Kontingent. `npm test` prüft zusätzlich Streaming, Tool-Rückgaben, Authentifizierung sowie Abbruch- und Konfliktfälle ohne externe Modellaufrufe.
+
 ## GitHub und Vercel
 
 Das Vercel-Projekt `hacktober-daylight` ist mit `finngck/Hacktober` verbunden. `main` ist der gemeinsame Produktionsstand; Featurebranches erhalten Vorschau-Deployments über die Git-Verbindung. Änderungen weiterhin per geprüftem PR integrieren.
 
-Vercel baut die Vite-Oberfläche aus `dist/` und führt die drei Dateien unter `api/` als Node-Funktionen aus. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. `vercel.json` enthält die Build-Konfiguration; die Umplanungsfunktion hat maximal 70 Sekunden Laufzeit.
+Vercel baut die Vite-Oberfläche aus `dist/` und führt die Dateien unter `api/` als Node-Funktionen aus, einschließlich des Voice-Catch-all-Endpunkts. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. Umplanung und Sprachendpunkt haben maximal 70 Sekunden Laufzeit.
 
 Den `GEMMA_API_KEY` ausschließlich als geheime serverseitige Vercel-Umgebungsvariable hinterlegen. `.env` und die lokale Schlüsseldatei werden nicht hochgeladen. Zusätzliche eigene Hostnamen können mit `APP_HOSTS` (kommagetrennt, ohne Protokoll) freigegeben werden; die Vercel-Deployment-, Branch- und Produktionsadressen werden automatisch berücksichtigt.
+
+Für Sprache zusätzlich `ELEVENLABS_API_KEY` und `VOICE_LLM_SECRET` als Vercel-Secrets sowie `ELEVENLABS_AGENT_ID` als serverseitige Konfiguration setzen. Das Endpoint-Secret muss mit dem bei ElevenLabs hinterlegten Custom-LLM-Secret übereinstimmen. Nach Änderungen neu deployen. Keine dieser Variablen mit `VITE_` präfixieren.
 
 Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Verlauf, keine GitHub- oder Vercel-Tokens. Browserdaten bleiben pro Gerät und Domain lokal; es gibt noch keine gemeinsame Datenspeicherung.
 
@@ -61,13 +81,16 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `GET /api/health`: lokale Konfiguration (`configured`, `model`); bestätigt keine externe Erreichbarkeit.
 - `GET /api/versions`: öffentliche GitHub-Commits und erfolgreiche Deployment-Links, kurz zwischengespeichert.
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
+- `GET /api/voice/status`: meldet, ob die Sprachkonfiguration vorhanden ist, ohne Schlüssel auszugeben.
+- `POST /api/voice/session`: erstellt serverseitig eine kurzlebige signierte ElevenLabs-Gesprächsadresse.
+- `POST /api/voice/v1/chat/completions`: authentifizierter Custom-LLM-Adapter, der Gemma-Text und Tool Calls als SSE an ElevenLabs streamt. Dieser Server-Aufruf benötigt `Authorization: Bearer VOICE_LLM_SECRET`.
 - `server/gemma.ts`: Google-REST-Adapter mit `gemma-4-26b-a4b-it` als Standard; über `GEMMA_MODEL` auf ein anderes freigegebenes Gemma-4-Modell umstellbar. [Offizielle Modell-Dokumentation](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
 - `src/components/Timeline.tsx`: Tagesansicht und Vergleich. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
 
 Gemma interpretiert die Nachricht, priorisiert die Aufgaben und begründet Abwägungen. Der regelbasierte Scheduler setzt sie in freie Zeitfenster: zunächst heutige Fristen und bei wenig Energie bestehende Erholungspausen, danach die übrigen Aufgaben nach Modellpriorität. Bereits passende optionale Startzeiten bleiben erhalten. Der Server prüft den fertigen Vorschlag zusätzlich auf eindeutige Aufgaben-IDs, vollständige Erhaltung der Aufgaben, unveränderte Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und explizit ausgeschlossene Aktivitätstags. Eine ungültige Modellinterpretation erhält maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
 
-`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Nur eine ausdrückliche Bestätigung ändert den aktiven Plan. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Das Verständnis natürlicher Sprache und die Qualität der Begründung bleiben Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet.
+`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Textvorschläge brauchen eine Bestätigung; ein ausdrücklicher Sprachauftrag übernimmt den validierten Plan direkt mit Undo. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Das Verständnis natürlicher Sprache und die Qualität der Begründung bleiben Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet.
 
 ## Saubere Arbeitskopie aktualisieren
 

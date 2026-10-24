@@ -29,6 +29,8 @@ import { Icon } from './components/Icon';
 import { Timeline } from './components/Timeline';
 import { AddTask } from './components/AddTask';
 import { CheckInPanel } from './components/CheckInPanel';
+import { VoicePanel } from './components/VoicePanel';
+import { describeDay, executeVoiceReplan } from './voice-tools';
 
 export default function App() {
   const [workspace, setWorkspace] = useState(loadWorkspace);
@@ -42,6 +44,7 @@ export default function App() {
   const proposalHeading = useRef<HTMLHeadingElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const requestController = useRef<AbortController | null>(null);
+  const workspaceRef = useRef(workspace);
   const { plan, checkIn } = workspace;
   const proposal = response?.proposedPlan;
   const changedItems =
@@ -59,6 +62,7 @@ export default function App() {
   }).format(new Date(`${plan.date}T12:00:00+02:00`));
 
   useEffect(() => {
+    workspaceRef.current = workspace;
     setStorageAvailable(saveWorkspace(workspace));
   }, [workspace]);
   useEffect(() => {
@@ -127,6 +131,69 @@ export default function App() {
       setBusy(false);
       requestController.current = null;
     }
+  }
+  async function voiceReplan(change: string, signal: AbortSignal) {
+    if (requestController.current || busy)
+      return { status: 'error', summary: 'Es läuft bereits eine Planung. Bitte kurz warten.' };
+    const controller = new AbortController();
+    requestController.current = controller;
+    setBusy(true);
+    clearDraft();
+    setMessage(change);
+    try {
+      return await executeVoiceReplan(change, {
+        read: () => workspaceRef.current,
+        signal,
+        request: async (source, text) => {
+          const result = await fetch('/api/replan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.any([signal, controller.signal]),
+            body: JSON.stringify({ plan: source.plan, checkIn: source.checkIn, message: text }),
+          });
+          const body = await result.json();
+          if (!result.ok) throw new Error(body.error || 'Der Plan konnte nicht erstellt werden.');
+          return body;
+        },
+        commit: (next) => {
+          workspaceRef.current = next;
+          setWorkspace(next);
+          setResponse(null);
+          setMessage('');
+          setNotice('Dein Tagesplan wurde im Gespräch angepasst.');
+        },
+        showResult: setResponse,
+      });
+    } catch (problem) {
+      const summary = signal.aborted
+        ? 'Die Planung wurde abgebrochen.'
+        : problem instanceof Error
+          ? problem.message
+          : 'Die Planung ist fehlgeschlagen.';
+      if (!signal.aborted) setError(summary);
+      return { status: 'error', summary };
+    } finally {
+      requestController.current = null;
+      setBusy(false);
+    }
+  }
+  function voiceUndo() {
+    if (requestController.current || busy)
+      return { status: 'error', summary: 'Es läuft gerade eine Planung.' };
+    const source = workspaceRef.current;
+    const previous = source.history.at(-1);
+    if (!previous)
+      return { status: 'error', summary: 'Es gibt keine Änderung zum Rückgängigmachen.' };
+    const next = { ...source, ...previous, history: source.history.slice(0, -1) };
+    workspaceRef.current = next;
+    setWorkspace(next);
+    clearDraft();
+    setNotice('Die letzte Änderung wurde rückgängig gemacht.');
+    return {
+      status: 'applied',
+      summary: 'Die letzte Änderung wurde rückgängig gemacht.',
+      plan: describeDay(next),
+    };
   }
   function acceptPlan() {
     if (!proposal || !response) return;
@@ -331,6 +398,12 @@ export default function App() {
               )}
             </section>
             <aside className="copilot-column" aria-label="Check-in und Planänderung">
+              <VoicePanel
+                busy={busy}
+                getDay={() => describeDay(workspaceRef.current)}
+                replan={voiceReplan}
+                undo={voiceUndo}
+              />
               <CheckInPanel checkIn={checkIn} disabled={busy} onChange={changeCheckIn} />
               <section className="copilot-panel" aria-labelledby="copilot-title">
                 <div className="copilot-heading">
@@ -486,7 +559,8 @@ export default function App() {
               <p className="control-note">
                 <Icon icon={LockKeyIcon} size={16} />
                 <span>
-                  Du entscheidest. Änderungen werden erst übernommen, wenn du sie bestätigst.
+                  Textvorschläge bestätigst du selbst. Klare Sprachaufträge werden direkt umgesetzt
+                  und lassen sich rückgängig machen.
                 </span>
               </p>
             </aside>

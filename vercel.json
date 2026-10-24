@@ -3,6 +3,9 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "functions": { "api/replan.ts": { "maxDuration": 70 } },
+  "functions": {
+    "api/replan.ts": { "maxDuration": 70 },
+    "api/voice/[...path].ts": { "maxDuration": 70 }
+  },
   "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
 }
