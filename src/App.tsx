@@ -18,6 +18,7 @@ import {
   replanResponseSchema,
   formatTime,
   validatePlan,
+  hasItemChanged,
   energyLabels,
   type CheckIn,
   type ReplanResponse,
@@ -51,8 +52,11 @@ export default function App() {
   const { plan, checkIn } = workspace;
   const proposal = response?.proposedPlan;
   const changedItems =
-    proposal?.items.filter(
-      (item) => plan.items.find((before) => before.id === item.id)?.start !== item.start,
+    proposal?.items.filter((item) =>
+      hasItemChanged(
+        plan.items.find((before) => before.id === item.id),
+        item,
+      ),
     ) ?? [];
   const fixedCount = plan.items.filter(
     (item) => item.fixed && item.start !== null && item.start >= plan.now,

@@ -12,7 +12,10 @@ React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Di
 
 „Sprich mit Daylight“ verbindet ElevenLabs für Spracherkennung und Sprachausgabe mit Gemma 4 für Gespräch und Tool Calls. Ein klarer Sprachauftrag plant den Tag um und übernimmt einen gültigen Plan direkt; der Agent erklärt danach die tatsächlichen Änderungen. Rückfragen und Konflikte verändern den Plan nicht. Änderungen können per Stimme oder Schaltfläche rückgängig gemacht werden. Der bisherige Textablauf mit Vorschau und Bestätigung bleibt verfügbar. Das frühere, getrennte Widget wurde entfernt.
 
-Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
+Kalender-/Wearable-Anbindungen und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
+
+Screenshot-Import liest Aufgaben aus einem Bild und zeigt sie zur Prüfung und Korrektur an; erst eine Bestätigung fügt sie dem Plan hinzu.
+
 
 ## Einstieg
 
@@ -62,7 +65,7 @@ npm start
 
 `npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln und den Gemma-Adapter. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
 
-`npm run test:live` ruft mit dem lokal eingerichteten Key tatsächlich Gemma auf (synthetischer Zugverspätungs-Test, maximal ein Reparaturversuch) und verbraucht API-Kontingent.
+`npm run test:live` prüft fünf synthetische Fälle mit dem lokal eingerichteten Gemma-Key: ausdrücklich verschobener fester Termin, Zugverspätung mit wenig Energie, zusätzliche Marketing-Klausur, Bearbeitung vorhandener Marketing-Lernzeit und neue Aufgabe zusammen mit geänderter Verfügbarkeit. Jeder Fall erlaubt maximal einen Reparaturversuch; der Befehl verbraucht API-Kontingent.
 
 `npm run test:voice:live` prüft den Gemma-Gesprächszyklus einschließlich Tool Call, tatsächlicher Planänderung und anschließender Erklärung mit synthetischen Daten. Der Test benötigt den Google-Key und verbraucht API-Kontingent. `npm test` prüft zusätzlich Streaming, Tool-Rückgaben, Authentifizierung sowie Abbruch- und Konfliktfälle ohne externe Modellaufrufe.
 
@@ -70,7 +73,8 @@ npm start
 
 Das Vercel-Projekt `hacktober-daylight` ist mit `finngck/Hacktober` verbunden. `main` ist der gemeinsame Produktionsstand; Featurebranches erhalten Vorschau-Deployments über die Git-Verbindung. Änderungen weiterhin per geprüftem PR integrieren.
 
-Vercel baut die Vite-Oberfläche aus `dist/` und führt die Dateien unter `api/` als Node-Funktionen aus, einschließlich des Voice-Catch-all-Endpunkts. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. Umplanung und Sprachendpunkt haben maximal 70 Sekunden Laufzeit.
+Vercel baut die Vite-Oberfläche aus `dist/` und führt die Dateien unter `api/` als Node-Funktionen aus, einschließlich des Voice-Catch-all-Endpunkts. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. Umplanung und Sprachendpunkt haben maximal 70 Sekunden Laufzeit. Der Screenshot-Import begrenzt seine höchstens zwei Modellversuche auf jeweils 25 Sekunden, damit sie innerhalb seiner 60 Sekunden Funktionslaufzeit abschließen.
+
 
 Relative Imports im von Node geladenen Servercode verwenden explizite `.js`-Endungen. Bei Fork-PRs kann der Vercel-Check zunächst eine Freigabe durch ein Teammitglied verlangen; der Link steht im Bot-Kommentar am PR. Vor der Integration Build und betroffene API in der Preview prüfen, danach den Produktionsstand. Der konkrete Ablauf steht im [Arbeitsablauf](docs/workflow.md#vercel-vor-und-nach-dem-merge).
 
@@ -84,7 +88,7 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 
 - `GET /api/health`: lokale Konfiguration (`configured`, `model`); bestätigt keine externe Erreichbarkeit.
 - `GET /api/versions`: öffentliche GitHub-Commits und erfolgreiche Deployment-Links, kurz zwischengespeichert.
-- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Ob das konfigurierte Gemma-Modell Bilder verarbeitet, ist mit `npm run test:live` noch nicht geprüft.
+- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Vorübergehende Providerfehler und ungültige Antworten teilen sich ein Limit von insgesamt zwei Modellaufrufen.
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `GET /api/voice/status`: meldet, ob die Sprachkonfiguration vorhanden ist, ohne Schlüssel auszugeben.
 - `POST /api/voice/session`: erstellt serverseitig eine kurzlebige signierte ElevenLabs-Gesprächsadresse.
@@ -93,11 +97,12 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
 - `src/components/Timeline.tsx`: Tagesansicht und Vergleich. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
 
-Gemma interpretiert die Nachricht, priorisiert die Aufgaben und begründet Abwägungen. Der regelbasierte Scheduler setzt sie in freie Zeitfenster: zunächst heutige Fristen und bei wenig Energie bestehende Erholungspausen, danach die übrigen Aufgaben nach Modellpriorität. Bereits passende optionale Startzeiten bleiben erhalten. Der Server prüft den fertigen Vorschlag zusätzlich auf eindeutige Aufgaben-IDs, vollständige Erhaltung der Aufgaben, unveränderte Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und explizit ausgeschlossene Aktivitätstags. Eine ungültige Modellinterpretation erhält maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
+Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task`, `update_task`, `move_task`, `prioritize_tasks`, `defer_tasks`, `update_day_context`, `replan_day` und `ask_clarification`. Der Server prüft die vollständige Aufrufserie und führt sie auf einer Kopie aus. Aufgabenänderungen brauchen ein wörtliches Zitat aus der Nachricht; unbekannte Tools, Argumente, IDs sowie Änderungen an begonnenen Blöcken werden abgelehnt. Feste zukünftige Termine lassen sich ausschließlich über `move_task` auf ausdrücklichen Nutzerwunsch verschieben. Neue Aufgaben verwenden feste Bausteine (z. B. Klausurvorbereitung: 90 Minuten, hohe Priorität), wenn keine Dauer genannt wurde. Eine weitere Klausur erzeugt eine eigene Lernaufgabe; explizite Korrekturen bearbeiten die passende bestehende Aufgabe.
 
-Feste zukünftige Termine werden nur auf ausdrücklichen Nutzerwunsch verschoben, etwa „Team-Meeting 15 Minuten früher“. Begonnene oder vergangene Blöcke bleiben unverändert; Fristen, Tagesgrenzen und Überschneidungen werden auch bei ausdrücklich gewünschten Verschiebungen geprüft.
+Der regelbasierte Scheduler reserviert zuerst heutige Fristen und Erholung, dann neu angeforderte oder bearbeitete Aufgaben, danach optionale Arbeit. Bereits passende Startzeiten bleiben möglichst erhalten; bei Platzproblemen folgt ein verdichteter Versuch. Eine angeforderte Aufgabe wird eingeplant oder erzeugt einen sichtbaren Konflikt. Zusammenfassung und Änderungsgründe entstehen aus dem tatsächlich berechneten Vorschlag. Alle bestehenden Aufgaben bleiben erhalten, auch wenn sie heute offen sind. Der Server prüft zusätzlich Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und Ausschlüsse. Ungültige Tool-Aufrufe erhalten maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
 
-`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Textvorschläge brauchen eine Bestätigung; ein ausdrücklicher Sprachauftrag übernimmt den validierten Plan direkt mit Undo. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Das Verständnis natürlicher Sprache und die Qualität der Begründung bleiben Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet.
+`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Textvorschläge brauchen eine Bestätigung; ein ausdrücklicher Sprachauftrag übernimmt den validierten Plan direkt mit Undo. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Die Auswahl der passenden Tools und Argumente bleibt Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet. Die Anbindung folgt Googles [Gemma Function-Calling-Schnittstelle](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api#function-calling).
+
 
 ## Saubere Arbeitskopie aktualisieren
 
@@ -119,3 +124,7 @@ Vier Instanzen arbeiten in getrennten lokalen Klonen und auf eigenen Branches. �
 - [Offene Entscheidungen](docs/open-questions.md)
 
 Produktideen und optionale Erweiterungen bleiben in Notion. Das Repository dokumentiert bestätigte Entscheidungen und den tatsächlich implementierten Stand.
+
+## Lizenz
+
+Das Projekt steht unter der [MIT-Lizenz](LICENSE).

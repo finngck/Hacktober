@@ -91,7 +91,9 @@ test('caffeine respects the daily maximum and the cutoff before bedtime', () => 
 });
 
 test('the Gemma adapter returns engine-selected measures from the reported signals', async () => {
-  const response = await generatePlan(request(), {
+  const source = request();
+  source.message = 'Ich habe nur fünf Stunden geschlafen und wenig Energie. Ich nicke weg.';
+  const response = await generatePlan(source, {
     apiKey: 'test',
     model: 'gemma-4-26b-a4b-it',
     fetcher: async () =>
@@ -102,18 +104,20 @@ test('the Gemma adapter returns engine-selected measures from the reported signa
               content: {
                 parts: [
                   {
-                    text: JSON.stringify({
-                      status: 'ready',
-                      summary: 'Wichtiges zuerst.',
-                      availabilityFrom: 840,
-                      energy: 'low',
-                      sleepHours: 5,
-                      question: null,
-                      taskOrder: ['study', 'break', 'inbox'],
-                      deferIds: ['project', 'gym'],
-                      reasons: [],
-                      signals: { sekundenschlaf: true },
-                    }),
+                    functionCall: {
+                      name: 'update_day_context',
+                      args: {
+                        energy: 'low',
+                        sleepHours: 5,
+                        source: source.message,
+                      },
+                    },
+                  },
+                  {
+                    functionCall: {
+                      name: 'update_day_context',
+                      args: { signals: { sekundenschlaf: true }, source: 'Ich nicke weg.' },
+                    },
                   },
                 ],
               },
@@ -129,9 +133,12 @@ test('the Gemma adapter returns engine-selected measures from the reported signa
 
 test('nap advice follows the proposed plan, not the replaced one', async () => {
   const state = { energy: 'low' as const, sleepHours: 5 };
-  const before = ids(selectMeasures(request(), state, { schlaefrig: true }));
+  const source = request();
+  source.message =
+    'Ich habe fünf Stunden geschlafen, bin schläfrig und habe wenig Energie. Bitte Statistik-Lernen auf 13 Uhr vorziehen.';
+  const before = ids(selectMeasures(source, state, { schlaefrig: true }));
   assert.ok(before.actions.includes('NAP_KURZ'));
-  const response = await generatePlan(request(), {
+  const response = await generatePlan(source, {
     apiKey: 'test',
     model: 'gemma-4-26b-a4b-it',
     fetcher: async () =>
@@ -142,17 +149,26 @@ test('nap advice follows the proposed plan, not the replaced one', async () => {
               content: {
                 parts: [
                   {
-                    text: JSON.stringify({
-                      status: 'ready',
-                      summary: 'Lernen direkt jetzt.',
-                      availabilityFrom: 780,
-                      ...state,
-                      question: null,
-                      taskOrder: ['study', 'break', 'inbox'],
-                      deferIds: ['project', 'gym'],
-                      reasons: [],
-                      signals: { schlaefrig: true },
-                    }),
+                    functionCall: {
+                      name: 'update_day_context',
+                      args: {
+                        ...state,
+                        signals: { schlaefrig: true },
+                        source:
+                          'Ich habe fünf Stunden geschlafen, bin schläfrig und habe wenig Energie.',
+                      },
+                    },
+                  },
+                  {
+                    functionCall: {
+                      name: 'move_task',
+                      args: {
+                        id: 'study',
+                        start: 780,
+                        shiftMinutes: null,
+                        source: 'Statistik-Lernen auf 13 Uhr vorziehen.',
+                      },
+                    },
                   },
                 ],
               },
