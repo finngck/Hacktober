@@ -15,6 +15,17 @@ cd Hacktober
 
 Vor Änderungen [AGENTS.md](AGENTS.md) und den [Arbeitsablauf](docs/workflow.md) lesen. Claude Code lädt die Regeln über [CLAUDE.md](CLAUDE.md).
 
+## Saubere Arbeitskopie aktualisieren
+
+Laufende Arbeit zuerst auf dem eigenen Branch sichern (committen). Danach `main` aktualisieren:
+
+```sh
+git switch main
+git pull --ff-only origin main
+```
+
+Schlägt `--ff-only` fehl, abbrechen und nichts zurücksetzen; den Stand klären, statt ihn zu überschreiben.
+
 ## Zusammenarbeit
 
 Vier Instanzen arbeiten in getrennten lokalen Klonen und auf eigenen Branches. Änderungen kommen als Pull Requests nach `main`. Finns Instanz prüft und integriert sie.
