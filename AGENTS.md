@@ -20,9 +20,9 @@
 ## Parallele Arbeit
 
 - Jede Instanz nutzt einen eigenen lokalen Klon oder Worktree und einen eigenen Branch ab dem aktuellen `origin/main`.
-- Bearbeite nur den zugewiesenen Bereich. Stimme notwendige Änderungen an gemeinsamen Schnittstellen mit Finns Integrationsinstanz ab.
+- Bearbeite nur den zugewiesenen Bereich. Stimme notwendige Änderungen an gemeinsamen Schnittstellen mit den beteiligten Instanzen ab.
 - Kleine, zusammenhängende PRs. Keine fremden Änderungen überschreiben, keine Force-Pushes, kein Push auf `main`.
-- Nur Finns beauftragte Instanz führt PRs zusammen. Sie prüft Diff, Umfang, aktuellen PR-Head und vorhandene Checks. Kein ungeprüftes Auto-Merge und kein Umgehen von Schutzregeln.
+- Alle Teammitglieder mit GitHub-Schreibrechten und ihre beauftragten Instanzen dürfen PRs im bestätigten Auftragsumfang nach `main` mergen; eine gesonderte Freigabe durch Finn ist dafür nicht nötig. Vor jedem Merge Diff, Umfang, aktuellen PR-Head und vorhandene Checks prüfen. Kein ungeprüftes Auto-Merge und kein Umgehen von Schutzregeln.
 - Diese Regeln und CODEOWNERS ersetzen keine technisch konfigurierte Branch Protection.
 - Wenn Schreibrechte fehlen, nutze einen Fork und einen PR zum Ursprungsrepo. Teile keine Logins oder Tokens.
 

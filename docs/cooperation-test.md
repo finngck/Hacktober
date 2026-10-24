@@ -2,9 +2,9 @@
 
 **Auftrag:** Nur Klonen, Zugriff, getrennte Branches, kleine Doku-PRs und Integration testen. Keine Produktfeatures, Dependencies, App-Gerüste oder Übernahme von Brainstorming.
 
-Prompt 1 gehört in Finns Instanz, Prompts 2–4 jeweils in eine andere Instanz. Jede Person kopiert ihren ganzen Prompt. Die Aufgaben bearbeiten getrennte Dateien. Die Anmeldung muss auf jedem Rechner separat funktionieren; ein Login in einer anderen App reicht dafür nicht aus.
+Prompt 1 gehört in Finns Instanz, Prompts 2–4 jeweils in eine andere Instanz. Jede Person kopiert ihren ganzen Prompt. Die Aufgaben bearbeiten getrennte Dateien. Alle beauftragten Instanzen mit GitHub-Schreibrechten dürfen passende Test-PRs nach Prüfung gemäß [Arbeitsablauf](workflow.md) mergen. Die Anmeldung muss auf jedem Rechner separat funktionieren; ein Login in einer anderen App reicht dafür nicht aus.
 
-**Erfolg:** Vier echte PRs sind im Ursprungsrepo erstellt, von Finns Instanz geprüft und gemergt. Jede Instanz kann den gemeinsamen Stand holen. Ein erfolgreicher öffentlicher Klon allein genügt nicht. Belege bleiben in den PRs; diese einmaligen Startaufträge können nach dem Test gelöscht werden.
+**Erfolg:** Vier echte PRs sind im Ursprungsrepo erstellt, von beauftragten Instanzen geprüft und gemergt. Jede Instanz kann den gemeinsamen Stand holen. Ein erfolgreicher öffentlicher Klon allein genügt nicht. Belege bleiben in den PRs; diese einmaligen Startaufträge können nach dem Test gelöscht werden.
 
 ## Prompt 1 — Finn: eigener Test-PR und Integration
 
@@ -77,9 +77,11 @@ Nur ein kleiner Dokumentations-PR, keine Features oder Dependencies.
    docs: explain clean local main updates
    Nutze die vorhandene PR-Vorlage und echte Prüfergebnisse; für die
    Beschreibung eine temporäre Datei und gh pr create --body-file nutzen.
-6. Gib PR-Link und etwaige Zugriffsprobleme hier aus. Merge nicht selbst.
-   Finns Instanz übernimmt die Integration. Hole nach deren Merge den
-   gemeinsamen Stand; bestätige erst dann, dass deine Änderung enthalten ist.
+6. Gib PR-Link und etwaige Zugriffsprobleme hier aus. Prüfe und merge den
+   PR bei eigenen Schreibrechten gemäß docs/workflow.md; andernfalls
+   übergib ihn an eine beauftragte Instanz mit Schreibrechten. Hole nach
+   dem Merge den gemeinsamen Stand; bestätige erst dann, dass deine
+   Änderung enthalten ist.
 
 Keine weiteren Dateien, Produktideen, Statuslogs oder Featureänderungen.
 ```
@@ -110,9 +112,11 @@ Nur ein kleiner Dokumentations-PR, keine Features oder Dependencies.
    finngck/Hacktober:main. Titel: docs: explain working branch updates
    Verwende die vorhandene PR-Vorlage mit tatsächlichen Ergebnissen und
    gh pr create --body-file mit einer temporären Beschreibungsdatei.
-6. Gib den PR-Link und offene Zugriffsprobleme hier aus. Merge nicht selbst;
-   Finns Instanz integriert. Hole nach deren Merge den gemeinsamen Stand
-   und bestätige erst dann, dass deine Änderung auf main angekommen ist.
+6. Gib den PR-Link und offene Zugriffsprobleme hier aus. Prüfe und merge
+   den PR bei eigenen Schreibrechten gemäß docs/workflow.md; andernfalls
+   übergib ihn an eine beauftragte Instanz mit Schreibrechten. Hole nach
+   dem Merge den gemeinsamen Stand und bestätige erst dann, dass deine
+   Änderung auf main angekommen ist.
 
 Keine weiteren Dateien, Produktideen, Statuslogs oder Featureänderungen.
 ```
@@ -141,9 +145,11 @@ Nur ein kleiner Dokumentations-PR, keine Features oder Dependencies.
    docs: add documentation source check to pull requests
    Verwende die Vorlage einschließlich des neuen Punkts und tatsächliche
    Prüfergebnisse. Nutze gh pr create --body-file mit temporärer Datei.
-6. Gib PR-Link und offene Zugriffsprobleme hier aus. Merge nicht selbst.
-   Finns Instanz übernimmt. Hole nach deren Merge den gemeinsamen Stand
-   und bestätige erst dann, dass deine Änderung auf main angekommen ist.
+6. Gib PR-Link und offene Zugriffsprobleme hier aus. Prüfe und merge den
+   PR bei eigenen Schreibrechten gemäß docs/workflow.md; andernfalls
+   übergib ihn an eine beauftragte Instanz mit Schreibrechten. Hole nach
+   dem Merge den gemeinsamen Stand und bestätige erst dann, dass deine
+   Änderung auf main angekommen ist.
 
 Keine weiteren Dateien, Produktideen, Statuslogs oder Featureänderungen.
 ```
