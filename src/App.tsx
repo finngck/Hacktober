@@ -31,11 +31,13 @@ import { AddTask } from './components/AddTask';
 import { CheckInPanel } from './components/CheckInPanel';
 import { VoicePanel } from './components/VoicePanel';
 import { describeDay, executeVoiceReplan } from './voice-tools';
+import { EnergyMeasures } from './components/EnergyMeasures';
 
 export default function App() {
   const [workspace, setWorkspace] = useState(loadWorkspace);
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState<ReplanResponse | null>(null);
+  const [voiceResult, setVoiceResult] = useState<ReplanResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -82,6 +84,7 @@ export default function App() {
 
   function clearDraft() {
     setResponse(null);
+    setVoiceResult(null);
     setError('');
     setNotice('');
   }
@@ -163,6 +166,7 @@ export default function App() {
           setNotice('Dein Tagesplan wurde im Gespräch angepasst.');
         },
         showResult: setResponse,
+        showApplied: setVoiceResult,
       });
     } catch (problem) {
       const summary = signal.aborted
@@ -404,6 +408,13 @@ export default function App() {
                 replan={voiceReplan}
                 undo={voiceUndo}
               />
+              {voiceResult && (
+                <section className="voice-panel" aria-label="Ergebnis des Sprachauftrags">
+                  <h3>Dein Tag ist angepasst</h3>
+                  <p className="voice-description">{voiceResult.result.summary}</p>
+                  <EnergyMeasures measures={voiceResult.measures} />
+                </section>
+              )}
               <CheckInPanel checkIn={checkIn} disabled={busy} onChange={changeCheckIn} />
               <section className="copilot-panel" aria-labelledby="copilot-title">
                 <div className="copilot-heading">
@@ -509,6 +520,7 @@ export default function App() {
                     {response.result.question && (
                       <p className="clarifying-question">{response.result.question}</p>
                     )}
+                    <EnergyMeasures measures={response.measures} />
                     {proposal && (
                       <>
                         <div className="understood">

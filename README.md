@@ -6,6 +6,8 @@ Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [No
 
 Der lokale Daylight-Prototyp setzt den Textablauf aus **Chat Core Features** um: Beispieltag und Check-in → Änderung eingeben → Gemma-4-Vorschlag → Vorher/Nachher prüfen → übernehmen oder verwerfen. Aufgaben können ergänzt, Änderungen rückgängig gemacht und der Beispieltag zurückgesetzt werden.
 
+Bei weniger als 7 Stunden Schlaf oder wenig Energie zeigt der Vorschlag bis zu drei Maßnahmen bzw. Maßgaben und bis zu zwei Restriktionen aus dem Maßnahmen-Pool in `shared/measures.ts`. Gemma meldet nur, was die Nachricht ausdrücklich nennt (z. B. Schläfrigkeit oder bisheriges Koffein); die Auswahl, Sperren und Ausschlüsse aus dem Check-in prüft der Code. Tagesbeginn und -ende gelten dabei als Aufwach- und Schlafenszeit.
+
 React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Die Icons kommen aus HugeIcons. Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
 
 „Sprich mit Daylight“ verbindet ElevenLabs für Spracherkennung und Sprachausgabe mit Gemma 4 für Gespräch und Tool Calls. Ein klarer Sprachauftrag plant den Tag um und übernimmt einen gültigen Plan direkt; der Agent erklärt danach die tatsächlichen Änderungen. Rückfragen und Konflikte verändern den Plan nicht. Änderungen können per Stimme oder Schaltfläche rückgängig gemacht werden. Der bisherige Textablauf mit Vorschau und Bestätigung bleibt verfügbar. Das frühere, getrennte Widget wurde entfernt.
@@ -70,6 +72,8 @@ Das Vercel-Projekt `hacktober-daylight` ist mit `finngck/Hacktober` verbunden. `
 
 Vercel baut die Vite-Oberfläche aus `dist/` und führt die Dateien unter `api/` als Node-Funktionen aus, einschließlich des Voice-Catch-all-Endpunkts. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. Umplanung und Sprachendpunkt haben maximal 70 Sekunden Laufzeit.
 
+Relative Imports im von Node geladenen Servercode verwenden explizite `.js`-Endungen. Bei Fork-PRs kann der Vercel-Check zunächst eine Freigabe durch ein Teammitglied verlangen; der Link steht im Bot-Kommentar am PR. Vor der Integration Build und betroffene API in der Preview prüfen, danach den Produktionsstand. Der konkrete Ablauf steht im [Arbeitsablauf](docs/workflow.md#vercel-vor-und-nach-dem-merge).
+
 Den `GEMMA_API_KEY` ausschließlich als geheime serverseitige Vercel-Umgebungsvariable hinterlegen. `.env` und die lokale Schlüsseldatei werden nicht hochgeladen. Zusätzliche eigene Hostnamen können mit `APP_HOSTS` (kommagetrennt, ohne Protokoll) freigegeben werden; die Vercel-Deployment-, Branch- und Produktionsadressen werden automatisch berücksichtigt.
 
 Für Sprache zusätzlich `ELEVENLABS_API_KEY` und `VOICE_LLM_SECRET` als Vercel-Secrets sowie `ELEVENLABS_AGENT_ID` als serverseitige Konfiguration setzen. Das Endpoint-Secret muss mit dem bei ElevenLabs hinterlegten Custom-LLM-Secret übereinstimmen. Nach Änderungen neu deployen. Keine dieser Variablen mit `VITE_` präfixieren.
@@ -89,6 +93,8 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `src/components/Timeline.tsx`: Tagesansicht und Vergleich. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
 
 Gemma interpretiert die Nachricht, priorisiert die Aufgaben und begründet Abwägungen. Der regelbasierte Scheduler setzt sie in freie Zeitfenster: zunächst heutige Fristen und bei wenig Energie bestehende Erholungspausen, danach die übrigen Aufgaben nach Modellpriorität. Bereits passende optionale Startzeiten bleiben erhalten. Der Server prüft den fertigen Vorschlag zusätzlich auf eindeutige Aufgaben-IDs, vollständige Erhaltung der Aufgaben, unveränderte Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und explizit ausgeschlossene Aktivitätstags. Eine ungültige Modellinterpretation erhält maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
+
+Feste zukünftige Termine werden nur auf ausdrücklichen Nutzerwunsch verschoben, etwa „Team-Meeting 15 Minuten früher“. Begonnene oder vergangene Blöcke bleiben unverändert; Fristen, Tagesgrenzen und Überschneidungen werden auch bei ausdrücklich gewünschten Verschiebungen geprüft.
 
 `start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Textvorschläge brauchen eine Bestätigung; ein ausdrücklicher Sprachauftrag übernimmt den validierten Plan direkt mit Undo. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Das Verständnis natürlicher Sprache und die Qualität der Begründung bleiben Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet.
 

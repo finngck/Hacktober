@@ -47,6 +47,7 @@ function proposedResponse() {
       },
     ),
     meta: { model: 'gemma-4-26b-a4b-it', elapsedMs: 20, attempts: 1 },
+    measures: { actions: [], restrictions: [] },
   };
 }
 

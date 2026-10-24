@@ -21,6 +21,7 @@ export async function executeVoiceReplan(
     request: (workspace: Workspace, message: string) => Promise<unknown>;
     commit: (workspace: Workspace) => void;
     showResult: (response: ReturnType<typeof replanResponseSchema.parse>) => void;
+    showApplied?: (response: ReturnType<typeof replanResponseSchema.parse>) => void;
     signal: AbortSignal;
   },
 ) {
@@ -81,5 +82,6 @@ export async function executeVoiceReplan(
     history: [...source.history, { plan: source.plan, checkIn: source.checkIn }].slice(-5),
   };
   dependencies.commit(next);
+  dependencies.showApplied?.(response);
   return { status: 'applied', summary: response.result.summary, changes, plan: describeDay(next) };
 }
