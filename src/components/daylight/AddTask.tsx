@@ -27,7 +27,7 @@ import { ChoiceGroup, ChoiceItem } from './Choice';
 import { DaylightSlider } from './DaylightSlider';
 import { categoryIcons } from './Timeline';
 
-const priorities = { high: 'High', medium: 'Medium', low: 'Low' } as const;
+export const priorities = { high: 'High', medium: 'Medium', low: 'Low' } as const;
 const initial = {
   title: '',
   duration: 45,
