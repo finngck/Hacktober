@@ -1,5 +1,6 @@
 import {
   formatTime,
+  energyLevelOf,
   hasItemChanged,
   materializeProposal,
   type Energy,
@@ -59,6 +60,7 @@ export function scheduleFromIntent(
     summary: intent.summary,
     availabilityFrom: intent.availabilityFrom,
     energy: intent.energy,
+    energyLevel: energyLevelOf({ energy: intent.energy, energyLevel: checkIn.energyLevel }),
     sleepHours: intent.sleepHours,
     question: null,
   };

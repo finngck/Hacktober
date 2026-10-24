@@ -8,7 +8,8 @@ import {
   BatteryMedium01Icon,
 } from '@hugeicons/core-free-icons';
 import {
-  energyLabels,
+  energyLevelLabels,
+  energyLevelOf,
   formatTime,
   type ReplanResponse,
   type ScheduleItem,
@@ -208,7 +209,7 @@ export function CopilotPanel({
                 </li>
                 <li className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
                   <Icon icon={BatteryMedium01Icon} size={14} />
-                  Energie {energyLabels[result.energy].toLowerCase()}
+                  Energie {energyLevelLabels[energyLevelOf(result) - 1].toLowerCase()}
                 </li>
               </ul>
               <p className="text-sm text-muted-foreground">

@@ -56,6 +56,8 @@ export const modelResultSchema = z.object({
   summary: z.string().min(1).max(900),
   availabilityFrom: minute,
   energy: energySchema,
+  // Finer 1–5 level for display; follows the check-in unless the planner changed energy.
+  energyLevel: scale.optional(),
   sleepHours: z.number().min(0).max(16),
   question: z.string().max(500).nullable(),
   placements: z
@@ -120,14 +122,13 @@ export const categoryLabels: Record<Category, string> = {
   movement: 'Bewegung',
   social: 'Freizeit',
 };
-export const energyLabels: Record<Energy, string> = { low: 'Wenig', medium: 'Okay', high: 'Viel' };
 export const energyLevelLabels = ['Sehr niedrig', 'Niedrig', 'Okay', 'Hoch', 'Sehr hoch'] as const;
 /** The planner works with three levels; the check-in slider offers five. */
 export const energyFromLevel = (level: number): Energy =>
   level <= 2 ? 'low' : level >= 4 ? 'high' : 'medium';
 const defaultEnergyLevel: Record<Energy, number> = { low: 2, medium: 3, high: 4 };
 /** The stored fine level, unless the planner has since moved energy to another band. */
-export const energyLevelOf = (checkIn: Pick<CheckIn, 'energy' | 'energyLevel'>) =>
+export const energyLevelOf = (checkIn: { energy: Energy; energyLevel?: number }) =>
   checkIn.energyLevel !== undefined && energyFromLevel(checkIn.energyLevel) === checkIn.energy
     ? checkIn.energyLevel
     : defaultEnergyLevel[checkIn.energy];
