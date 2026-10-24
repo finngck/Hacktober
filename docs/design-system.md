@@ -18,7 +18,8 @@ Die einzige Quelle ist [`src/styles/theme.css`](../src/styles/theme.css). Die Na
 | Fläche     | `card`, `popover`                                | Karten, Dialoge, Popovers                      |
 | Text       | `foreground`, `muted-foreground`                 | Text, Nebentext                                |
 | Aktion     | `primary`, `accent`, `ring`                      | Hauptaktion, Auswahl, Fokus                    |
-| Kategorien | `category-{study,work,recovery,movement,social}` | Getönte Terminkarten (`bg-…/6`, `border-…/25`) |
+| Priorität  | `priority-{high,medium,low}`                     | Terminkarten: hoch dunkelgrün, niedrig hell    |
+| Kategorien | `category-{study,work,recovery,movement,social}` | Reserve für Kategorie-Akzente                  |
 | Status     | `success`, `warning`, `destructive`, `info`      | Rückmeldungen                                  |
 
 Radien leiten sich aus `--radius` ab (`rounded-lg` für Bedienelemente, `rounded-xl`/`rounded-2xl` für Blöcke und Karten). Rohe Farbwerte in `src/**/*.ts(x)` sind verboten. `tests/design-system.test.ts` prüft das.

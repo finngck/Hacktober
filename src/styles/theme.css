@@ -17,6 +17,12 @@
   --category-movement: #b0652f;
   --category-social: #a8506f;
 
+  /* Timeline blocks by priority: dark green for high, sage for medium, light sage for low. */
+  --priority-high: #3f5d4b;
+  --priority-high-foreground: #fffefa;
+  --priority-medium: #b7c7b4;
+  --priority-low: #e3eadd;
+
   /* coss ui semantic tokens */
   --background: #f3f1ea;
   --foreground: var(--ink);
@@ -86,6 +92,11 @@
   --color-category-recovery: var(--category-recovery);
   --color-category-movement: var(--category-movement);
   --color-category-social: var(--category-social);
+
+  --color-priority-high: var(--priority-high);
+  --color-priority-high-foreground: var(--priority-high-foreground);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
 
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
