@@ -12,6 +12,7 @@ export type VoiceOptions = {
   elevenLabsAgentId?: string;
   voiceLlmSecret?: string;
   sessionSigner?: (agentId: string) => Promise<string>;
+  sessionTokenIssuer?: (agentId: string) => Promise<string>;
 };
 
 export function hasVoiceAuthorization(header: string | undefined, secret: string | undefined) {
@@ -67,15 +68,29 @@ export function createVoiceRouter(options: VoiceOptions) {
     options.voiceLlmSecret,
   );
   router.get('/status', (_req, res) => res.json({ configured }));
-  router.post('/session', async (_req, res) => {
+  router.post('/session', async (req, res) => {
     if (!configured) return res.status(503).json({ error: "Voice chat isn't set up yet." });
     try {
+      const client = new ElevenLabsClient({ apiKey: options.elevenLabsApiKey });
+      if (req.body?.connectionType === 'webrtc') {
+        const conversationToken = options.sessionTokenIssuer
+          ? await options.sessionTokenIssuer(options.elevenLabsAgentId!)
+          : (
+              await client.conversationalAi.conversations.getWebrtcToken(
+                { agentId: options.elevenLabsAgentId! },
+                { timeoutInSeconds: 15, maxRetries: 0 },
+              )
+            ).token;
+        if (!conversationToken) throw new Error('Missing conversation token');
+        return res.json({ conversationToken });
+      }
       const signedUrl = options.sessionSigner
         ? await options.sessionSigner(options.elevenLabsAgentId!)
         : (
-            await new ElevenLabsClient({
-              apiKey: options.elevenLabsApiKey,
-            }).conversationalAi.conversations.getSignedUrl({ agentId: options.elevenLabsAgentId! })
+            await client.conversationalAi.conversations.getSignedUrl(
+              { agentId: options.elevenLabsAgentId! },
+              { timeoutInSeconds: 15, maxRetries: 0 },
+            )
           ).signedUrl;
       if (!signedUrl?.startsWith('wss://api.elevenlabs.io/'))
         throw new Error('Invalid session URL');

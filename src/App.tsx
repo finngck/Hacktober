@@ -265,11 +265,6 @@ export default function App() {
           setMessage('');
           const recorded = recordAcceptedPlan(progress);
           setProgress(recorded.progress);
-          toastManager.add({
-            type: 'success',
-            title: 'Plan updated',
-            description: 'Your day plan was updated in the conversation.',
-          });
           celebrate(recorded.unlocked);
         },
         showResult: (next) => {
@@ -277,7 +272,23 @@ export default function App() {
           setConversation(continueConversation({ message: change, conversation: context }, next));
           setMessage('');
         },
-        showApplied: setVoiceResult,
+        showApplied: (applied, changes) => {
+          setVoiceResult(applied);
+          toastManager.add({
+            type: 'success',
+            title: 'Plan updated in conversation',
+            description: changes.length
+              ? changes
+                  .slice(0, 3)
+                  .map((change) => `${change.title}: ${change.before} → ${change.after}`)
+                  .join(' · ') +
+                (changes.length > 3
+                  ? ` · ${changes.length - 3} more changes in the conversation.`
+                  : '')
+              : applied.result.summary,
+            actionProps: { children: 'Undo', onClick: voiceUndo },
+          });
+        },
       });
     } catch (problem) {
       const summary = signal.aborted
@@ -395,12 +406,6 @@ export default function App() {
           />
         </div>
         <div className="grid content-start gap-4 lg:[grid-area:copilot] xl:sticky xl:top-20 xl:self-start">
-          <VoicePanel
-            busy={busy}
-            getDay={() => describeDay(workspaceRef.current)}
-            replan={voiceReplan}
-            undo={voiceUndo}
-          />
           {voiceResult && (
             <section
               className="grid gap-3 rounded-xl border bg-card p-4 shadow-xs/5"
@@ -412,6 +417,14 @@ export default function App() {
             </section>
           )}
           <CopilotPanel
+            voiceControl={
+              <VoicePanel
+                busy={busy}
+                getDay={() => describeDay(workspaceRef.current)}
+                replan={voiceReplan}
+                undo={voiceUndo}
+              />
+            }
             message={message}
             onMessageChange={(text) => {
               setMessage(text);
