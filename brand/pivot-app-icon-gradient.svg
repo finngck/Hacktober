@@ -1,30 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Pivot">
+<svg xmlns="http://www.w3.org/2000/svg" width="356" height="320" viewBox="0 0 356 320">
   <defs>
     <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#f1f0eb"/>
-      <stop offset="0.55" stop-color="#c9cdbd"/>
-      <stop offset="1" stop-color="#d9cfae"/>
+      <stop offset="0" stop-color="#e8e6df"/>
+      <stop offset="0.52" stop-color="#d6d8c7"/>
+      <stop offset="1" stop-color="#e5e0d1"/>
     </linearGradient>
-    <radialGradient id="green" cx="0.44" cy="0.44" r="0.5">
-      <stop offset="0" stop-color="#3f5945"/>
-      <stop offset="0.45" stop-color="#55705a" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#7d8f78" stop-opacity="0"/>
+    <radialGradient id="sage" cx="48%" cy="48%" r="62%">
+      <stop offset="0" stop-color="#7f9277" stop-opacity=".95"/>
+      <stop offset=".58" stop-color="#aeb9a0" stop-opacity=".72"/>
+      <stop offset="1" stop-color="#d9d8cb" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="olive" cx="0.82" cy="0.62" r="0.38">
-      <stop offset="0" stop-color="#858456" stop-opacity="0.75"/>
-      <stop offset="1" stop-color="#858456" stop-opacity="0"/>
+    <radialGradient id="olive" cx="80%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#b5b27b" stop-opacity=".9"/>
+      <stop offset=".6" stop-color="#c9c8a7" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#d8d8cb" stop-opacity="0"/>
     </radialGradient>
+    <filter id="soften">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
     <clipPath id="tile">
-      <rect width="512" height="512" rx="114"/>
+      <rect x="17" y="29" width="271" height="269" rx="57"/>
     </clipPath>
   </defs>
+  <rect width="356" height="320" fill="#faf9f6"/>
   <g clip-path="url(#tile)">
-    <rect width="512" height="512" fill="url(#base)"/>
-    <rect width="512" height="512" fill="url(#olive)"/>
-    <rect width="512" height="512" fill="url(#green)"/>
+    <rect x="17" y="29" width="271" height="269" rx="57" fill="url(#base)"/>
+    <ellipse cx="139" cy="155" rx="125" ry="118" fill="url(#sage)" filter="url(#soften)"/>
+    <ellipse cx="250" cy="103" rx="105" ry="112" fill="url(#olive)" filter="url(#soften)"/>
+    <ellipse cx="52" cy="233" rx="92" ry="75" fill="#c7d0c1" opacity=".7" filter="url(#soften)"/>
   </g>
-  <g fill="#fffefa">
-    <circle cx="160" cy="348" r="36"/>
-    <path fill-rule="evenodd" d="M176 138H293a92 92 0 0 1 0 184H222V193H176ZM275 193H293a36 36 0 0 1 0 72H275Z"/>
-  </g>
+  <path fill="#fbfaf7" fill-rule="evenodd" d="M111 104 H169 C197 104 216 123 216 151 C216 179 197 199 169 199 H144 V174 H169 C182 174 191 165 191 151 C191 137 182 128 169 128 H111 Z"/>
+  <circle cx="103.5" cy="212.5" r="18.5" fill="#fbfaf7"/>
 </svg>
