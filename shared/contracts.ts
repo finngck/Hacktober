@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { energyMeasuresSchema } from './measures.js';
 
 export const categorySchema = z.enum(['study', 'work', 'recovery', 'movement', 'social']);
 export const energySchema = z.enum(['low', 'medium', 'high']);
@@ -62,6 +63,7 @@ export const modelResultSchema = z.object({
 export const replanResponseSchema = z.object({
   result: modelResultSchema,
   proposedPlan: planSchema.nullable(),
+  measures: energyMeasuresSchema,
   meta: z.object({ model: z.string(), elapsedMs: z.number(), attempts: z.number() }),
 });
 

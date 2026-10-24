@@ -8,6 +8,7 @@ import {
   type ReplanRequest,
   type ScheduleItem,
 } from '../shared/contracts.js';
+import { signalsSchema } from '../shared/measures.js';
 
 export const intentSchema = z.object({
   status: z.enum(['ready', 'clarification']),
@@ -21,6 +22,7 @@ export const intentSchema = z.object({
   reasons: z
     .array(z.object({ id: z.string().max(80), reason: z.string().min(1).max(400) }))
     .max(40),
+  signals: signalsSchema.optional(),
 });
 export type PlanningIntent = z.infer<typeof intentSchema>;
 type Occupied = { start: number; end: number };

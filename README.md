@@ -6,6 +6,8 @@ Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [No
 
 Der lokale Daylight-Prototyp setzt den Textablauf aus **Chat Core Features** um: Beispieltag und Check-in → Änderung eingeben → Gemma-4-Vorschlag → Vorher/Nachher prüfen → übernehmen oder verwerfen. Aufgaben können ergänzt, Änderungen rückgängig gemacht und der Beispieltag zurückgesetzt werden.
 
+Bei weniger als 7 Stunden Schlaf oder wenig Energie zeigt der Vorschlag bis zu drei Maßnahmen bzw. Maßgaben und bis zu zwei Restriktionen aus dem Maßnahmen-Pool in `shared/measures.ts`. Gemma meldet nur, was die Nachricht ausdrücklich nennt (z. B. Schläfrigkeit oder bisheriges Koffein); die Auswahl, Sperren und Ausschlüsse aus dem Check-in prüft der Code. Tagesbeginn und -ende gelten dabei als Aufwach- und Schlafenszeit.
+
 React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Die Icons kommen aus HugeIcons. Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
 
 Sprache, ElevenLabs, Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
