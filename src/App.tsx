@@ -316,7 +316,7 @@ export default function App() {
         Zum Tagesplan
       </a>
       <AppHeader busy={busy} onReset={reset} onStartCheckIn={() => setFlowOpen(true)} />
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'side_copilot''side_day'] xl:grid-rows-1 xl:grid-cols-[17rem_minmax(0,1fr)_23rem] xl:[grid-template-areas:'side_day_copilot']">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 pb-6 sm:px-6 lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'side_copilot''side_day'] xl:grid-rows-1 xl:grid-cols-[17rem_minmax(0,1fr)_23rem] xl:[grid-template-areas:'side_day_copilot']">
         <div className="lg:[grid-area:side]">
           <CheckInSidebar
             checkIn={checkIn}
