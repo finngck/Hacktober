@@ -8,7 +8,7 @@ Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [No
 
 Live: **https://hacktober-daylight.vercel.app** mit Landing Page unter `/` und Planer unter `/app` (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
 
-Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/landing.css`, der Planer aus `app.html` und `src/main.tsx`. Logo-Dateien liegen in `brand/`; `public/favicon.svg` ist das App-Icon.
+Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/styles/landing.css`, der Planer aus `app.html` und `src/main.tsx`. Logo-Dateien liegen in `brand/`; `public/favicon.svg` ist das App-Icon.
 
 ### Technologien
 
@@ -121,7 +121,7 @@ Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task
 
 Der regelbasierte Scheduler reserviert zuerst heutige Fristen und Erholung, dann neu angeforderte oder bearbeitete Aufgaben, danach optionale Arbeit. Bereits passende Startzeiten bleiben möglichst erhalten; bei Platzproblemen folgt ein verdichteter Versuch. Eine angeforderte Aufgabe wird eingeplant oder erzeugt einen sichtbaren Konflikt. Zusammenfassung und Änderungsgründe entstehen aus dem tatsächlich berechneten Vorschlag. Alle bestehenden Aufgaben bleiben erhalten, auch wenn sie heute offen sind. Der Server prüft zusätzlich Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und Ausschlüsse. Ungültige Tool-Aufrufe erhalten maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
 
-`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Ein ausdrücklicher Sprachauftrag übernimmt den validierten Plan direkt mit Undo. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Nur eine ausdrückliche Bestätigung ändert den aktiven Plan. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Die Auswahl der passenden Tools und Argumente bleibt Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet. Die Anbindung folgt Googles [Gemma Function-Calling-Schnittstelle](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api#function-calling).
+`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Ein ausdrücklicher Sprachauftrag übernimmt den validierten Plan direkt mit Undo. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Textvorschläge ändern den aktiven Plan erst nach deiner Bestätigung. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Die Auswahl der passenden Tools und Argumente bleibt Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet. Die Anbindung folgt Googles [Gemma Function-Calling-Schnittstelle](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api#function-calling).
 
 ## Saubere Arbeitskopie aktualisieren
 
