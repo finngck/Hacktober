@@ -9,7 +9,9 @@ import {
   type ReplanResponse,
   type ScheduleItem,
 } from '../shared/contracts';
+import { fitIntoDay } from '../shared/fit';
 import { freshWorkspace, loadWorkspace, saveWorkspace } from './state';
+import { continueConversation, type PlanningConversation } from '../shared/conversation';
 import {
   badges,
   checkedInToday,
@@ -54,6 +56,7 @@ export default function App() {
   const [flowOpen, setFlowOpen] = useState(() => !checkedInToday(loadProgress()));
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState<ReplanResponse | null>(null);
+  const [conversation, setConversation] = useState<PlanningConversation>([]);
   const [voiceResult, setVoiceResult] = useState<ReplanResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<ScheduleItem | null>(null);
@@ -101,6 +104,7 @@ export default function App() {
 
   function clearDraft() {
     setResponse(null);
+    setConversation([]);
     setVoiceResult(null);
     setError('');
   }
@@ -114,12 +118,20 @@ export default function App() {
     setProgress(recorded.progress);
     return { streak: streak(recorded.progress), unlocked: recorded.unlocked };
   }
-  function addTasks(items: ScheduleItem[]) {
+  function importTasks(items: ScheduleItem[]) {
+    const fitted = fitIntoDay(plan, items);
+    return addTasks(fitted.items, fitted.notes, fitted.planItems);
+  }
+  function addTasks(
+    items: ScheduleItem[],
+    notes: string[] = [],
+    existing: ScheduleItem[] = plan.items,
+  ) {
     if (plan.items.length + items.length > 40)
       return 'Der Prototyp unterstützt bis zu 40 Aufgaben.';
     if (items.some((item) => item.start !== null && item.start < plan.now))
       return `Neue Aufgaben müssen nach der Demo-Uhrzeit ${formatTime(plan.now)} beginnen.`;
-    const nextPlan = { ...plan, items: [...plan.items, ...items] };
+    const nextPlan = { ...plan, items: [...existing, ...items] };
     const issues = validatePlan(nextPlan);
     if (issues.length) return issues.join(' ');
     clearDraft();
@@ -131,7 +143,7 @@ export default function App() {
     toastManager.add({
       type: 'success',
       title: items.length === 1 ? 'Aufgabe hinzugefügt' : `${items.length} Aufgaben hinzugefügt`,
-      description: items.map((item) => item.title).join(', '),
+      description: [items.map((item) => item.title).join(', '), ...notes].join(' '),
     });
     return undefined;
   }
@@ -170,9 +182,11 @@ export default function App() {
           },
     );
   }
-  async function runReplan(text: string) {
-    if (busy || text.trim().length < 3) return;
-    clearDraft();
+  async function runReplan(text: string, context = conversation) {
+    if (busy || !text.trim()) return;
+    setResponse(null);
+    setVoiceResult(null);
+    setError('');
     setBusy(true);
     const controller = new AbortController();
     requestController.current = controller;
@@ -181,11 +195,15 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({ plan, checkIn, message: text }),
+        body: JSON.stringify({ plan, checkIn, message: text, conversation: context }),
       });
       const body = await result.json();
       if (!result.ok) throw new Error(body.error || 'Der Plan konnte nicht erstellt werden.');
-      setResponse(replanResponseSchema.parse(body));
+      if (controller.signal.aborted) return;
+      const parsed = replanResponseSchema.parse(body);
+      setResponse(parsed);
+      setConversation(continueConversation({ message: text, conversation: context }, parsed));
+      if (parsed.result.status !== 'proposal') setMessage('');
     } catch (problem) {
       if (!controller.signal.aborted)
         setError(
@@ -198,7 +216,7 @@ export default function App() {
   }
   function replan(event?: FormEvent) {
     event?.preventDefault();
-    if (message.trim().length < 3) {
+    if (message.trim().length < (conversation.length ? 1 : 3)) {
       setError('Beschreib in ein paar Worten, was sich an deinem Tag geändert hat.');
       textarea.current?.focus();
       return;
@@ -208,15 +226,19 @@ export default function App() {
   function planFromCheckIn() {
     const text = checkInMessage(checkIn, plan);
     setMessage(text);
-    void runReplan(text);
+    clearDraft();
+    void runReplan(text, []);
   }
   async function voiceReplan(change: string, signal: AbortSignal) {
     if (requestController.current || busy)
       return { status: 'error', summary: 'Es läuft bereits eine Planung. Bitte kurz warten.' };
     const controller = new AbortController();
+    const context = conversation;
     requestController.current = controller;
     setBusy(true);
-    clearDraft();
+    setResponse(null);
+    setVoiceResult(null);
+    setError('');
     setMessage(change);
     try {
       return await executeVoiceReplan(change, {
@@ -227,7 +249,12 @@ export default function App() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             signal: AbortSignal.any([signal, controller.signal]),
-            body: JSON.stringify({ plan: source.plan, checkIn: source.checkIn, message: text }),
+            body: JSON.stringify({
+              plan: source.plan,
+              checkIn: source.checkIn,
+              message: text,
+              conversation: context,
+            }),
           });
           const body = await result.json();
           if (!result.ok) throw new Error(body.error || 'Der Plan konnte nicht erstellt werden.');
@@ -237,6 +264,7 @@ export default function App() {
           workspaceRef.current = next;
           setWorkspace(next);
           setResponse(null);
+          setConversation([]);
           setMessage('');
           const recorded = recordAcceptedPlan(progress);
           setProgress(recorded.progress);
@@ -247,7 +275,11 @@ export default function App() {
           });
           celebrate(recorded.unlocked);
         },
-        showResult: setResponse,
+        showResult: (next) => {
+          setResponse(next);
+          setConversation(continueConversation({ message: change, conversation: context }, next));
+          setMessage('');
+        },
         showApplied: setVoiceResult,
       });
     } catch (problem) {
@@ -297,7 +329,7 @@ export default function App() {
       },
       history: [...previous.history, { plan: previous.plan, checkIn: previous.checkIn }].slice(-5),
     }));
-    setResponse(null);
+    clearDraft();
     setMessage('');
     const recorded = recordAcceptedPlan(progress);
     setProgress(recorded.progress);
@@ -315,7 +347,7 @@ export default function App() {
         title: 'Vorschlag verworfen',
         description: 'Dein bisheriger Plan gilt weiter.',
       });
-    setResponse(null);
+    clearDraft();
   }
   function undo() {
     setWorkspace((current) => {
@@ -387,7 +419,15 @@ export default function App() {
             message={message}
             onMessageChange={(text) => {
               setMessage(text);
+              setError('');
+              // Keep unresolved questions and their context while typing an answer.
+              if (response?.result.status === 'proposal') setResponse(null);
+            }}
+            conversation={conversation}
+            onNewRequest={() => {
               clearDraft();
+              setMessage('');
+              textarea.current?.focus();
             }}
             onSubmit={replan}
             onCancel={() => requestController.current?.abort()}
@@ -440,7 +480,7 @@ export default function App() {
                   <TooltipPopup>Rückgängig</TooltipPopup>
                 </Tooltip>
               )}
-              <ScreenshotImport onAdd={addTasks} disabled={busy} />
+              <ScreenshotImport onAdd={importTasks} disabled={busy} />
               <AddTask onAdd={(item) => addTasks([item])} disabled={busy} />
             </div>
           </div>
