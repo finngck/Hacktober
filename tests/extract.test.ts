@@ -28,6 +28,13 @@ test('parses extracted tasks, also when wrapped in a markdown fence', () => {
   assert.throws(() => parseExtractText(JSON.stringify({ tasks: [{ ...task, start: 9000 }] })));
 });
 
+test('reads the JSON object even when the model adds text around it', () => {
+  const body = JSON.stringify({ tasks: [task], note: null });
+  assert.equal(parseExtractText(`Hier ist das Ergebnis:\n${body}\nViel Erfolg!`).tasks.length, 1);
+  assert.equal(parseExtractText(`\`\`\`json\n${body}\n\`\`\` Fertig.`).tasks.length, 1);
+  assert.throws(() => parseExtractText('Ich kann das Bild leider nicht lesen.'));
+});
+
 test('sends the image as inline data and returns reviewable tasks', async () => {
   let sent: any;
   const result = await extractTasks(image, {
