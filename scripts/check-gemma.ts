@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { demoCheckIn, demoPlan, demoPrompts } from '../shared/demo';
 import {
   hasItemChanged,
+  replanResponseSchema,
   validatePlan,
   type Plan,
   type ReplanRequest,
@@ -9,8 +10,10 @@ import {
 } from '../shared/contracts';
 import { config } from '../server/config';
 import { generatePlan } from '../server/gemma';
+import { setTimeout } from 'node:timers/promises';
 
-// Explicit opt-in: five real requests, each with at most one bounded repair.
+// Explicit opt-in: real requests, each with at most one bounded repair.
+// Optional scenario names select a subset. REPLAN_BASE_URL checks a deployed API.
 const marketingPlan: Plan = structuredClone(demoPlan);
 marketingPlan.items.push({
   ...marketingPlan.items.find((item) => item.id === 'study')!,
@@ -24,6 +27,50 @@ const scenarios: {
   request: ReplanRequest;
   verify: (response: ReplanResponse) => void;
 }[] = [
+  {
+    name: 'fatigue-and-more-time',
+    request: {
+      plan: demoPlan,
+      checkIn: demoCheckIn,
+      message: 'Ich habe keinen Kopf mehr für Statistik und will das lieber länger machen.',
+    },
+    verify: (response) => {
+      assert.equal(response.result.energy, 'low');
+      assert.equal(response.result.sleepHours, demoCheckIn.sleepHours);
+      assert.equal(response.proposedPlan!.items.find((item) => item.id === 'study')?.duration, 120);
+    },
+  },
+  {
+    name: 'extend-running-task',
+    request: {
+      plan: { ...demoPlan, now: 840, availableFrom: 840 },
+      checkIn: demoCheckIn,
+      message: 'Ich brauche für die aktuelle Aufgabe eine halbe Stunde länger.',
+    },
+    verify: (response) => {
+      const study = response.proposedPlan!.items.find((item) => item.id === 'study')!;
+      assert.equal(study.duration, 120);
+      assert.equal(study.start, 810);
+    },
+  },
+  {
+    name: 'clarification-follow-up',
+    request: {
+      plan: demoPlan,
+      checkIn: demoCheckIn,
+      conversation: [
+        {
+          message: 'Ich habe keinen Kopf mehr dafür und will lieber länger machen.',
+          reply: 'Welche Aufgabe meinst du?',
+        },
+      ],
+      message: 'Statistik',
+    },
+    verify: (response) => {
+      assert.equal(response.result.energy, 'low');
+      assert.equal(response.proposedPlan!.items.find((item) => item.id === 'study')?.duration, 120);
+    },
+  },
   {
     name: 'explicit-fixed-appointment-move',
     request: {
@@ -101,8 +148,24 @@ const scenarios: {
   },
 ];
 
-for (const scenario of scenarios) {
-  const response = await generatePlan(scenario.request, config);
+const selected = process.argv.slice(2);
+const checks = scenarios.filter((scenario) => !selected.length || selected.includes(scenario.name));
+assert.ok(checks.length, 'No matching scenarios.');
+for (const [index, scenario] of checks.entries()) {
+  // Space requests to avoid overwhelming the shared demo model quota.
+  if (index > 0) await setTimeout(25000);
+  let response: ReplanResponse;
+  if (process.env.REPLAN_BASE_URL) {
+    const base = new URL(process.env.REPLAN_BASE_URL);
+    const result = await fetch(new URL('/api/replan', base), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Origin: base.origin },
+      body: JSON.stringify(scenario.request),
+      signal: AbortSignal.timeout(70000),
+    });
+    assert.equal(result.status, 200, `${scenario.name}: HTTP ${result.status}`);
+    response = replanResponseSchema.parse(await result.json());
+  } else response = await generatePlan(scenario.request, config);
   assert.equal(response.result.status, 'proposal', `${scenario.name}: ${response.result.summary}`);
   assert.ok(response.proposedPlan);
   assert.deepEqual(validatePlan(response.proposedPlan), []);

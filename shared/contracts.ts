@@ -46,7 +46,17 @@ export const checkInSchema = z.object({
 export const replanRequestSchema = z.object({
   plan: planSchema,
   checkIn: checkInSchema,
-  message: z.string().trim().min(3).max(2000),
+  message: z.string().trim().min(1).max(2000),
+  // Only unresolved exchanges; accepting/discarding or changing the plan clears them.
+  conversation: z
+    .array(
+      z.object({
+        message: z.string().trim().min(1).max(2000),
+        reply: z.string().trim().min(1).max(900),
+      }),
+    )
+    .max(4)
+    .optional(),
 });
 
 export const modelResultSchema = z.object({
