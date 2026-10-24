@@ -10,7 +10,7 @@ Bei weniger als 7 Stunden Schlaf oder wenig Energie zeigt der Vorschlag bis zu d
 
 React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Die Icons kommen aus HugeIcons. Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
 
-Das schwebende ElevenLabs-Widget ist entfernt; die App lädt dessen externes Skript nicht mehr. Speech-to-Text im Planer, Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
+Screenshot-Import liest Aufgaben aus einem Bild und zeigt sie zur Prüfung und Korrektur an; erst eine Bestätigung fügt sie dem Plan hinzu. Das schwebende ElevenLabs-Widget ist entfernt; die App lädt dessen externes Skript nicht mehr. Speech-to-Text im Planer, Kalender-/Wearable-Anbindungen und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
 
 ## Einstieg
 
@@ -52,7 +52,7 @@ npm start
 
 Das Vercel-Projekt `hacktober-daylight` ist mit `finngck/Hacktober` verbunden. `main` ist der gemeinsame Produktionsstand; Featurebranches erhalten Vorschau-Deployments über die Git-Verbindung. Änderungen weiterhin per geprüftem PR integrieren.
 
-Vercel baut die Vite-Oberfläche aus `dist/` und führt die drei Dateien unter `api/` als Node-Funktionen aus. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. `vercel.json` enthält die Build-Konfiguration; die Umplanungsfunktion hat maximal 70 Sekunden Laufzeit.
+Vercel baut die Vite-Oberfläche aus `dist/` und führt die vier Dateien unter `api/` als Node-Funktionen aus. Lokaler und gehosteter Betrieb verwenden dieselbe Express-App und Planungslogik. `vercel.json` enthält die Build-Konfiguration; die Umplanungsfunktion hat maximal 70 Sekunden Laufzeit. Der Screenshot-Import begrenzt seine höchstens zwei Modellversuche auf jeweils 25 Sekunden, damit sie innerhalb seiner 60 Sekunden Funktionslaufzeit abschließen.
 
 Relative Imports im von Node geladenen Servercode verwenden explizite `.js`-Endungen. Bei Fork-PRs kann der Vercel-Check zunächst eine Freigabe durch ein Teammitglied verlangen; der Link steht im Bot-Kommentar am PR. Vor der Integration Build und betroffene API in der Preview prüfen, danach den Produktionsstand. Der konkrete Ablauf steht im [Arbeitsablauf](docs/workflow.md#vercel-vor-und-nach-dem-merge).
 
@@ -64,7 +64,7 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 
 - `GET /api/health`: lokale Konfiguration (`configured`, `model`); bestätigt keine externe Erreichbarkeit.
 - `GET /api/versions`: öffentliche GitHub-Commits und erfolgreiche Deployment-Links, kurz zwischengespeichert.
-- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Ob das konfigurierte Gemma-Modell Bilder verarbeitet, ist mit `npm run test:live` noch nicht geprüft.
+- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Vorübergehende Providerfehler und ungültige Antworten teilen sich ein Limit von insgesamt zwei Modellaufrufen.
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `server/gemma.ts`: Google-REST-Adapter mit `gemma-4-26b-a4b-it` als Standard; über `GEMMA_MODEL` auf ein anderes freigegebenes Gemma-4-Modell umstellbar. [Offizielle Modell-Dokumentation](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
