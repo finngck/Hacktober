@@ -69,6 +69,17 @@ Gemma interpretiert die Nachricht, priorisiert die Aufgaben und begründet Abwä
 
 `start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Nur eine ausdrückliche Bestätigung ändert den aktiven Plan. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Das Verständnis natürlicher Sprache und die Qualität der Begründung bleiben Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet.
 
+## Saubere Arbeitskopie aktualisieren
+
+Laufende Arbeit zuerst auf dem eigenen Branch sichern (committen). Danach `main` aktualisieren:
+
+```sh
+git switch main
+git pull --ff-only origin main
+```
+
+Schlägt `--ff-only` fehl, abbrechen und nichts zurücksetzen; den Stand klären, statt ihn zu überschreiben.
+
 ## Zusammenarbeit
 
 Vier Instanzen arbeiten in getrennten lokalen Klonen und auf eigenen Branches. Änderungen kommen als Pull Requests nach `main`. Finns Instanz prüft und integriert sie.
