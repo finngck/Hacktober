@@ -1,6 +1,8 @@
 # Local configuration and credentials
 .env
 .env.*
+*.env
+*.env.*
 !.env.example
 CLAUDE.local.md
 .claude/settings.local.json

@@ -5,6 +5,7 @@
 - Lies diese Datei und `README.md` vor Änderungen. Der konkrete Nutzerauftrag bestimmt den Umfang.
 - Der erste Arbeitsauftrag ist ausschließlich der Kooperationstest in `docs/cooperation-test.md`. Implementiere dabei keine Produktfeatures und installiere keinen App-Stack.
 - Produktquelle ist der Abschnitt **Chat Core Features** auf der in `README.md` verlinkten Notion-Teamseite. Optionale oder spätere Integrationen sind kein automatischer Implementierungsauftrag.
+- WHOOP und weitere Wearable-Integrationen bleiben vorerst außerhalb des Umfangs. Spätere Featureaufträge konzentrieren sich zunächst auf die Kernfunktionalität.
 - Ist Notion nicht zugänglich oder eine Anforderung widersprüchlich, benenne die konkrete Lücke. Erfinde keine Anforderungen und ersetze die Quelle nicht durch Vermutungen.
 
 ## Dokumentation ohne Bloat
@@ -30,5 +31,5 @@
 - Prüfe vor dem Commit mindestens `git diff --check` und den vollständigen Diff; vor dem PR zusätzlich den Branch-Diff gegen `origin/main`.
 - Prüfe bei reinen Dokuänderungen relative Links und Befehle auf Plausibilität. Es gibt derzeit keine App-Tests; behaupte keine erfolgreichen Build- oder Laufzeittests.
 - Sobald App-Code existiert, verwende die tatsächlich im Repo definierten Prüfungen und dokumentiere ihre Ergebnisse im PR. Fehlende oder fehlgeschlagene Prüfungen offen nennen.
-- Keine Schlüssel, Tokens, `.env`-Dateien, personenbezogenen Testdaten oder lokalen Claude-Einstellungen committen. Verwende für Demos synthetische Daten.
+- Keine Schlüssel, Tokens, Env-Dateien (auch benannte Dateien wie `GEMMA.env`), personenbezogenen Testdaten oder lokalen Claude-Einstellungen committen. `GEMMA.env` ist ausschließlich lokale Konfiguration; ihren Inhalt nicht in Chats, PRs, Logs oder Doku ausgeben. Verwende für Demos synthetische Daten.
 - Bei Authentifizierungsfehlern ist die Anmeldung durch die jeweilige Person nötig. Keine Zugangsdaten aus fremden Konfigurationen übernehmen.
