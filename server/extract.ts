@@ -21,12 +21,16 @@ Rules:
 - title keeps the original language, at most 100 characters. At most 20 items.
 - note is null unless something needs the user's attention (unreadable parts, several different days, missing times), in short German.`;
 
+/** The model sometimes wraps the JSON in prose or code fences; read the outermost object. */
 export function parseExtractText(text: string) {
   const cleaned = text
     .trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/, '');
-  return extractResultSchema.parse(JSON.parse(cleaned));
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  const json = start !== -1 && end > start ? cleaned.slice(start, end + 1) : cleaned;
+  return extractResultSchema.parse(JSON.parse(json));
 }
 
 export async function extractTasks(

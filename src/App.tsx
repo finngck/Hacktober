@@ -34,6 +34,9 @@ import { checkInMessage } from './components/daylight/checkInOptions';
 import { CopilotPanel } from './components/daylight/CopilotPanel';
 import { ScreenshotImport } from './components/daylight/ScreenshotImport';
 import { Timeline } from './components/daylight/Timeline';
+import { EnergyMeasures } from './components/daylight/EnergyMeasures';
+import { VoicePanel } from './components/VoicePanel';
+import { describeDay, executeVoiceReplan } from './voice-tools';
 
 function celebrate(unlocked: BadgeId[]) {
   for (const id of unlocked)
@@ -50,12 +53,14 @@ export default function App() {
   const [flowOpen, setFlowOpen] = useState(() => !checkedInToday(loadProgress()));
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState<ReplanResponse | null>(null);
+  const [voiceResult, setVoiceResult] = useState<ReplanResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [health, setHealth] = useState<{ configured: boolean; model: string } | null>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const requestController = useRef<AbortController | null>(null);
+  const workspaceRef = useRef(workspace);
   const { plan, checkIn } = workspace;
   const proposal = response?.proposedPlan ?? null;
   const changedItems =
@@ -76,6 +81,7 @@ export default function App() {
   }).format(new Date(`${plan.date}T12:00:00+02:00`));
 
   useEffect(() => {
+    workspaceRef.current = workspace;
     setStorageAvailable(saveWorkspace(workspace));
   }, [workspace]);
   useEffect(() => saveProgress(progress), [progress]);
@@ -93,6 +99,7 @@ export default function App() {
 
   function clearDraft() {
     setResponse(null);
+    setVoiceResult(null);
     setError('');
   }
   function changeCheckIn(patch: Partial<CheckIn>) {
@@ -166,6 +173,80 @@ export default function App() {
     setMessage(text);
     void runReplan(text);
   }
+  async function voiceReplan(change: string, signal: AbortSignal) {
+    if (requestController.current || busy)
+      return { status: 'error', summary: 'Es läuft bereits eine Planung. Bitte kurz warten.' };
+    const controller = new AbortController();
+    requestController.current = controller;
+    setBusy(true);
+    clearDraft();
+    setMessage(change);
+    try {
+      return await executeVoiceReplan(change, {
+        read: () => workspaceRef.current,
+        signal,
+        request: async (source, text) => {
+          const result = await fetch('/api/replan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.any([signal, controller.signal]),
+            body: JSON.stringify({ plan: source.plan, checkIn: source.checkIn, message: text }),
+          });
+          const body = await result.json();
+          if (!result.ok) throw new Error(body.error || 'Der Plan konnte nicht erstellt werden.');
+          return body;
+        },
+        commit: (next) => {
+          workspaceRef.current = next;
+          setWorkspace(next);
+          setResponse(null);
+          setMessage('');
+          const recorded = recordAcceptedPlan(progress);
+          setProgress(recorded.progress);
+          toastManager.add({
+            type: 'success',
+            title: 'Plan angepasst',
+            description: 'Dein Tagesplan wurde im Gespräch angepasst.',
+          });
+          celebrate(recorded.unlocked);
+        },
+        showResult: setResponse,
+        showApplied: setVoiceResult,
+      });
+    } catch (problem) {
+      const summary = signal.aborted
+        ? 'Die Planung wurde abgebrochen.'
+        : problem instanceof Error
+          ? problem.message
+          : 'Die Planung ist fehlgeschlagen.';
+      if (!signal.aborted) setError(summary);
+      return { status: 'error', summary };
+    } finally {
+      requestController.current = null;
+      setBusy(false);
+    }
+  }
+  function voiceUndo() {
+    if (requestController.current || busy)
+      return { status: 'error', summary: 'Es läuft gerade eine Planung.' };
+    const source = workspaceRef.current;
+    const previous = source.history.at(-1);
+    if (!previous)
+      return { status: 'error', summary: 'Es gibt keine Änderung zum Rückgängigmachen.' };
+    const next = { ...source, ...previous, history: source.history.slice(0, -1) };
+    workspaceRef.current = next;
+    setWorkspace(next);
+    clearDraft();
+    toastManager.add({
+      title: 'Rückgängig gemacht',
+      description: 'Die letzte Änderung ist zurückgenommen.',
+    });
+    return {
+      status: 'applied',
+      summary: 'Die letzte Änderung wurde rückgängig gemacht.',
+      plan: describeDay(next),
+    };
+  }
   function acceptPlan() {
     if (!proposal || !response) return;
     setWorkspace((previous) => ({
@@ -235,7 +316,7 @@ export default function App() {
         Zum Tagesplan
       </a>
       <AppHeader busy={busy} onReset={reset} onStartCheckIn={() => setFlowOpen(true)} />
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'side_copilot''side_day'] xl:grid-rows-1 xl:grid-cols-[17rem_minmax(0,1fr)_23rem] xl:[grid-template-areas:'side_day_copilot']">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 pb-6 sm:px-6 lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'side_copilot''side_day'] xl:grid-rows-1 xl:grid-cols-[17rem_minmax(0,1fr)_23rem] xl:[grid-template-areas:'side_day_copilot']">
         <div className="lg:[grid-area:side]">
           <CheckInSidebar
             checkIn={checkIn}
@@ -246,7 +327,23 @@ export default function App() {
             onStartFlow={() => setFlowOpen(true)}
           />
         </div>
-        <div className="lg:[grid-area:copilot] xl:sticky xl:top-20 xl:self-start">
+        <div className="grid content-start gap-4 lg:[grid-area:copilot] xl:sticky xl:top-20 xl:self-start">
+          <VoicePanel
+            busy={busy}
+            getDay={() => describeDay(workspaceRef.current)}
+            replan={voiceReplan}
+            undo={voiceUndo}
+          />
+          {voiceResult && (
+            <section
+              className="grid gap-3 rounded-xl border bg-card p-4 shadow-xs/5"
+              aria-label="Ergebnis des Sprachauftrags"
+            >
+              <h3 className="font-semibold">Dein Tag ist angepasst</h3>
+              <p className="text-sm text-muted-foreground">{voiceResult.result.summary}</p>
+              <EnergyMeasures measures={voiceResult.measures} />
+            </section>
+          )}
           <CopilotPanel
             message={message}
             onMessageChange={(text) => {
