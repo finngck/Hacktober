@@ -39,6 +39,8 @@ export function CopilotPanel({
   changedItems,
   onAccept,
   onDiscard,
+  conversation,
+  onNewRequest,
   textareaRef,
 }: {
   message: string;
@@ -52,6 +54,8 @@ export function CopilotPanel({
   changedItems: ScheduleItem[];
   onAccept: () => void;
   onDiscard: () => void;
+  conversation: { message: string; reply: string }[];
+  onNewRequest: () => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
@@ -73,9 +77,18 @@ export function CopilotPanel({
           Describe it in one sentence. Pivot sorts out the rest.
         </p>
       </div>
+      {conversation.length > 0 && (
+        <div className="grid gap-2 rounded-lg bg-muted p-3 text-sm">
+          <p>Your change: {conversation[0].message}</p>
+          {!response && <p className="font-medium">{conversation.at(-1)!.reply}</p>}
+          <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={onNewRequest}>
+            Start a new change
+          </Button>
+        </div>
+      )}
       <form onSubmit={onSubmit} className="grid gap-2">
         <label htmlFor="change-message" className="sr-only">
-          Change to your day plan
+          {conversation.length ? 'Answer to the quick question' : 'Change to your day plan'}
         </label>
         <Textarea
           ref={textareaRef}
@@ -91,7 +104,11 @@ export function CopilotPanel({
               onSubmit();
             }
           }}
-          placeholder="My train is delayed and I slept badly …"
+          placeholder={
+            conversation.length
+              ? 'Your answer, for example "Statistics" …'
+              : 'My train is delayed and I slept badly …'
+          }
         />
         <div className="flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
@@ -117,13 +134,13 @@ export function CopilotPanel({
                 Cancel
               </Button>
             ) : (
-              <Button type="submit">Replan day</Button>
+              <Button type="submit">{conversation.length ? 'Send answer' : 'Replan day'}</Button>
             )}
           </div>
         </div>
       </form>
 
-      {!response && !busy && (
+      {!response && !busy && !conversation.length && (
         <div className="grid gap-2">
           <span className="text-xs text-muted-foreground">Try it out</span>
           <div className="flex flex-wrap gap-1.5">
@@ -229,7 +246,6 @@ export function CopilotPanel({
             <div className="flex gap-2">
               <Button
                 onClick={() => {
-                  onDiscard();
                   textareaRef.current?.focus();
                 }}
               >

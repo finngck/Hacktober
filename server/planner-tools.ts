@@ -1,12 +1,14 @@
 import { z } from 'zod';
 import {
   energySchema,
+  hasItemChanged,
   itemSchema,
   type ReplanRequest,
   type ScheduleItem,
 } from '../shared/contracts.js';
 import type { PlanningIntent } from './scheduler.js';
 import { signalsSchema } from '../shared/measures.js';
+import { explicitLowEnergy } from './explicit-energy.js';
 
 // The model selects operations; only this allowlist can change a proposal.
 const source = z
@@ -14,7 +16,9 @@ const source = z
   .trim()
   .min(3)
   .max(2000)
-  .describe('Exact quote from message authorizing this operation.');
+  .describe(
+    'Exact quote from a USER message: current message OR conversation[].message. Never quote an assistant reply.',
+  );
 const id = z.string().min(1).max(80);
 const ids = z.array(id).min(1).max(40);
 const patch = itemSchema
@@ -62,8 +66,17 @@ const toolDefinitions = {
   },
   update_task: {
     description:
-      'Edit an existing flexible future task explicitly identified by the user, preserving its ID and other fields. Automatically reserves it. Never change fixed/begun tasks, remove deadlines, or replace an unrelated subject.',
+      'Edit an existing flexible task explicitly identified by the user. For an absolute total duration use patch.duration; for longer/shorter use adjust_task_duration. A currently running flexible task permits ONLY duration edits, keeping its start and elapsed time. Never edit fixed/completed tasks, remove deadlines, or replace an unrelated subject.',
     args: z.strictObject({ id, patch, source }),
+  },
+  adjust_task_duration: {
+    description:
+      'Make an existing flexible future or currently running task longer/shorter by changeMinutes. The server adds this to its current duration. For "longer", "more time" or "take it slower" without a quantity OMIT changeMinutes: the proposal adds 30 minutes. Negative values shorten a task. Never use prioritize_tasks alone for a duration change. Fixed and completed tasks cannot be resized.',
+    args: z.strictObject({
+      id,
+      changeMinutes: z.number().int().min(-480).max(480).optional(),
+      source,
+    }),
   },
   move_task: {
     description:
@@ -92,7 +105,7 @@ const toolDefinitions = {
   },
   update_day_context: {
     description:
-      'Report availability, energy, sleep or signals ONLY when explicitly stated in message. Omit unknown signals and unchanged fields. Times are minutes after midnight: 14:00=840. Relative delays add to plan.availableFrom. The engine selects energy measures; do not recommend them yourself.',
+      'Report availability, energy, sleep or signals explicitly stated in the current OR earlier unresolved USER messages. "My head is done" / "I\'m wiped" / "exhausted" report low energy. Report context together with duration changes, including after a clarification answer. Omit unknown signals and unchanged fields. Times are minutes after midnight: 14:00=840. Relative delays add to plan.availableFrom. The engine selects energy measures.',
     args: z.strictObject({
       availabilityFrom: z.number().int().min(0).max(1440).optional(),
       energy: energySchema.optional(),
@@ -126,6 +139,10 @@ export const plannerToolDeclarations = Object.entries(toolDefinitions).map(([nam
 const callSchema = z.discriminatedUnion('name', [
   z.strictObject({ name: z.literal('create_task'), args: toolDefinitions.create_task.args }),
   z.strictObject({ name: z.literal('update_task'), args: toolDefinitions.update_task.args }),
+  z.strictObject({
+    name: z.literal('adjust_task_duration'),
+    args: toolDefinitions.adjust_task_duration.args,
+  }),
   z.strictObject({ name: z.literal('move_task'), args: toolDefinitions.move_task.args }),
   z.strictObject({
     name: z.literal('prioritize_tasks'),
@@ -147,11 +164,12 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
   // Validate the entire batch before touching a copy. A failed batch has no side effects.
   const calls = z.array(callSchema).min(1).max(20).parse(rawCalls);
   const prepared = structuredClone(request);
+  const reportedEnergy = explicitLowEnergy(request);
   const intent: PlanningIntent = {
     status: 'ready',
     summary: '',
     availabilityFrom: request.plan.availableFrom,
-    energy: request.checkIn.energy,
+    energy: reportedEnergy ?? request.checkIn.energy,
     sleepHours: request.checkIn.sleepHours,
     question: null,
     taskOrder: [],
@@ -169,15 +187,23 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
     return { request: prepared, intent };
   }
   for (const call of calls) {
-    if ('source' in call.args && !request.message.includes(call.args.source))
-      throw new Error(`${call.name}: source must be an exact quote from message.`);
+    if (!('source' in call.args)) continue;
+    const evidence = call.args.source;
+    if (
+      ![request.message, ...(request.conversation ?? []).map((turn) => turn.message)].some(
+        (message) => message.includes(evidence),
+      )
+    )
+      throw new Error(`${call.name}: source must be an exact quote from a user message.`);
   }
   const edited = new Set<string>();
   const focus = new Set<string>();
-  const findMutable = (taskId: string) => {
+  const findMutable = (taskId: string, allowRunningDuration = false) => {
     const task = prepared.plan.items.find((item) => item.id === taskId);
     if (!task) throw new Error(`Unknown task ID: ${taskId}.`);
-    if (task.fixed || (task.start !== null && task.start < request.plan.now))
+    const started = task.start !== null && task.start < request.plan.now;
+    const running = started && task.start! + task.duration > request.plan.now;
+    if (task.fixed || (started && !(allowRunningDuration && running)))
       throw new Error(
         `"${task.title}" is fixed or has already started and cannot be edited or deferred.`,
       );
@@ -208,17 +234,33 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
       );
       focus.add(taskId);
     }
-    if (call.name === 'update_task') {
-      const task = findMutable(call.args.id);
+    if (call.name === 'update_task' || call.name === 'adjust_task_duration') {
+      const durationOnly =
+        call.name === 'adjust_task_duration' ||
+        Object.keys(call.args.patch).every((key) => key === 'duration');
+      const task = findMutable(call.args.id, durationOnly);
       if (edited.has(task.id) || focus.has(task.id))
         throw new Error('A task can only be edited once per proposal.');
+      const changes =
+        call.name === 'adjust_task_duration'
+          ? { duration: task.duration + (call.args.changeMinutes ?? 30) }
+          : call.args.patch;
       if (
         task.deadline !== null &&
-        call.args.patch.deadline !== undefined &&
-        call.args.patch.deadline !== task.deadline
+        changes.deadline !== undefined &&
+        changes.deadline !== task.deadline
       )
         throw new Error("Today's deadline cannot be removed or changed.");
-      Object.assign(task, call.args.patch);
+      const updated = itemSchema.parse({ ...task, ...changes });
+      if (
+        task.start !== null &&
+        task.start < request.plan.now &&
+        task.start + updated.duration < request.plan.now
+      )
+        throw new Error('The new duration cannot remove work time that has already elapsed.');
+      if (!hasItemChanged(task, updated))
+        throw new Error('The task is unchanged. Use adjust_task_duration for more time.');
+      Object.assign(task, updated);
       edited.add(task.id);
       focus.add(task.id);
     }
@@ -267,6 +309,9 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
       if (signals) intent.signals = { ...intent.signals, ...signals };
     }
   }
+  // A plainly stated user fact takes precedence over an omitted or unchanged
+  // model context field. A newer correction is excluded by explicitLowEnergy.
+  if (reportedEnergy) intent.energy = reportedEnergy;
   if (intent.availabilityFrom < request.plan.now)
     throw new Error('availabilityFrom must be at or after plan.now, in minutes after midnight.');
   if (

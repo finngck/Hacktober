@@ -118,6 +118,12 @@ export function scheduleFromIntent(
   const lockedBlocks = locked
     .filter((item) => item.start !== null)
     .toSorted((a, b) => a.start! - b.start!);
+  for (const item of lockedBlocks) {
+    if (item.start! + item.duration > Math.min(item.deadline ?? plan.dayEnd, plan.dayEnd))
+      return conflict(
+        `"${item.title}" doesn't fit before its deadline or the end of the day with ${item.duration} minutes. Choose a shorter duration.`,
+      );
+  }
   for (let index = 1; index < lockedBlocks.length; index++) {
     const previous = lockedBlocks[index - 1];
     if (previous.start! + previous.duration > lockedBlocks[index].start!)
@@ -146,7 +152,9 @@ export function scheduleFromIntent(
           ? `Moved to ${formatTime(item.start!)} as you asked.`
           : item.fixed
             ? 'Fixed appointment stays unchanged.'
-            : 'Past or started block stays unchanged.',
+            : item.duration !== originalPlan.items.find((before) => before.id === item.id)?.duration
+              ? `Adjusted to ${item.duration} minutes as you asked; the start stays the same.`
+              : 'Past or started block stays unchanged.',
       },
     ]),
   );
