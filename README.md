@@ -28,7 +28,7 @@ Schlägt `--ff-only` fehl, abbrechen und nichts zurücksetzen; den Stand klären
 
 ## Zusammenarbeit
 
-Vier Instanzen arbeiten in getrennten lokalen Klonen und auf eigenen Branches. Änderungen kommen als Pull Requests nach `main`. Finns Instanz prüft und integriert sie.
+Vier Instanzen arbeiten in getrennten lokalen Klonen und auf eigenen Branches. Änderungen kommen als Pull Requests nach `main`. Alle Teammitglieder mit GitHub-Schreibrechten und ihre beauftragten Instanzen dürfen passende PRs nach Prüfung integrieren.
 
 - [Vier Startprompts und Kooperationstest](docs/cooperation-test.md)
 - [Dokumentation und Quellenregeln](docs/README.md)
