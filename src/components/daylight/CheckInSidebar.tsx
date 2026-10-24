@@ -35,6 +35,7 @@ import {
   StressControl,
 } from './CheckInControls';
 import { checkInSummary, firstControl, moodIcons } from './checkInOptions';
+import { WearableConnections } from './WearableConnections';
 
 function CheckInRow({
   icon,
@@ -242,6 +243,8 @@ export function CheckInSidebar({
           })}
         </ul>
       </section>
+
+      <WearableConnections />
     </aside>
   );
 }
