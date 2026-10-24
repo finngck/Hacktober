@@ -4,7 +4,9 @@ Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [No
 
 ## Aktueller Stand
 
-Der lokale Daylight-Prototyp setzt den Textablauf aus **Chat Core Features** um: Beispieltag und Check-in → Änderung eingeben → Gemma-4-Vorschlag → Vorher/Nachher prüfen → übernehmen oder verwerfen. Aufgaben können ergänzt, Änderungen rückgängig gemacht und der Beispieltag zurückgesetzt werden.
+Der Pivot-Prototyp hat eine Landing Page unter `/` (`index.html`, `src/landing.ts`) und den Planer unter `/app` (`app.html`, `src/main.tsx`). Logo-Dateien liegen in `brand/`; `public/favicon.svg` ist das App-Icon.
+
+Der lokale Pivot-Prototyp setzt den Textablauf aus **Chat Core Features** um: Beispieltag und Check-in → Änderung eingeben → Gemma-4-Vorschlag → Vorher/Nachher prüfen → übernehmen oder verwerfen. Aufgaben können ergänzt, Änderungen rückgängig gemacht und der Beispieltag zurückgesetzt werden.
 
 Bei weniger als 7 Stunden Schlaf oder wenig Energie zeigt der Vorschlag bis zu drei Maßnahmen bzw. Maßgaben und bis zu zwei Restriktionen aus dem Maßnahmen-Pool in `shared/measures.ts`. Gemma meldet nur, was die Nachricht ausdrücklich nennt (z. B. Schläfrigkeit oder bisheriges Koffein); die Auswahl, Sperren und Ausschlüsse aus dem Check-in prüft der Code. Tagesbeginn und -ende gelten dabei als Aufwach- und Schlafenszeit.
 

@@ -7,7 +7,7 @@ export async function getVersions(fetcher: typeof fetch = fetch): Promise<Versio
   if (fetcher === fetch && cached && cached.expires > Date.now()) return cached.value;
   const get = async (path: string) => {
     const response = await fetcher(apiRoot + path, {
-      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Daylight-Version-Panel' },
+      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Pivot-Version-Panel' },
       signal: AbortSignal.timeout(6000),
     });
     if (!response.ok) throw new Error('Versionsverlauf nicht verfügbar.');

@@ -143,17 +143,8 @@ fieldset {
   min-width: 165px;
 }
 .brand-symbol {
-  background: #eaf0ff;
-  border-radius: 12px;
   width: 39px;
   height: 39px;
-  display: grid;
-  place-items: center;
-  color: var(--blue);
-}
-.brand-dot {
-  color: var(--blue);
-  margin-left: -8px;
 }
 .header-context {
   display: flex;

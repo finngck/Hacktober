@@ -5,5 +5,6 @@ import { getBuildInfo } from './server/build-info.ts';
 export default defineConfig({
   plugins: [react()],
   define: { __BUILD_INFO__: JSON.stringify(getBuildInfo()) },
+  build: { rollupOptions: { input: { landing: 'index.html', app: 'app.html' } } },
   server: { allowedHosts: ['localhost', '127.0.0.1'] },
 });

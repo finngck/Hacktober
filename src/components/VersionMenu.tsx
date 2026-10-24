@@ -62,7 +62,7 @@ export function VersionMenu() {
         </div>
         <div className="current-version">
           <div className="version-title">
-            <strong>Daylight {build.version}</strong>
+            <strong>Pivot {build.version}</strong>
             <span>
               {build.environment === 'production'
                 ? 'Live'
