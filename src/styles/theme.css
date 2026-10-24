@@ -17,11 +17,11 @@
   --category-movement: #b0652f;
   --category-social: #a8506f;
 
-  /* Timeline blocks by priority: dark green for high, sage for medium, light sage for low. */
-  --priority-high: #3f5d4b;
+  /* Timeline blocks by priority, warm olive from the logo gradient: dark for high, mid for medium, light for low. */
+  --priority-high: #4f5732;
   --priority-high-foreground: #fffefa;
-  --priority-medium: #b7c7b4;
-  --priority-low: #e3eadd;
+  --priority-medium: #b3ae74;
+  --priority-low: #ece8d6;
 
   /* coss ui semantic tokens */
   --background: #f3f1ea;

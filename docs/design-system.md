@@ -18,7 +18,7 @@ Die einzige Quelle ist [`src/styles/theme.css`](../src/styles/theme.css). Die Na
 | Fläche     | `card`, `popover`                                | Karten, Dialoge, Popovers                      |
 | Text       | `foreground`, `muted-foreground`                 | Text, Nebentext                                |
 | Aktion     | `primary`, `accent`, `ring`                      | Hauptaktion, Auswahl, Fokus                    |
-| Priorität  | `priority-{high,medium,low}`                     | Terminkarten: hoch dunkelgrün, niedrig hell    |
+| Priorität  | `priority-{high,medium,low}`                     | Terminkarten in Oliv: hoch dunkel, niedrig hell |
 | Kategorien | `category-{study,work,recovery,movement,social}` | Reserve für Kategorie-Akzente                  |
 | Status     | `success`, `warning`, `destructive`, `info`      | Rückmeldungen                                  |
 

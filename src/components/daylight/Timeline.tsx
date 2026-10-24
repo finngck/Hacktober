@@ -29,11 +29,11 @@ export const categoryIcons: Record<Category, typeof BookOpen01Icon> = {
   movement: Dumbbell01Icon,
   social: UserMultiple02Icon,
 };
-/** Block colour by priority: the more important, the darker the green. */
+/** Block colour by priority: the more important, the darker the olive. */
 const priorityTint: Record<ScheduleItem['priority'], string> = {
   high: 'border-priority-high bg-priority-high text-priority-high-foreground',
-  medium: 'border-priority-medium bg-priority-medium/70',
-  low: 'border-priority-low bg-priority-low/80',
+  medium: 'border-priority-medium bg-priority-medium',
+  low: 'border-priority-low bg-priority-low',
 };
 
 function RailSegment({ past }: { from?: number; to?: number; past?: boolean }) {
@@ -70,8 +70,11 @@ function TimeBlock({
   focus: boolean;
   note?: string;
 }) {
-  const subtle =
-    item.priority === 'high' ? 'text-priority-high-foreground/75' : 'text-muted-foreground';
+  const subtle = {
+    high: 'text-priority-high-foreground/75',
+    medium: 'text-foreground/70',
+    low: 'text-muted-foreground',
+  }[item.priority];
   return (
     <article className={cn(timeBlock({ state }), priorityTint[item.priority])}>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
