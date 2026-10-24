@@ -8,7 +8,7 @@ Der lokale Daylight-Prototyp setzt den Textablauf aus **Chat Core Features** um:
 
 React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Die Icons kommen aus HugeIcons. Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
 
-Der ElevenLabs-Agent „DailyFlow Agent“ ist als offizielles Widget unten rechts eingebunden (`index.html`). Er läuft getrennt vom Planer: Gespräche ändern den Tagesplan nicht, und Gesprächsinhalte gehen an ElevenLabs. Das Widget-Skript wird von unpkg geladen. Speech-to-Text im Planer, Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
+Das schwebende ElevenLabs-Widget ist entfernt; die App lädt dessen externes Skript nicht mehr. Speech-to-Text im Planer, Kalender-/Wearable-Anbindungen, Screenshot-Import und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
 
 ## Einstieg
 
