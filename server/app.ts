@@ -1,5 +1,6 @@
 import express from 'express';
-import { replanRequestSchema, validatePlan } from '../shared/contracts.js';
+import { extractRequestSchema, replanRequestSchema, validatePlan } from '../shared/contracts.js';
+import { extractTasks } from './extract.js';
 import { generatePlan, PlannerError } from './gemma.js';
 import { isAllowedRequest } from './request-origin.js';
 import { getVersions } from './versions.js';
@@ -30,6 +31,31 @@ export function createApp(
     next();
   });
   app.use('/api/voice', createVoiceRouter(options));
+  let activeExtractions = 0;
+  app.post('/api/extract', express.json({ limit: '4mb' }), async (req, res) => {
+    const parsed = extractRequestSchema.safeParse(req.body);
+    if (!parsed.success)
+      return res.status(400).json({
+        error: 'Das Bild ist ungültig oder zu groß. Nutze PNG, JPEG oder WebP bis etwa 2,5 MB.',
+      });
+    if (activeExtractions >= 2)
+      return res
+        .status(429)
+        .json({ error: 'Es werden gerade zwei Bilder gelesen. Versuche es gleich erneut.' });
+    activeExtractions++;
+    try {
+      return res.json(await extractTasks(parsed.data, options));
+    } catch (error) {
+      return res.status(error instanceof PlannerError ? error.status : 500).json({
+        error:
+          error instanceof PlannerError
+            ? error.message
+            : 'Das Bild konnte nicht gelesen werden. Versuche es erneut.',
+      });
+    } finally {
+      activeExtractions--;
+    }
+  });
   app.get('/api/health', (_req, res) =>
     res.json({ configured: Boolean(options.apiKey), model: options.model }),
   );

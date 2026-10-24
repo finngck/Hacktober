@@ -84,6 +84,7 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 
 - `GET /api/health`: lokale Konfiguration (`configured`, `model`); bestätigt keine externe Erreichbarkeit.
 - `GET /api/versions`: öffentliche GitHub-Commits und erfolgreiche Deployment-Links, kurz zwischengespeichert.
+- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Ob das konfigurierte Gemma-Modell Bilder verarbeitet, ist mit `npm run test:live` noch nicht geprüft.
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `GET /api/voice/status`: meldet, ob die Sprachkonfiguration vorhanden ist, ohne Schlüssel auszugeben.
 - `POST /api/voice/session`: erstellt serverseitig eine kurzlebige signierte ElevenLabs-Gesprächsadresse.

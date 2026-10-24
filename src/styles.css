@@ -1809,3 +1809,37 @@ h1 {
     max-height: calc(100dvh - 32px);
   }
 }
+
+.panel-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.import-dialog {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+}
+.file-pick {
+  display: inline-flex;
+  cursor: pointer;
+  margin-bottom: 14px;
+}
+.file-pick input {
+  display: none;
+}
+.import-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 8px 0 18px;
+}
+.import-row {
+  border: 1px solid #d8e1ef;
+  border-radius: 12px;
+  padding: 14px;
+  min-width: 0;
+}
+.import-row > input {
+  margin: 10px 0 12px;
+}
