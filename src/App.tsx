@@ -27,6 +27,7 @@ import { toastManager } from '@/components/ui/toast';
 import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip';
 import { Icon } from './components/Icon';
 import { AddTask } from './components/daylight/AddTask';
+import { EditTask } from './components/daylight/EditTask';
 import { AppHeader } from './components/daylight/AppHeader';
 import { CheckInFlow } from './components/daylight/CheckInFlow';
 import { CheckInSidebar } from './components/daylight/CheckInSidebar';
@@ -55,6 +56,7 @@ export default function App() {
   const [response, setResponse] = useState<ReplanResponse | null>(null);
   const [voiceResult, setVoiceResult] = useState<ReplanResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<ScheduleItem | null>(null);
   const [error, setError] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [health, setHealth] = useState<{ configured: boolean; model: string } | null>(null);
@@ -132,6 +134,41 @@ export default function App() {
       description: items.map((item) => item.title).join(', '),
     });
     return undefined;
+  }
+  function updateTask(item: ScheduleItem) {
+    const nextPlan = {
+      ...plan,
+      items: plan.items.map((existing) => (existing.id === item.id ? item : existing)),
+    };
+    const issues = validatePlan(nextPlan);
+    if (issues.length) return issues.join(' ');
+    clearDraft();
+    setWorkspace((previous) => ({
+      ...previous,
+      plan: nextPlan,
+      history: [...previous.history, { plan: previous.plan, checkIn: previous.checkIn }].slice(-5),
+    }));
+    return undefined;
+  }
+  function saveTask(item: ScheduleItem) {
+    const problem = updateTask(item);
+    if (!problem)
+      toastManager.add({ type: 'success', title: 'Änderung gespeichert', description: item.title });
+    return problem;
+  }
+  function moveTask(id: string, start: number) {
+    const item = plan.items.find((existing) => existing.id === id);
+    if (!item) return;
+    const problem = updateTask({ ...item, start });
+    toastManager.add(
+      problem
+        ? { type: 'error', title: 'Nicht verschoben', description: problem }
+        : {
+            type: 'success',
+            title: 'Aufgabe verschoben',
+            description: `${item.title}: ${formatTime(start)}–${formatTime(start + item.duration)}`,
+          },
+    );
   }
   async function runReplan(text: string) {
     if (busy || text.trim().length < 3) return;
@@ -304,6 +341,7 @@ export default function App() {
       plan={plan}
       focusTaskId={checkIn.focusTaskId}
       label={proposal ? 'Bisheriger Plan' : 'Dein Tagesplan'}
+      actions={busy ? undefined : { onEdit: setEditing, onMove: moveTask }}
     />
   );
 
@@ -443,6 +481,7 @@ export default function App() {
         onPlanDay={planFromCheckIn}
         planningDisabled={busy}
       />
+      <EditTask item={editing} plan={plan} onSave={saveTask} onClose={() => setEditing(null)} />
     </div>
   );
 }

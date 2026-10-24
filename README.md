@@ -26,6 +26,7 @@ Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/styles/land
 - Maßnahmen bei wenig Schlaf oder Energie aus einem Pool (Koffein, Nap, Bewegung) mit Sperren und Ausschlüssen. Gemma meldet nur Signale, die Auswahl trifft der Code.
 - Screenshot-Import: Aufgaben, Termine und Fristen aus einem Bild lesen, prüfen und korrigieren, erst dann hinzufügen. Mit einem synthetischen Stundenplan in der Vorschau getestet; die Erkennungsqualität bei echten Screenshots ist nicht breit geprüft.
 - Aufgaben von Hand hinzufügen.
+- Blöcke im Tagesplan antippen und bearbeiten (Titel, Start, Dauer, Priorität, fester Termin, heute offen lassen) oder am Griff hoch- und runterziehen (15-Minuten-Schritte, mit Tastatur per Pfeiltasten). Jede Änderung durchläuft dieselbe Planprüfung wie neue Aufgaben und lässt sich rückgängig machen; begonnene Blöcke behalten Uhrzeit und Dauer.
 - „Sprich mit Pivot“: Ein klarer Sprachauftrag übernimmt den validierten Plan direkt. Der Agent erklärt danach die tatsächlichen Änderungen; Rückfragen und Konflikte verändern den Plan nicht. Undo funktioniert per Stimme oder Schaltfläche.
 
 ### Noch nicht umgesetzt
