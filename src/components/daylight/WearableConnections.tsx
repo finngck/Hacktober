@@ -1,13 +1,13 @@
 import { Pulse01Icon, SmartWatch01Icon, SmartWatch03Icon } from '@hugeicons/core-free-icons';
 import { Icon } from '../Icon';
 
-/** Platzhalter: zeigt geplante Verbindungen, ohne irgendetwas zu verbinden. */
+/** Placeholder: shows planned connections without connecting anything. */
 const wearables = [
-  { name: 'WHOOP', detail: 'Schlaf und Erholung', icon: Pulse01Icon },
-  { name: 'Oura', detail: 'Schlaf und Bereitschaft', icon: SmartWatch03Icon },
-  { name: 'Apple Watch', detail: 'Aktivität und Schlaf', icon: SmartWatch01Icon },
-  { name: 'Fitbit', detail: 'Schritte und Schlaf', icon: SmartWatch01Icon },
-  { name: 'Ultrahuman', detail: 'Schlaf und Stoffwechsel', icon: Pulse01Icon },
+  { name: 'WHOOP', detail: 'Sleep and recovery', icon: Pulse01Icon },
+  { name: 'Oura', detail: 'Sleep and readiness', icon: SmartWatch03Icon },
+  { name: 'Apple Watch', detail: 'Activity and sleep', icon: SmartWatch01Icon },
+  { name: 'Fitbit', detail: 'Steps and sleep', icon: SmartWatch01Icon },
+  { name: 'Ultrahuman', detail: 'Sleep and metabolism', icon: Pulse01Icon },
 ];
 
 export function WearableConnections() {
@@ -18,13 +18,13 @@ export function WearableConnections() {
     >
       <div className="flex items-center justify-between gap-2 px-2 pt-1 pb-2">
         <h2 id="wearables-title" className="text-lg font-semibold whitespace-nowrap">
-          Verbindungen
+          Connections
         </h2>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs whitespace-nowrap text-muted-foreground">
-          Bald verfügbar
+          Coming soon
         </span>
       </div>
-      <ul className="grid gap-0.5" aria-label="Geplante Wearable-Verbindungen">
+      <ul className="grid gap-0.5" aria-label="Planned wearable connections">
         {wearables.map((wearable) => (
           <li
             key={wearable.name}
@@ -37,12 +37,12 @@ export function WearableConnections() {
               <span className="truncate text-sm font-medium">{wearable.name}</span>
               <span className="truncate text-xs text-muted-foreground">{wearable.detail}</span>
             </span>
-            <span className="text-xs whitespace-nowrap text-muted-foreground">Nicht verbunden</span>
+            <span className="text-xs whitespace-nowrap text-muted-foreground">Not connected</span>
           </li>
         ))}
       </ul>
       <p className="px-2 pt-2 pb-1 text-xs text-muted-foreground">
-        Vorschau: Die Anbindungen sind noch nicht umgesetzt. Der Check-in bleibt manuell.
+        Preview: these integrations are not built yet. The check-in stays manual.
       </p>
     </section>
   );
