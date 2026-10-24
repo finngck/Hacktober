@@ -250,3 +250,55 @@ test('conflicts and clarifications cannot be applied; missing key, rate limit an
     /nicht erreichbar/,
   );
 });
+
+test('fixed appointments stay put unless the user explicitly asks to move them', () => {
+  const source = request();
+  const kept = scheduleFromIntent(source, intent());
+  assert.equal(kept.proposedPlan?.items.find((item) => item.id === 'team')?.start, 930);
+
+  const moved = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: 'team', start: null, shiftMinutes: -15 }],
+  });
+  const team = moved.proposedPlan?.items.find((item) => item.id === 'team');
+  assert.equal(moved.result.status, 'proposal');
+  assert.equal(team?.start, 915);
+  assert.equal(team?.fixed, true);
+  assert.deepEqual(validatePlan(moved.proposedPlan!), []);
+  assert.match(moved.result.placements.find((item) => item.id === 'team')!.reason, /Wunsch/);
+});
+
+test('explicit moves accept absolute times and report clear conflicts', () => {
+  const source = request();
+  const absolute = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: 'team', start: 900, shiftMinutes: null }],
+  });
+  assert.equal(absolute.proposedPlan?.items.find((item) => item.id === 'team')?.start, 900);
+
+  const outside = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: 'team', start: 1430, shiftMinutes: null }],
+  });
+  assert.equal(outside.result.status, 'conflict');
+  assert.equal(outside.proposedPlan, null);
+
+  const overlap = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: 'team', start: 1150, shiftMinutes: null }],
+  });
+  assert.equal(overlap.result.status, 'conflict');
+  assert.match(overlap.result.summary, /überschneiden/);
+});
+
+test('past or begun tasks cannot be moved even on request', () => {
+  const source = request();
+  const begun = source.plan.items.find(
+    (item) => item.start !== null && item.start < source.plan.now,
+  )!;
+  const outcome = scheduleFromIntent(source, {
+    ...intent(),
+    moves: [{ id: begun.id, start: source.plan.now + 60, shiftMinutes: null }],
+  });
+  assert.equal(outcome.result.status, 'conflict');
+});
