@@ -8,6 +8,7 @@ import {
   type ReplanRequest,
   type ScheduleItem,
 } from '../shared/contracts.js';
+import type { Signals } from '../shared/measures.js';
 
 export type PlanningIntent = {
   status: 'ready' | 'clarification';
@@ -21,6 +22,7 @@ export type PlanningIntent = {
   deferIds: string[];
   moves?: { id: string; start: number | null; shiftMinutes: number | null }[];
   reasons: { id: string; reason: string }[];
+  signals?: Signals;
 };
 type Occupied = { start: number; end: number };
 

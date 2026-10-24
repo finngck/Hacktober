@@ -6,6 +6,7 @@ import {
   type ScheduleItem,
 } from '../shared/contracts.js';
 import type { PlanningIntent } from './scheduler.js';
+import { signalsSchema } from '../shared/measures.js';
 
 // The model selects operations; only this allowlist can change a proposal.
 const source = z
@@ -91,11 +92,12 @@ const toolDefinitions = {
   },
   update_day_context: {
     description:
-      'Change availability, energy or sleep ONLY when explicitly changed in message. Omit unchanged fields. Times are minutes after midnight: 14:00=840. Relative delays add to plan.availableFrom.',
+      'Report availability, energy, sleep or signals ONLY when explicitly stated in message. Omit unknown signals and unchanged fields. Times are minutes after midnight: 14:00=840. Relative delays add to plan.availableFrom. The engine selects energy measures; do not recommend them yourself.',
     args: z.strictObject({
       availabilityFrom: z.number().int().min(0).max(1440).optional(),
       energy: energySchema.optional(),
       sleepHours: z.number().min(0).max(16).optional(),
+      signals: signalsSchema.strict().optional(),
       source,
     }),
   },

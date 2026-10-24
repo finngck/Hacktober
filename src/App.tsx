@@ -30,6 +30,7 @@ import { Icon } from './components/Icon';
 import { Timeline } from './components/Timeline';
 import { AddTask } from './components/AddTask';
 import { CheckInPanel } from './components/CheckInPanel';
+import { EnergyMeasures } from './components/EnergyMeasures';
 
 export default function App() {
   const [workspace, setWorkspace] = useState(loadWorkspace);
@@ -440,6 +441,7 @@ export default function App() {
                     {response.result.question && (
                       <p className="clarifying-question">{response.result.question}</p>
                     )}
+                    <EnergyMeasures measures={response.measures} />
                     {proposal && (
                       <>
                         <div className="understood">
