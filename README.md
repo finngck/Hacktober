@@ -2,11 +2,13 @@
 
 Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [Notion-Teamseite](https://app.notion.com/p/q-summit/Hacktoberfest-403024b9b73b80c2be88d09ff91a9d08).
 
-## Daylight im Überblick
+## Pivot im Überblick
 
-**Your day changes. Your plan should too.** Daylight ist ein adaptiver Tagesplaner für Studierende und Young Professionals mit wechselnden Verpflichtungen. Er kombiniert Termine, Aufgaben, Präferenzen und das aktuelle Energielevel und plant den Tag nach einer unerwarteten Änderung neu: Du schreibst, was sich geändert hat, siehst Vorher und Nachher mit Begründung und bestätigst erst dann.
+**Your day changes. Your plan should too.** Pivot ist ein adaptiver Tagesplaner für Studierende und Young Professionals mit wechselnden Verpflichtungen. Er kombiniert Termine, Aufgaben, Präferenzen und das aktuelle Energielevel und plant den Tag nach einer unerwarteten Änderung neu: Du schreibst, was sich geändert hat, siehst Vorher und Nachher mit Begründung und bestätigst erst dann.
 
-Live: **https://hacktober-daylight.vercel.app** (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
+Live: **https://hacktober-daylight.vercel.app** mit Landing Page unter `/` und Planer unter `/app` (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
+
+Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/landing.css`, der Planer aus `app.html` und `src/main.tsx`. Logo-Dateien liegen in `brand/`; `public/favicon.svg` ist das App-Icon.
 
 ### Technologien
 

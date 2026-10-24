@@ -92,7 +92,7 @@ export function AddTask({
           <DialogHeader>
             <DialogTitle>Was steht noch an?</DialogTitle>
             <DialogDescription>
-              Ohne Startzeit bleibt die Aufgabe offen, bis Daylight sie einplant.
+              Ohne Startzeit bleibt die Aufgabe offen, bis Pivot sie einplant.
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="grid gap-5">

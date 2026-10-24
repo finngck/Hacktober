@@ -169,7 +169,7 @@ export function FocusControl({ checkIn, onChange, plan }: ControlProps & { plan:
             .join(' · '),
         ),
       )}
-      {option(null, 'Kein Fokus', 'Daylight gewichtet alles nach Priorität.')}
+      {option(null, 'Kein Fokus', 'Pivot gewichtet alles nach Priorität.')}
     </div>
   );
 }

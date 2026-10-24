@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   ArrowReloadHorizontalIcon,
   MoreHorizontalIcon,
-  Sun03Icon,
   SunriseIcon,
 } from '@hugeicons/core-free-icons';
 import {
@@ -19,17 +18,15 @@ import { Button } from '@/components/ui/button';
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from '@/components/ui/menu';
 import { Icon } from '../Icon';
 
-/** The wordmark: sun icon on a dark tile, as in the favicon. */
+/** The wordmark: Pivot app icon (same file as the favicon) and name. */
 export function Logo() {
   return (
     <span
       translate="no"
       className="inline-flex items-center gap-2 text-lg font-semibold tracking-tight"
     >
-      <span className="grid size-7 place-items-center rounded-lg bg-primary text-primary-foreground">
-        <Icon icon={Sun03Icon} size={17} strokeWidth={2} />
-      </span>
-      daylight
+      <img src="/favicon.svg" alt="" className="size-7" />
+      Pivot
     </span>
   );
 }
@@ -47,7 +44,7 @@ export function AppHeader({
   return (
     <header className="sticky top-0 z-30 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6">
-        <a href="#day-plan" aria-label="Daylight, zum Tagesplan" className="rounded-full">
+        <a href="#day-plan" aria-label="Pivot, zum Tagesplan" className="rounded-full">
           <Logo />
         </a>
         <Badge variant="outline" className="ml-1 max-sm:hidden">

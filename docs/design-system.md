@@ -1,11 +1,11 @@
 # Design-System und Corporate Identity
 
-Verbindlich für jede Oberfläche von Daylight. Neue Features übernehmen damit automatisch den gleichen Look. Agenten laden diese Regeln über den Projekt-Skill [`daylight-ui`](../.claude/skills/daylight-ui/SKILL.md).
+Verbindlich für jede Oberfläche von Pivot (Planer und Landingpage). Neue Features übernehmen damit automatisch den gleichen Look. Agenten laden diese Regeln über den Projekt-Skill [`daylight-ui`](../.claude/skills/daylight-ui/SKILL.md).
 
 ## Marke
 
 - **Stil:** Neutraler coss-ui-Look: graue App-Fläche, weiße Karten, feine Ränder, Schwarz-Grau für Aktionen. Farbe trägt nur Bedeutung (Kategorien, Status).
-- **Logo:** Wortmarke `daylight` in Inter, davor die Sonne auf dunkler Kachel (`Logo` in `src/components/daylight/AppHeader.tsx`, Favicon `public/favicon.svg`).
+- **Logo:** Pivot-App-Icon (`public/favicon.svg`) mit Wortmarke „Pivot“ in Inter (`Logo` in `src/components/daylight/AppHeader.tsx`). Die Landingpage (`index.html`, `src/styles/landing.css`) nutzt dieselbe neutrale Palette und Inter.
 - **Tonalität:** Deutsch, „du“, Satzanfang groß, aktive Verben. Ein Button sagt, was passiert („Plan übernehmen“), und der Toast danach greift dasselbe Wort auf („Plan übernommen“). Fehler erklären, was passiert ist und was hilft, ohne Entschuldigung.
 
 ## Tokens

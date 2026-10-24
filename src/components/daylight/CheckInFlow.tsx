@@ -28,7 +28,7 @@ const steps = [
     title: 'Wie viel Energie hast du?',
     description: 'Schieb die Sonne so hoch, wie du dich fühlst.',
   },
-  { title: 'Wie geht es dir?', description: 'Bei viel Druck plant Daylight mehr Luft ein.' },
+  { title: 'Wie geht es dir?', description: 'Bei viel Druck plant Pivot mehr Luft ein.' },
   {
     title: 'Was ist heute das Eine?',
     description: 'Dein Fokus bekommt das beste freie Zeitfenster.',
@@ -116,7 +116,7 @@ export function CheckInFlow({
                 </ul>
               )}
               <DialogDescription>
-                Soll Daylight deinen restlichen Tag an diesen Check-in anpassen?
+                Soll Pivot deinen restlichen Tag an diesen Check-in anpassen?
               </DialogDescription>
             </DialogPanel>
             <DialogFooter>

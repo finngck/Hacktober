@@ -69,7 +69,7 @@ export function CopilotPanel({
           Was hat sich geändert?
         </h2>
         <p className="text-sm text-muted-foreground">
-          Beschreib es in einem Satz. Daylight sortiert den Rest.
+          Beschreib es in einem Satz. Pivot sortiert den Rest.
         </p>
       </div>
       <form onSubmit={onSubmit} className="grid gap-2">

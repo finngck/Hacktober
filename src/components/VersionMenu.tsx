@@ -98,7 +98,7 @@ export function VersionMenu() {
         <DialogPanel className="grid gap-5">
           <div className="grid gap-1 rounded-xl bg-muted p-3 text-sm">
             <div className="flex items-center gap-2">
-              <strong className="font-heading text-base">Daylight {build.version}</strong>
+              <strong className="font-heading text-base">Pivot {build.version}</strong>
               <Badge variant="outline">
                 {build.environment === 'production'
                   ? 'Live'
