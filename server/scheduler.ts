@@ -122,6 +122,12 @@ export function scheduleFromIntent(
   const lockedBlocks = locked
     .filter((item) => item.start !== null)
     .toSorted((a, b) => a.start! - b.start!);
+  for (const item of lockedBlocks) {
+    if (item.start! + item.duration > Math.min(item.deadline ?? plan.dayEnd, plan.dayEnd))
+      return conflict(
+        `„${item.title}“ passt mit ${item.duration} Minuten nicht vor die Frist oder das Tagesende. Wähle eine kürzere Dauer.`,
+      );
+  }
   for (let index = 1; index < lockedBlocks.length; index++) {
     const previous = lockedBlocks[index - 1];
     if (previous.start! + previous.duration > lockedBlocks[index].start!)
@@ -150,7 +156,9 @@ export function scheduleFromIntent(
           ? `Auf deinen Wunsch auf ${formatTime(item.start!)} verschoben.`
           : item.fixed
             ? 'Fester Termin bleibt unverändert.'
-            : 'Vergangener oder begonnener Block bleibt unverändert.',
+            : item.duration !== originalPlan.items.find((before) => before.id === item.id)?.duration
+              ? `Wie angefragt auf ${item.duration} Minuten angepasst; der Beginn bleibt erhalten.`
+              : 'Vergangener oder begonnener Block bleibt unverändert.',
       },
     ]),
   );
