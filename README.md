@@ -44,7 +44,7 @@ npm start
 
 `npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln und den Gemma-Adapter. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
 
-`npm run test:live` ruft mit dem lokal eingerichteten Key tatsächlich Gemma auf (synthetischer Zugverspätungs-Test, maximal ein Reparaturversuch) und verbraucht API-Kontingent.
+`npm run test:live` prüft vier synthetische Fälle mit dem lokal eingerichteten Gemma-Key: Zugverspätung mit wenig Energie, zusätzliche Marketing-Klausur, Bearbeitung vorhandener Marketing-Lernzeit und neue Aufgabe zusammen mit geänderter Verfügbarkeit. Jeder Fall erlaubt maximal einen Reparaturversuch; der Befehl verbraucht API-Kontingent.
 
 ## GitHub und Vercel
 
@@ -65,9 +65,11 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
 - `src/components/Timeline.tsx`: Tagesansicht und Vergleich. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
 
-Gemma interpretiert die Nachricht, priorisiert die Aufgaben und begründet Abwägungen. Der regelbasierte Scheduler setzt sie in freie Zeitfenster: zunächst heutige Fristen und bei wenig Energie bestehende Erholungspausen, danach die übrigen Aufgaben nach Modellpriorität. Bereits passende optionale Startzeiten bleiben erhalten. Der Server prüft den fertigen Vorschlag zusätzlich auf eindeutige Aufgaben-IDs, vollständige Erhaltung der Aufgaben, unveränderte Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und explizit ausgeschlossene Aktivitätstags. Eine ungültige Modellinterpretation erhält maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
+Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task`, `update_task`, `prioritize_tasks`, `defer_tasks`, `update_day_context`, `replan_day` und `ask_clarification`. Der Server prüft die vollständige Aufrufserie und führt sie auf einer Kopie aus. Aufgabenänderungen brauchen ein wörtliches Zitat aus der Nachricht; unbekannte Tools, Argumente, IDs sowie Änderungen an festen oder begonnenen Blöcken werden abgelehnt. Neue Aufgaben verwenden feste Bausteine (z. B. Klausurvorbereitung: 90 Minuten, hohe Priorität), wenn keine Dauer genannt wurde. Eine weitere Klausur erzeugt eine eigene Lernaufgabe; explizite Korrekturen bearbeiten die passende bestehende Aufgabe.
 
-`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Nur eine ausdrückliche Bestätigung ändert den aktiven Plan. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Das Verständnis natürlicher Sprache und die Qualität der Begründung bleiben Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet.
+Der regelbasierte Scheduler reserviert zuerst heutige Fristen und Erholung, dann neu angeforderte oder bearbeitete Aufgaben, danach optionale Arbeit. Bereits passende Startzeiten bleiben möglichst erhalten; bei Platzproblemen folgt ein verdichteter Versuch. Eine angeforderte Aufgabe wird eingeplant oder erzeugt einen sichtbaren Konflikt. Zusammenfassung und Änderungsgründe entstehen aus dem tatsächlich berechneten Vorschlag. Alle bestehenden Aufgaben bleiben erhalten, auch wenn sie heute offen sind. Der Server prüft zusätzlich Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und Ausschlüsse. Ungültige Tool-Aufrufe erhalten maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
+
+`start: null` heißt **heute offen**, nicht automatisch auf morgen verschoben. Die Verfügbarkeit wird bei Übernahme im Plan gespeichert. Nur eine ausdrückliche Bestätigung ändert den aktiven Plan. Die Zeitplanung ist eine Heuristik für einen einzelnen Tag, kein vollständiger Optimierer. Die Auswahl der passenden Tools und Argumente bleibt Modellleistung. Bei jeder Planung werden Aufgaben, Check-in, Präferenzen und Nachricht an die Google-API gesendet. Die Anbindung folgt Googles [Gemma Function-Calling-Schnittstelle](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api#function-calling).
 
 ## Saubere Arbeitskopie aktualisieren
 

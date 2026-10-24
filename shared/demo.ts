@@ -117,6 +117,11 @@ export const demoPlan: Plan = {
 
 export const demoPrompts = [
   {
+    label: 'Morgen eine Marketing-Klausur',
+    message:
+      'Ich schreibe morgen noch eine Marketing-Klausur und muss noch lernen. Kannst du das einplanen und irrelevante Sachen austauschen?',
+  },
+  {
     label: 'Mein Zug hat Verspätung',
     message:
       'Mein Zug hat eine Stunde Verspätung. Ich bin erst um 14:00 verfügbar. Ich habe nur fünf Stunden geschlafen und wenig Energie. Bitte plane meinen restlichen Tag realistisch um.',

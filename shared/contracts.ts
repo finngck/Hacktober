@@ -89,6 +89,21 @@ export const parseTime = (time: string) => {
   return hours * 60 + minutes;
 };
 
+export function hasItemChanged(before: ScheduleItem | undefined, after: ScheduleItem): boolean {
+  return (
+    !before ||
+    before.title !== after.title ||
+    before.category !== after.category ||
+    before.start !== after.start ||
+    before.duration !== after.duration ||
+    before.priority !== after.priority ||
+    before.effort !== after.effort ||
+    before.deadline !== after.deadline ||
+    before.fixed !== after.fixed ||
+    before.tags.toSorted().join(',') !== after.tags.toSorted().join(',')
+  );
+}
+
 export function validatePlan(plan: Plan): string[] {
   const errors: string[] = [];
   if (plan.dayStart > plan.now || plan.now >= plan.dayEnd)

@@ -10,6 +10,7 @@ import {
 import {
   categoryLabels,
   formatTime,
+  hasItemChanged,
   type Category,
   type Plan,
   type ModelResult,
@@ -51,7 +52,7 @@ export function Timeline({
       <ol className="schedule-list">
         {scheduled.map((item, index) => {
           const before = original?.items.find((source) => source.id === item.id);
-          const changed = before && before.start !== item.start;
+          const changed = Boolean(original) && hasItemChanged(before, item);
           const past = item.start! + item.duration <= plan.now;
           const previousEnd = index
             ? scheduled[index - 1].start! + scheduled[index - 1].duration
@@ -102,9 +103,17 @@ export function Timeline({
                   </div>
                   {changed && (
                     <p className="change-note">
-                      {before.start === null
-                        ? 'Neu eingeplant'
-                        : `Vorher ${formatTime(before.start)}`}
+                      {!before
+                        ? 'Neu hinzugefügt'
+                        : before.title !== item.title
+                          ? `Vorher „${before.title}“`
+                          : before.duration !== item.duration
+                            ? `Vorher ${before.duration} Min.`
+                            : before.start === null
+                              ? 'Neu eingeplant'
+                              : before.start !== item.start
+                                ? `Vorher ${formatTime(before.start)}`
+                                : 'Aufgabe bearbeitet'}
                       <span> · </span>
                       {result?.placements.find((placement) => placement.id === item.id)?.reason}
                     </p>
