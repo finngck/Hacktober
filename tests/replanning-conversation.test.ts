@@ -4,6 +4,7 @@ import { once } from 'node:events';
 import { createApp } from '../server/app';
 import { prepareToolCalls } from '../server/planner-tools';
 import { scheduleFromIntent } from '../server/scheduler';
+import { explicitLowEnergy } from '../server/explicit-energy';
 import { continueConversation } from '../shared/conversation';
 import { demoCheckIn, demoPlan } from '../shared/demo';
 import {
@@ -41,6 +42,50 @@ test('more time defaults to a real 30-minute extension and combines with low ene
   assert.equal(response.proposedPlan!.items.find((item) => item.id === 'project')!.start, null);
   assert.deepEqual(validatePlan(response.proposedPlan!), []);
   assert.deepEqual(source, snapshot);
+});
+
+test('a direct fatigue report survives an omitted context tool and a task-name follow-up', () => {
+  const source = request();
+  source.conversation = [{ message: source.message, reply: 'Welche Aufgabe meinst du?' }];
+  source.message = 'Statistik';
+  const response = schedule(source, [resize(source)]);
+  assert.equal(response.result.energy, 'low');
+  assert.equal(response.result.sleepHours, demoCheckIn.sleepHours);
+  assert.equal(response.proposedPlan!.items.find((item) => item.id === 'study')!.duration, 120);
+  assert.equal(response.proposedPlan!.items.find((item) => item.id === 'project')!.start, null);
+  const unchangedModelContext = schedule(source, [
+    resize(source),
+    {
+      name: 'update_day_context',
+      args: { energy: 'medium', source: source.message },
+    },
+  ]);
+  assert.equal(unchangedModelContext.result.energy, 'low');
+});
+
+test('fatigue defaults do not override corrections, other people, quotations or model context', () => {
+  const source = request();
+  source.conversation = [{ message: source.message, reply: 'Welche Aufgabe meinst du?' }];
+  for (const message of [
+    'Ich bin nicht erschöpft.',
+    'Ich habe wieder viel Energie.',
+    'Ich bin wieder fit.',
+    'Wenn ich erschöpft bin, was mache ich dann?',
+    'Meine Freundin hat keinen Kopf mehr dafür.',
+    'Was bedeutet „Ich habe keinen Kopf mehr“?',
+  ])
+    assert.equal(explicitLowEnergy({ ...source, message }), undefined, message);
+  for (const message of [
+    'Ja, ich habe keinen Kopf mehr dafür.',
+    'Ich bin heute total platt.',
+    'Ich habe gerade wenig Energie.',
+  ])
+    assert.equal(explicitLowEnergy({ ...source, message }), 'low', message);
+  source.message = 'Ich bin wieder fit.';
+  const response = schedule(source, [
+    { name: 'update_day_context', args: { energy: 'high', source: source.message } },
+  ]);
+  assert.equal(response.result.energy, 'high');
 });
 
 test('running work can be extended; its start and elapsed work remain while following tasks shift', () => {

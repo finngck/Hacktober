@@ -8,6 +8,7 @@ import {
 } from '../shared/contracts.js';
 import type { PlanningIntent } from './scheduler.js';
 import { signalsSchema } from '../shared/measures.js';
+import { explicitLowEnergy } from './explicit-energy.js';
 
 // The model selects operations; only this allowlist can change a proposal.
 const source = z
@@ -163,11 +164,12 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
   // Validate the entire batch before touching a copy. A failed batch has no side effects.
   const calls = z.array(callSchema).min(1).max(20).parse(rawCalls);
   const prepared = structuredClone(request);
+  const reportedEnergy = explicitLowEnergy(request);
   const intent: PlanningIntent = {
     status: 'ready',
     summary: '',
     availabilityFrom: request.plan.availableFrom,
-    energy: request.checkIn.energy,
+    energy: reportedEnergy ?? request.checkIn.energy,
     sleepHours: request.checkIn.sleepHours,
     question: null,
     taskOrder: [],
@@ -314,6 +316,9 @@ export function prepareToolCalls(request: ReplanRequest, rawCalls: unknown) {
       if (signals) intent.signals = { ...intent.signals, ...signals };
     }
   }
+  // A plainly stated user fact takes precedence over an omitted or unchanged
+  // model context field. A newer correction is excluded by explicitLowEnergy.
+  if (reportedEnergy) intent.energy = reportedEnergy;
   if (intent.availabilityFrom < request.plan.now)
     throw new Error('availabilityFrom muss ab plan.now liegen, in Minuten nach Mitternacht.');
   if (
