@@ -24,7 +24,7 @@ Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/landing.css
 - Änderung als Text eingeben → Gemma-4-Vorschlag → Vorher/Nachher mit Erklärung → übernehmen oder verwerfen, mit Undo.
 - Feste Termine bleiben für den Planer unverändert und lassen sich nur auf ausdrücklichen Wunsch verschieben („Team-Meeting 15 Minuten früher“).
 - Maßnahmen bei wenig Schlaf oder Energie aus einem Pool (Koffein, Nap, Bewegung) mit Sperren und Ausschlüssen. Gemma meldet nur Signale, die Auswahl trifft der Code.
-- Screenshot-Import: Aufgaben, Termine und Fristen aus einem Bild lesen, prüfen und korrigieren, erst dann hinzufügen. Mit einem synthetischen Stundenplan in der Vorschau getestet; die Erkennungsqualität bei echten Screenshots ist nicht breit geprüft.
+- Screenshot-Import: Aufgaben, Termine und Fristen aus PNG, JPEG oder WebP bis 20 MB lesen, prüfen und korrigieren, erst dann hinzufügen. Der Browser verkleinert große Bilder und erhält dunklen Text auf transparentem Hintergrund. Schließen bricht den Upload ab; verspätete Ergebnisse werden ignoriert. Die Erkennungsqualität bei beliebigen echten Screenshots ist nicht breit geprüft.
 - Aufgaben von Hand hinzufügen.
 
 ### Noch nicht umgesetzt
@@ -72,6 +72,8 @@ npm start
 
 `npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln, den Gemma-Adapter und die Design-System-Regeln. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
 
+`npm run test:upload` prüft den Screenshot-Ablauf in einem echten Browser mit synthetischen Bildern und simulierten Modellantworten: Dateiformate, Transparenz, Komprimierung, Abbruch, Zeitlimit, Fehleranzeige und bestätigte Übernahme samt Neuladen. Einmalig `npx playwright install chromium` ausführen; alternativ vorhandenes Chrome mit `PLAYWRIGHT_CHANNEL=chrome npm run test:upload` verwenden. Für WebKit: `npx playwright install webkit` und `UPLOAD_BROWSER=webkit npm run test:upload`. Die Tests starten ihren eigenen lokalen Server und brauchen keinen API-Key.
+
 `npm run test:live` prüft fünf synthetische Fälle mit dem lokal eingerichteten Gemma-Key: ausdrücklich verschobener fester Termin, Zugverspätung mit wenig Energie, zusätzliche Marketing-Klausur, Bearbeitung vorhandener Marketing-Lernzeit und neue Aufgabe zusammen mit geänderter Verfügbarkeit. Jeder Fall erlaubt maximal einen Reparaturversuch; der Befehl verbraucht API-Kontingent.
 
 ## GitHub und Vercel
@@ -90,7 +92,7 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 
 - `GET /api/health`: lokale Konfiguration (`configured`, `model`); bestätigt keine externe Erreichbarkeit.
 - `GET /api/versions`: öffentliche GitHub-Commits und erfolgreiche Deployment-Links, kurz zwischengespeichert.
-- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Vorübergehende Providerfehler und ungültige Antworten teilen sich ein Limit von insgesamt zwei Modellaufrufen. Das konfigurierte Modell hat in der Vorschau einen synthetischen Stundenplan korrekt gelesen.
+- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis 3.500.000 Base64-Zeichen, etwa 2,5 MB). Der Browser komprimiert größere Originaldateien vor dem Upload und begrenzt den gesamten Vorgang auf 65 Sekunden. Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Vorübergehende Provider- und Verbindungsfehler sowie ungültige Antworten teilen sich ein Limit von insgesamt zwei Modellaufrufen.
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `server/gemma.ts`: Google-REST-Adapter mit `gemma-4-26b-a4b-it` als Standard; über `GEMMA_MODEL` auf ein anderes freigegebenes Gemma-4-Modell umstellbar. [Offizielle Modell-Dokumentation](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
