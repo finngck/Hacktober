@@ -7,7 +7,7 @@ import {
   type Plan,
   type ReplanRequest,
   type ScheduleItem,
-} from '../shared/contracts';
+} from '../shared/contracts.js';
 
 export const intentSchema = z.object({
   status: z.enum(['ready', 'clarification']),

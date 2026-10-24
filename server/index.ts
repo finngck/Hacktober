@@ -1,7 +1,7 @@
 import express from 'express';
 import { resolve } from 'node:path';
-import { createApp } from './app';
-import { config } from './config';
+import { createApp } from './app.js';
+import { config } from './config.js';
 
 const app = createApp(config);
 if (process.argv.includes('--production')) {

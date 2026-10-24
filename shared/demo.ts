@@ -1,4 +1,4 @@
-import type { CheckIn, Plan } from './contracts';
+import type { CheckIn, Plan } from './contracts.js';
 
 export const demoCheckIn: CheckIn = {
   sleepHours: 6.5,

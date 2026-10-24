@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { ReplanRequest, ReplanResponse } from '../shared/contracts';
-import { intentSchema, scheduleFromIntent } from './scheduler';
+import type { ReplanRequest, ReplanResponse } from '../shared/contracts.js';
+import { intentSchema, scheduleFromIntent } from './scheduler.js';
 
 export class PlannerError extends Error {
   constructor(
