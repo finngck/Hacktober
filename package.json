@@ -14,7 +14,9 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "test:live": "node --import tsx scripts/check-gemma.ts",
     "format": "prettier --write src server api shared tests scripts public index.html package.json tsconfig.json vite.config.ts vercel.json",
-    "format:check": "prettier --check src server api shared tests scripts public index.html package.json tsconfig.json vite.config.ts vercel.json"
+    "format:check": "prettier --check src server api shared tests scripts public index.html package.json tsconfig.json vite.config.ts vercel.json",
+    "voice:setup": "node --import tsx scripts/configure-voice.ts",
+    "test:voice:live": "node --import tsx scripts/check-voice.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -28,7 +30,9 @@
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "tailwind-merge": "^3.7.0",
-    "zod": "^4.6.7"
+    "zod": "^4.6.7",
+    "@elevenlabs/elevenlabs-js": "^2.74.0",
+    "@elevenlabs/react": "^1.19.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
