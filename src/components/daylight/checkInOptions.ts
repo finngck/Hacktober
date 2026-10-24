@@ -9,16 +9,15 @@ import {
   Dumbbell01Icon,
 } from '@hugeicons/core-free-icons';
 import {
-  energyLabels,
+  energyLevelLabels,
+  energyLevelOf,
   moodLabels,
   stressLabels,
   sleepQualityLabels,
   type CheckIn,
-  type Energy,
   type Plan,
 } from '../../../shared/contracts';
 
-export const energyLevels: Energy[] = ['low', 'medium', 'high'];
 export const moodIcons = [Sad02Icon, Sad01Icon, NeutralIcon, SmileIcon, HappyIcon];
 export const exclusionOptions = [
   { id: 'coffee', label: 'Kein Kaffee', icon: Coffee01Icon },
@@ -51,7 +50,7 @@ export function checkInSummary(checkIn: CheckIn, plan: Plan) {
   const focus = plan.items.find((item) => item.id === checkIn.focusTaskId);
   return {
     sleep: `${formatHours(checkIn.sleepHours)} · ${sleepQualityLabels[checkIn.sleepQuality]}`,
-    energy: energyLabels[checkIn.energy],
+    energy: energyLevelLabels[energyLevelOf(checkIn) - 1],
     mood: moodLabels[checkIn.mood - 1],
     stress: stressLabels[checkIn.stress - 1],
     focus: focus?.title ?? 'Noch kein Fokus',

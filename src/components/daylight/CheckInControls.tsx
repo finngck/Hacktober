@@ -1,6 +1,8 @@
 import { Moon02Icon, Target02Icon, Tick02Icon } from '@hugeicons/core-free-icons';
 import {
-  energyLabels,
+  energyFromLevel,
+  energyLevelLabels,
+  energyLevelOf,
   moodLabels,
   sleepQualityLabels,
   stressLabels,
@@ -14,7 +16,6 @@ import { Icon } from '../Icon';
 import { ChoiceChip, ChoiceGroup, ChoiceItem } from './Choice';
 import { DaylightSlider } from './DaylightSlider';
 import {
-  energyLevels,
   exclusionOptions,
   focusCandidates,
   formatHours,
@@ -62,19 +63,21 @@ export function SleepControl({ checkIn, onChange }: ControlProps) {
 }
 
 export function EnergyControl({ checkIn, onChange }: ControlProps) {
-  const level = energyLevels.indexOf(checkIn.energy);
+  const level = energyLevelOf(checkIn);
   return (
     <div className="grid gap-3">
       <DaylightSlider
         label="Energie gerade"
         tone="sun"
-        min={0}
-        max={2}
+        min={1}
+        max={5}
         value={level}
-        onValueChange={(index) => onChange({ energy: energyLevels[index] })}
-        display={energyLabels[checkIn.energy]}
-        startLabel="Wenig"
-        endLabel="Viel"
+        onValueChange={(energyLevel) =>
+          onChange({ energyLevel, energy: energyFromLevel(energyLevel) })
+        }
+        display={energyLevelLabels[level - 1]}
+        startLabel="Sehr niedrig"
+        endLabel="Sehr hoch"
       />
     </div>
   );
