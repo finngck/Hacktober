@@ -12,6 +12,7 @@ export type VoiceOptions = {
   elevenLabsAgentId?: string;
   voiceLlmSecret?: string;
   sessionSigner?: (agentId: string) => Promise<string>;
+  sessionTokenIssuer?: (agentId: string) => Promise<string>;
 };
 
 export function hasVoiceAuthorization(header: string | undefined, secret: string | undefined) {
@@ -27,10 +28,10 @@ export function createConversationRouter(options: VoiceOptions) {
   router.post('/v1/chat/completions', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     if (!hasVoiceAuthorization(req.headers.authorization, options.voiceLlmSecret))
-      return res.status(401).json({ error: 'Nicht autorisierte Sprachanfrage.' });
+      return res.status(401).json({ error: 'Unauthorized voice request.' });
     const parsed = conversationRequestSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: 'Ungültiges Gesprächsformat.' });
-    if (active >= 4) return res.status(429).json({ error: 'Bitte versuche es gleich erneut.' });
+    if (!parsed.success) return res.status(400).json({ error: 'Invalid conversation format.' });
+    if (active >= 4) return res.status(429).json({ error: 'Please try again in a moment.' });
     const controller = new AbortController();
     res.on('close', () => controller.abort());
     active++;
@@ -47,9 +48,7 @@ export function createConversationRouter(options: VoiceOptions) {
     } catch (error) {
       if (controller.signal.aborted) return;
       const message =
-        error instanceof PlannerError
-          ? error.message
-          : 'Der Sprachdialog ist gerade nicht erreichbar.';
+        error instanceof PlannerError ? error.message : 'Voice chat is not available right now.';
       if (!res.headersSent)
         res.status(error instanceof PlannerError ? error.status : 502).json({ error: message });
       else res.end(`data: ${JSON.stringify({ error: { message } })}\n\ndata: [DONE]\n\n`);
@@ -69,24 +68,36 @@ export function createVoiceRouter(options: VoiceOptions) {
     options.voiceLlmSecret,
   );
   router.get('/status', (_req, res) => res.json({ configured }));
-  router.post('/session', async (_req, res) => {
-    if (!configured)
-      return res.status(503).json({ error: 'Der Sprachdialog ist noch nicht eingerichtet.' });
+  router.post('/session', async (req, res) => {
+    if (!configured) return res.status(503).json({ error: "Voice chat isn't set up yet." });
     try {
+      const client = new ElevenLabsClient({ apiKey: options.elevenLabsApiKey });
+      if (req.body?.connectionType === 'webrtc') {
+        const conversationToken = options.sessionTokenIssuer
+          ? await options.sessionTokenIssuer(options.elevenLabsAgentId!)
+          : (
+              await client.conversationalAi.conversations.getWebrtcToken(
+                { agentId: options.elevenLabsAgentId! },
+                { timeoutInSeconds: 15, maxRetries: 0 },
+              )
+            ).token;
+        if (!conversationToken) throw new Error('Missing conversation token');
+        return res.json({ conversationToken });
+      }
       const signedUrl = options.sessionSigner
         ? await options.sessionSigner(options.elevenLabsAgentId!)
         : (
-            await new ElevenLabsClient({
-              apiKey: options.elevenLabsApiKey,
-            }).conversationalAi.conversations.getSignedUrl({ agentId: options.elevenLabsAgentId! })
+            await client.conversationalAi.conversations.getSignedUrl(
+              { agentId: options.elevenLabsAgentId! },
+              { timeoutInSeconds: 15, maxRetries: 0 },
+            )
           ).signedUrl;
       if (!signedUrl?.startsWith('wss://api.elevenlabs.io/'))
         throw new Error('Invalid session URL');
       return res.json({ signedUrl });
     } catch {
       return res.status(502).json({
-        error:
-          'Die Sprachverbindung konnte nicht gestartet werden. Prüfe die ElevenLabs-Einrichtung.',
+        error: "The voice connection couldn't be started. Check the ElevenLabs setup.",
       });
     }
   });

@@ -10,7 +10,7 @@ const messages: ConversationRequest['messages'] = [
   {
     role: 'user',
     content:
-      'Mein Zug ist verspätet. Ich bin erst ab 14 Uhr verfügbar und habe wenig Energie. Plane meinen Tagesplan bitte um.',
+      'My train is delayed. I am only available from 14:00 and have low energy. Please replan my day.',
   },
 ];
 let applied = false;

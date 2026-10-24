@@ -1,6 +1,8 @@
 import { formatTime, replanResponseSchema, validatePlan } from '../shared/contracts';
 import type { Workspace } from './state';
 
+export type VoiceChange = { title: string; before: string; after: string; reason: string };
+
 export function describeDay(workspace: Workspace) {
   return {
     date: workspace.plan.date,
@@ -9,7 +11,7 @@ export function describeDay(workspace: Workspace) {
     checkIn: workspace.checkIn,
     items: workspace.plan.items.map((item) => ({
       ...item,
-      time: item.start === null ? 'heute offen' : formatTime(item.start),
+      time: item.start === null ? 'open today' : formatTime(item.start),
     })),
   };
 }
@@ -21,7 +23,10 @@ export async function executeVoiceReplan(
     request: (workspace: Workspace, message: string) => Promise<unknown>;
     commit: (workspace: Workspace) => void;
     showResult: (response: ReturnType<typeof replanResponseSchema.parse>) => void;
-    showApplied?: (response: ReturnType<typeof replanResponseSchema.parse>) => void;
+    showApplied?: (
+      response: ReturnType<typeof replanResponseSchema.parse>,
+      changes: VoiceChange[],
+    ) => void;
     signal: AbortSignal;
   },
 ) {
@@ -31,12 +36,12 @@ export async function executeVoiceReplan(
   if (dependencies.signal.aborted)
     return {
       status: 'error',
-      summary: 'Die Planung wurde abgebrochen. Es wurde nichts übernommen.',
+      summary: 'Planning was canceled. Nothing was applied.',
     };
   if (JSON.stringify(dependencies.read()) !== snapshot)
     return {
       status: 'stale',
-      summary: 'Der Tagesplan wurde inzwischen geändert. Bitte erneut planen.',
+      summary: 'The day plan changed in the meantime. Please plan again.',
     };
   if (response.result.status !== 'proposal' || !response.proposedPlan) {
     dependencies.showResult(response);
@@ -47,7 +52,7 @@ export async function executeVoiceReplan(
     };
   }
   const issues = validatePlan(response.proposedPlan);
-  if (issues.length) throw new Error('Der neue Tagesplan konnte nicht geprüft werden.');
+  if (issues.length) throw new Error("Couldn't validate the new day plan.");
   const changes = response.proposedPlan.items.flatMap((item) => {
     const before = source.plan.items.find((candidate) => candidate.id === item.id);
     if (
@@ -62,10 +67,10 @@ export async function executeVoiceReplan(
         title: item.title,
         before: before
           ? before.start === null
-            ? 'heute offen'
+            ? 'open today'
             : formatTime(before.start)
-          : 'neue Aufgabe',
-        after: item.start === null ? 'heute offen' : formatTime(item.start),
+          : 'new task',
+        after: item.start === null ? 'open today' : formatTime(item.start),
         reason:
           response.result.placements.find((placement) => placement.id === item.id)?.reason ?? '',
       },
@@ -83,6 +88,6 @@ export async function executeVoiceReplan(
     history: [...source.history, { plan: source.plan, checkIn: source.checkIn }].slice(-5),
   };
   dependencies.commit(next);
-  dependencies.showApplied?.(response);
+  dependencies.showApplied?.(response, changes);
   return { status: 'applied', summary: response.result.summary, changes, plan: describeDay(next) };
 }

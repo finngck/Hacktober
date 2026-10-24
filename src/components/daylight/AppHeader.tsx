@@ -46,29 +46,27 @@ export function AppHeader({
       <div className="mx-auto flex h-20 max-w-7xl items-center gap-3 px-4 sm:px-6">
         <a
           href="#day-plan"
-          aria-label="Pivot, zum Tagesplan"
+          aria-label="Pivot, go to day plan"
           className="inline-flex shrink-0 items-center rounded-full"
         >
           <Logo />
         </a>
         <Badge variant="outline" className="ml-1 max-sm:hidden">
-          Beispieltag
+          Sample day
         </Badge>
         <div className="ml-auto flex items-center">
           <Menu>
-            <MenuTrigger
-              render={<Button variant="ghost" size="icon" aria-label="Weitere Aktionen" />}
-            >
+            <MenuTrigger render={<Button variant="ghost" size="icon" aria-label="More actions" />}>
               <Icon icon={MoreHorizontalIcon} size={20} />
             </MenuTrigger>
             <MenuPopup align="end">
               <MenuItem onClick={onStartCheckIn} disabled={busy}>
                 <Icon icon={SunriseIcon} size={16} />
-                Check-in starten
+                Start check-in
               </MenuItem>
               <MenuItem variant="destructive" onClick={() => setConfirmReset(true)} disabled={busy}>
                 <Icon icon={ArrowReloadHorizontalIcon} size={16} />
-                Beispieltag zurücksetzen
+                Reset sample day
               </MenuItem>
             </MenuPopup>
           </Menu>
@@ -77,14 +75,14 @@ export function AppHeader({
       <AlertDialog open={confirmReset} onOpenChange={setConfirmReset}>
         <AlertDialogPopup>
           <AlertDialogHeader>
-            <AlertDialogTitle>Beispieltag zurücksetzen?</AlertDialogTitle>
+            <AlertDialogTitle>Reset sample day?</AlertDialogTitle>
             <AlertDialogDescription>
-              Plan, Check-in und Rückgängig-Verlauf kehren zum Ausgangszustand zurück. Deine Serie
-              und Abzeichen bleiben.
+              Your plan, check-in, and undo history return to their starting state. Your streak and
+              badges stay.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogClose render={<Button variant="ghost" />}>Abbrechen</AlertDialogClose>
+            <AlertDialogClose render={<Button variant="ghost" />}>Cancel</AlertDialogClose>
             <Button
               variant="destructive"
               onClick={() => {
@@ -92,7 +90,7 @@ export function AppHeader({
                 onReset();
               }}
             >
-              Zurücksetzen
+              Reset
             </Button>
           </AlertDialogFooter>
         </AlertDialogPopup>

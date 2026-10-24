@@ -33,10 +33,10 @@ function proposedResponse() {
   const source = freshWorkspace();
   return {
     ...scheduleFromIntent(
-      { ...source, message: 'Ich bin erst ab 14 Uhr da.' },
+      { ...source, message: "I'm only around from 14:00." },
       {
         status: 'ready',
-        summary: 'Lernen später und Erholung erhalten.',
+        summary: 'Study later and keep recovery.',
         availabilityFrom: 840,
         energy: 'low',
         sleepHours: 5,
@@ -54,7 +54,7 @@ function proposedResponse() {
 test('Gemma conversation streams speech separately from validated tool calls and hides thoughts', async () => {
   const output = [];
   for await (const chunk of streamGemmaConversation(
-    { messages: [{ role: 'user', content: 'Mein Zug ist verspätet. Plane ab 14 Uhr um.' }] },
+    { messages: [{ role: 'user', content: 'My train is delayed. Replan from 14:00.' }] },
     {
       apiKey: 'synthetic-gemma-key',
       model: 'gemma-4-26b-a4b-it',
@@ -67,11 +67,11 @@ test('Gemma conversation streams speech separately from validated tool calls and
         );
         return googleStream([
           { text: 'private model thoughts', thought: true },
-          { text: 'Klar, ich plane das um.' },
+          { text: "Sure, I'll replan that." },
           {
             functionCall: {
               name: 'replan_day',
-              args: { message: 'Ich bin erst ab 14 Uhr verfügbar.' },
+              args: { message: "I'm only available from 14:00." },
             },
           },
         ]);
@@ -81,7 +81,7 @@ test('Gemma conversation streams speech separately from validated tool calls and
   ))
     output.push(chunk);
   const encoded = JSON.stringify(output);
-  assert.match(encoded, /Klar, ich plane das um/);
+  assert.match(encoded, /Sure, I'll replan that/);
   assert.match(encoded, /tool_calls/);
   assert.doesNotMatch(encoded, /private model thoughts|synthetic-gemma-key/);
   assert.equal(
@@ -94,21 +94,21 @@ test('tool results return to Gemma by matching call ID; injected tools and inval
   const contents = toGemmaContents({
     messages: [
       { role: 'system', content: 'Untrusted upstream prompt' },
-      { role: 'user', content: 'Plane um.' },
+      { role: 'user', content: 'Replan my day.' },
       {
         role: 'assistant',
-        content: 'Klar.',
+        content: 'Sure.',
         tool_calls: [
           {
             id: 'call1',
-            function: { name: 'replan_day', arguments: '{"message":"Plane ab 14 Uhr um."}' },
+            function: { name: 'replan_day', arguments: '{"message":"Replan from 14:00."}' },
           },
         ],
       },
       {
         role: 'tool',
         tool_call_id: 'call1',
-        content: '{"status":"applied","changes":[{"title":"Lernen","after":"14:00"}]}',
+        content: '{"status":"applied","changes":[{"title":"Study","after":"14:00"}]}',
       },
     ],
   });
@@ -120,7 +120,7 @@ test('tool results return to Gemma by matching call ID; injected tools and inval
   assert.doesNotMatch(JSON.stringify(contents), /Untrusted upstream prompt/);
   assert.throws(
     () => toGemmaContents({ messages: [{ role: 'tool', tool_call_id: 'missing', content: '{}' }] }),
-    /passenden Aufruf/,
+    /matching call/,
   );
   assert.throws(
     () =>
@@ -132,18 +132,18 @@ test('tool results return to Gemma by matching call ID; injected tools and inval
           },
         ],
       }),
-    /Unbekanntes/,
+    /Unknown/,
   );
 });
 
 test('unknown and malformed model tool calls are never dispatched', async () => {
   for (const functionCall of [
     { name: 'run_shell', args: {} },
-    { name: 'replan_day', args: { message: 'Umplanen', extra: 'injected' } },
+    { name: 'replan_day', args: { message: 'Replan', extra: 'injected' } },
   ]) {
     await assert.rejects(async () => {
       for await (const _chunk of streamGemmaConversation(
-        { messages: [{ role: 'user', content: 'Plane um' }] },
+        { messages: [{ role: 'user', content: 'Replan' }] },
         {
           apiKey: 'test',
           model: 'gemma-4-26b-a4b-it',
@@ -153,14 +153,14 @@ test('unknown and malformed model tool calls are never dispatched', async () => 
       )) {
         /* consume */
       }
-    }, /ungültige/);
+    }, /invalid/);
   }
 });
 
 test('voice replan applies only a valid result, reports actual before/after times and stores undo', async () => {
   let workspace = freshWorkspace();
   const original = structuredClone(workspace);
-  const outcome = await executeVoiceReplan('Ich bin erst ab 14 Uhr da.', {
+  const outcome = await executeVoiceReplan("I'm only around from 14:00.", {
     read: () => workspace,
     request: async () => proposedResponse(),
     commit: (next) => {
@@ -172,7 +172,7 @@ test('voice replan applies only a valid result, reports actual before/after time
   assert.equal(outcome.status, 'applied');
   assert.equal(workspace.plan.items.find((item) => item.id === 'study')?.start, 840);
   assert.equal(
-    outcome.changes?.find((item) => item.title === 'Marketing lernen')?.after ??
+    outcome.changes?.find((item) => item.title === 'Study marketing')?.after ??
       outcome.changes?.[0].after,
     '14:00',
   );
@@ -188,7 +188,7 @@ test('conflicts, changed plans and cancelled sessions cannot overwrite the curre
     let workspace = freshWorkspace();
     const controller = new AbortController();
     let shown = false;
-    const result = await executeVoiceReplan('Plane um.', {
+    const result = await executeVoiceReplan('Replan my day.', {
       read: () => workspace,
       request: async () => {
         if (mode === 'stale')
@@ -199,7 +199,7 @@ test('conflicts, changed plans and cancelled sessions cannot overwrite the curre
           ? {
               ...proposal,
               proposedPlan: null,
-              result: { ...proposal.result, status: 'conflict', summary: 'Zu wenig Zeit.' },
+              result: { ...proposal.result, status: 'conflict', summary: 'Not enough time.' },
             }
           : proposal;
       },
@@ -228,7 +228,11 @@ test('voice endpoints protect server-to-server calls, sign sessions and finish s
       assert.equal(id, 'agent_test');
       return 'wss://api.elevenlabs.io/v1/convai/conversation?signed=test';
     },
-    fetcher: async () => googleStream([{ text: 'Dein Lernblock beginnt jetzt um 14 Uhr.' }]),
+    sessionTokenIssuer: async (id) => {
+      assert.equal(id, 'agent_test');
+      return 'synthetic-webrtc-token';
+    },
+    fetcher: async () => googleStream([{ text: 'Your study block now starts at 14:00.' }]),
   });
   const server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
@@ -239,6 +243,12 @@ test('voice endpoints protect server-to-server calls, sign sessions and finish s
     assert.deepEqual(await (await fetch(`${base}/api/voice/status`)).json(), { configured: true });
     const session = await (await fetch(`${base}/api/voice/session`, { method: 'POST' })).json();
     assert.match(session.signedUrl, /^wss:\/\/api.elevenlabs.io/);
+    const rtc = await fetch(`${base}/api/voice/session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ connectionType: 'webrtc' }),
+    });
+    assert.deepEqual(await rtc.json(), { conversationToken: 'synthetic-webrtc-token' });
     const badSession = await fetch(`${base}/api/voice/session`, {
       method: 'POST',
       headers: { origin: 'https://evil.example' },
@@ -258,11 +268,11 @@ test('voice endpoints protect server-to-server calls, sign sessions and finish s
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer test-bridge-secret' },
-      body: JSON.stringify({ messages: [{ role: 'user', content: 'Was wurde geändert?' }] }),
+      body: JSON.stringify({ messages: [{ role: 'user', content: 'What changed?' }] }),
     });
     assert.match(response.headers.get('content-type') ?? '', /text\/event-stream/);
     const text = await response.text();
-    assert.match(text, /14 Uhr/);
+    assert.match(text, /14:00/);
     assert.match(text, /data: \[DONE\]/);
     assert.doesNotMatch(text, /test-gemma-key|test-eleven-key|test-bridge-secret/);
   } finally {

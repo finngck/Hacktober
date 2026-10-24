@@ -18,7 +18,7 @@ const request = (): ReplanRequest =>
   structuredClone({
     plan: demoPlan,
     checkIn: demoCheckIn,
-    message: 'Ich habe keinen Kopf mehr für Statistik und will das länger machen.',
+    message: 'My head is done for statistics and I want to work on it longer.',
   });
 const resize = (source: ReplanRequest, id = 'study', changeMinutes?: number) => ({
   name: 'adjust_task_duration',
@@ -34,7 +34,7 @@ test('more time defaults to a real 30-minute extension and combines with low ene
   const snapshot = structuredClone(source);
   const response = schedule(source, [
     resize(source),
-    { name: 'update_day_context', args: { energy: 'low', source: 'keinen Kopf mehr' } },
+    { name: 'update_day_context', args: { energy: 'low', source: 'My head is done' } },
   ]);
   assert.equal(response.result.status, 'proposal');
   assert.equal(response.result.energy, 'low');
@@ -46,8 +46,8 @@ test('more time defaults to a real 30-minute extension and combines with low ene
 
 test('a direct fatigue report survives an omitted context tool and a task-name follow-up', () => {
   const source = request();
-  source.conversation = [{ message: source.message, reply: 'Welche Aufgabe meinst du?' }];
-  source.message = 'Statistik';
+  source.conversation = [{ message: source.message, reply: 'Which task do you mean?' }];
+  source.message = 'Statistics';
   const response = schedule(source, [resize(source)]);
   assert.equal(response.result.energy, 'low');
   assert.equal(response.result.sleepHours, demoCheckIn.sleepHours);
@@ -65,23 +65,28 @@ test('a direct fatigue report survives an omitted context tool and a task-name f
 
 test('fatigue defaults do not override corrections, other people, quotations or model context', () => {
   const source = request();
-  source.conversation = [{ message: source.message, reply: 'Welche Aufgabe meinst du?' }];
+  source.conversation = [{ message: source.message, reply: 'Which task do you mean?' }];
   for (const message of [
-    'Ich bin nicht erschöpft.',
-    'Ich habe wieder viel Energie.',
-    'Ich bin wieder fit.',
-    'Wenn ich erschöpft bin, was mache ich dann?',
-    'Meine Freundin hat keinen Kopf mehr dafür.',
-    'Was bedeutet „Ich habe keinen Kopf mehr“?',
+    "I'm not exhausted.",
+    'I have plenty of energy again.',
+    "I'm fit again.",
+    "If I'm exhausted, what should I do then?",
+    "My friend's head is done for it.",
+    'My girlfriend is exhausted.',
+    'What does "I have no energy left" mean?',
+    'What does \u201Cmy head is done\u201D mean?',
   ])
     assert.equal(explicitLowEnergy({ ...source, message }), undefined, message);
   for (const message of [
-    'Ja, ich habe keinen Kopf mehr dafür.',
-    'Ich bin heute total platt.',
-    'Ich habe gerade wenig Energie.',
+    'Yes, my head is done for it.',
+    "I'm totally wiped today.",
+    'I have hardly any energy right now.',
+    'I feel really tired.',
+    "I've got very little energy.",
+    'Statistics. I am exhausted.',
   ])
     assert.equal(explicitLowEnergy({ ...source, message }), 'low', message);
-  source.message = 'Ich bin wieder fit.';
+  source.message = "I'm fit again.";
   const response = schedule(source, [
     { name: 'update_day_context', args: { energy: 'high', source: source.message } },
   ]);
@@ -95,7 +100,7 @@ test('running work can be extended; its start and elapsed work remain while foll
   source.plan.items.push({
     ...source.plan.items.find((item) => item.id === 'inbox')!,
     id: 'follow-up',
-    title: 'Kurze Nachbereitung',
+    title: 'Quick follow-up',
     start: 900,
     duration: 15,
   });
@@ -110,7 +115,7 @@ test('running work can be extended; its start and elapsed work remain while foll
   );
   assert.match(
     response.result.placements.find((item) => item.id === 'study')!.reason,
-    /120 Minuten/,
+    /120 minutes/,
   );
   assert.deepEqual(validatePlan(response.proposedPlan!), []);
 });
@@ -125,7 +130,7 @@ test('absolute running duration is supported but cannot rewrite elapsed work or 
   });
   const response = schedule(source, [update({ duration: 120 })]);
   assert.equal(response.proposedPlan!.items.find((item) => item.id === 'study')!.start, 810);
-  for (const patch of [{ duration: 20 }, { duration: 120, title: 'Andere Aufgabe' }]) {
+  for (const patch of [{ duration: 20 }, { duration: 120, title: 'Another task' }]) {
     assert.throws(() => prepareToolCalls(source, [update(patch)]));
   }
   assert.throws(() => prepareToolCalls(source, [resize(source, 'study', -80)]));
@@ -158,13 +163,13 @@ test('a running extension that hits a fixed event or deadline reports a conflict
     const response = schedule(source, [resize(source, 'study', extra)]);
     assert.equal(response.result.status, 'conflict');
     assert.equal(response.proposedPlan, null);
-    assert.match(response.result.summary, /überschneiden|Frist|Tagesende/);
+    assert.match(response.result.summary, /overlap|deadline|end of the day/);
   }
 });
 
 test('an HTTP clarification followed by just the task name retains the original duration and energy request', async () => {
   const source = request();
-  source.message = 'Ich habe keinen Kopf mehr dafür und will lieber länger machen.';
+  source.message = "My head is done for it and I'd rather work on it longer.";
   let calls = 0;
   const app = createApp({
     apiKey: 'synthetic-test',
@@ -175,20 +180,20 @@ test('an HTTP clarification followed by just the task name retains the original 
       calls++;
       const tools =
         calls === 1
-          ? [{ name: 'ask_clarification', args: { question: 'Welche Aufgabe meinst du?' } }]
+          ? [{ name: 'ask_clarification', args: { question: 'Which task do you mean?' } }]
           : [
               {
                 name: 'adjust_task_duration',
-                args: { id: 'study', source: 'will lieber länger machen' },
+                args: { id: 'study', source: 'rather work on it longer' },
               },
-              { name: 'update_day_context', args: { energy: 'low', source: 'keinen Kopf mehr' } },
+              { name: 'update_day_context', args: { energy: 'low', source: 'My head is done' } },
             ];
       if (calls === 2) {
-        assert.equal(payload.latestMessage, 'Statistik');
+        assert.equal(payload.latestMessage, 'Statistics');
         assert.ok(payload.message.includes(source.message));
-        assert.ok(payload.message.endsWith('Statistik'));
+        assert.ok(payload.message.endsWith('Statistics'));
         assert.equal(payload.conversation[0].message, source.message);
-        assert.equal(payload.conversation[0].reply, 'Welche Aufgabe meinst du?');
+        assert.equal(payload.conversation[0].reply, 'Which task do you mean?');
       }
       return new Response(
         JSON.stringify({
@@ -214,21 +219,21 @@ test('an HTTP clarification followed by just the task name retains the original 
     const question = await post(source);
     assert.equal(question.result.status, 'clarification');
     const conversation = continueConversation(source, question);
-    const answer = await post({ ...source, message: 'Statistik', conversation });
+    const answer = await post({ ...source, message: 'Statistics', conversation });
     assert.equal(answer.result.status, 'proposal');
     assert.equal(answer.result.energy, 'low');
     assert.equal(answer.proposedPlan!.items.find((item) => item.id === 'study')!.duration, 120);
-    assert.deepEqual(continueConversation({ message: 'Statistik', conversation }, answer), []);
+    assert.deepEqual(continueConversation({ message: 'Statistics', conversation }, answer), []);
     assert.equal(calls, 2);
     let repeated = conversation;
     for (let index = 0; index < 5; index++)
       repeated = continueConversation(
-        { message: `Antwort ${index}`, conversation: repeated },
+        { message: `Answer ${index}`, conversation: repeated },
         question,
       );
     assert.equal(repeated.length, 4);
     assert.equal(repeated[0].message, source.message);
-    assert.equal(repeated.at(-1)!.message, 'Antwort 4');
+    assert.equal(repeated.at(-1)!.message, 'Answer 4');
   } finally {
     await new Promise<void>((resolve, reject) =>
       server.close((error) => (error ? reject(error) : resolve())),
@@ -238,19 +243,19 @@ test('an HTTP clarification followed by just the task name retains the original 
 
 test('assistant replies cannot authorize edits; short answers and bounded user context can', () => {
   const source = request();
-  source.conversation = [{ message: source.message, reply: 'Soll ich das Gym auslassen?' }];
-  source.message = 'Ja';
+  source.conversation = [{ message: source.message, reply: 'Should I skip the gym?' }];
+  source.message = 'Yes';
   assert.equal(replanRequestSchema.safeParse(source).success, true);
   assert.throws(
     () =>
       prepareToolCalls(source, [
-        { name: 'defer_tasks', args: { ids: ['gym'], source: 'Gym auslassen' } },
+        { name: 'defer_tasks', args: { ids: ['gym'], source: 'skip the gym' } },
       ]),
-    /Nutzernachricht/,
+    /user message/,
   );
   assert.doesNotThrow(() =>
     prepareToolCalls(source, [
-      { name: 'adjust_task_duration', args: { id: 'study', source: 'will das länger machen' } },
+      { name: 'adjust_task_duration', args: { id: 'study', source: 'want to work on it longer' } },
     ]),
   );
   assert.equal(

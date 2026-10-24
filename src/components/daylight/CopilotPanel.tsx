@@ -1,4 +1,4 @@
-import { useEffect, useRef, type FormEvent, type RefObject } from 'react';
+import { useEffect, useRef, type FormEvent, type RefObject, type ReactNode } from 'react';
 import {
   Alert02Icon,
   Clock01Icon,
@@ -42,6 +42,7 @@ export function CopilotPanel({
   conversation,
   onNewRequest,
   textareaRef,
+  voiceControl,
 }: {
   message: string;
   onMessageChange: (message: string) => void;
@@ -57,6 +58,7 @@ export function CopilotPanel({
   conversation: { message: string; reply: string }[];
   onNewRequest: () => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
+  voiceControl?: ReactNode;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const result = response?.result;
@@ -71,24 +73,24 @@ export function CopilotPanel({
     >
       <div>
         <h2 id="copilot-title" className="text-base font-semibold">
-          Was hat sich geändert?
+          What changed?
         </h2>
         <p className="text-sm text-muted-foreground">
-          Beschreib es in einem Satz. Pivot sortiert den Rest.
+          Describe it in one sentence. Pivot sorts out the rest.
         </p>
       </div>
       {conversation.length > 0 && (
         <div className="grid gap-2 rounded-lg bg-muted p-3 text-sm">
-          <p>Deine Änderung: {conversation[0].message}</p>
+          <p>Your change: {conversation[0].message}</p>
           {!response && <p className="font-medium">{conversation.at(-1)!.reply}</p>}
           <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={onNewRequest}>
-            Neue Änderung beginnen
+            Start a new change
           </Button>
         </div>
       )}
       <form onSubmit={onSubmit} className="grid gap-2">
         <label htmlFor="change-message" className="sr-only">
-          {conversation.length ? 'Antwort auf die Rückfrage' : 'Änderung für deinen Tagesplan'}
+          {conversation.length ? 'Answer to the quick question' : 'Change to your day plan'}
         </label>
         <Textarea
           ref={textareaRef}
@@ -106,8 +108,8 @@ export function CopilotPanel({
           }}
           placeholder={
             conversation.length
-              ? 'Deine Antwort – zum Beispiel „Statistik“ …'
-              : 'Mein Zug ist verspätet und ich habe schlecht geschlafen …'
+              ? 'Your answer, for example "Statistics" …'
+              : 'My train is delayed and I slept badly …'
           }
         />
         <div className="flex items-center justify-between gap-3">
@@ -122,29 +124,28 @@ export function CopilotPanel({
                     : 'bg-muted-foreground/40',
               )}
             />
-            {health ? (health.configured ? 'Gemma 4 bereit' : 'API-Key fehlt') : 'Verbindung …'}
+            {health ? (health.configured ? 'Gemma 4 ready' : 'API key missing') : 'Connecting …'}
           </span>
           <div className="flex items-center gap-2">
             <KbdGroup className="max-sm:hidden">
-              <Kbd>{isMac ? '⌘' : 'Strg'}</Kbd>
+              <Kbd>{isMac ? '⌘' : 'Ctrl'}</Kbd>
               <Kbd>↵</Kbd>
             </KbdGroup>
             {busy ? (
               <Button type="button" variant="outline" onClick={onCancel}>
-                Abbrechen
+                Cancel
               </Button>
             ) : (
-              <Button type="submit">
-                {conversation.length ? 'Antwort senden' : 'Tag neu planen'}
-              </Button>
+              <Button type="submit">{conversation.length ? 'Send answer' : 'Replan day'}</Button>
             )}
           </div>
         </div>
       </form>
+      {voiceControl}
 
       {!response && !busy && !conversation.length && (
         <div className="grid gap-2">
-          <span className="text-xs text-muted-foreground">Zum Ausprobieren</span>
+          <span className="text-xs text-muted-foreground">Try it out</span>
           <div className="flex flex-wrap gap-1.5">
             {demoPrompts.map((prompt) => (
               <Button
@@ -168,7 +169,7 @@ export function CopilotPanel({
         {busy && (
           <div className="grid gap-2" role="status">
             <p className="text-sm text-muted-foreground">
-              Termine, Aufgaben und dein Check-in werden zusammen betrachtet …
+              Weighing your appointments, tasks, and check-in together …
             </p>
             <Skeleton className="h-4 w-4/5" />
             <Skeleton className="h-4 w-3/5" />
@@ -180,7 +181,7 @@ export function CopilotPanel({
       {error && (
         <Alert variant="error">
           <Icon icon={Alert02Icon} size={18} />
-          <AlertTitle>Das hat nicht geklappt</AlertTitle>
+          <AlertTitle>That didn't work</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -202,10 +203,10 @@ export function CopilotPanel({
                 }
               />
               {result.status === 'proposal'
-                ? 'Das würde ich ändern'
+                ? "Here's what I'd change"
                 : result.status === 'conflict'
-                  ? 'Das passt noch nicht zusammen'
-                  : 'Eine kurze Rückfrage'}
+                  ? "This doesn't fit together yet"
+                  : 'A quick question'}
             </h3>
             <p className="text-sm">{result.summary}</p>
             {result.question && <p className="font-medium">{result.question}</p>}
@@ -214,13 +215,10 @@ export function CopilotPanel({
 
           {response.proposedPlan ? (
             <>
-              <ul
-                className="flex flex-wrap gap-1.5 text-xs"
-                aria-label="So habe ich dich verstanden"
-              >
+              <ul className="flex flex-wrap gap-1.5 text-xs" aria-label="What I understood">
                 <li className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
                   <Icon icon={Clock01Icon} size={14} />
-                  Ab {formatTime(result.availabilityFrom)}
+                  From {formatTime(result.availabilityFrom)}
                 </li>
                 <li className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
                   <Icon icon={Moon02Icon} size={14} />
@@ -228,22 +226,22 @@ export function CopilotPanel({
                 </li>
                 <li className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1">
                   <Icon icon={BatteryMedium01Icon} size={14} />
-                  Energie {energyLevelLabels[energyLevelOf(result) - 1].toLowerCase()}
+                  Energy {energyLevelLabels[energyLevelOf(result) - 1].toLowerCase()}
                 </li>
               </ul>
               <p className="text-sm text-muted-foreground">
                 {changedItems.length === 0
-                  ? 'Keine Zeit ändert sich.'
-                  : `${changedItems.length} ${changedItems.length === 1 ? 'Block ändert sich' : 'Blöcke ändern sich'}. Die Details siehst du im Tagesplan.`}{' '}
-                Dein bisheriger Plan gilt, bis du übernimmst.
+                  ? 'No times change.'
+                  : `${changedItems.length} ${changedItems.length === 1 ? 'block changes' : 'blocks change'}. See the details in your day plan.`}{' '}
+                Your current plan stays until you apply.
               </p>
               <div className="grid grid-cols-[1fr_2fr] gap-2">
                 <Button variant="outline" onClick={onDiscard}>
-                  Verwerfen
+                  Discard
                 </Button>
                 <Button onClick={onAccept}>
                   <Icon icon={Tick02Icon} size={18} />
-                  Plan übernehmen
+                  Apply plan
                 </Button>
               </div>
             </>
@@ -254,13 +252,13 @@ export function CopilotPanel({
                   textareaRef.current?.focus();
                 }}
               >
-                Nachricht ergänzen
+                Add details
               </Button>
             </div>
           )}
           <p className="text-xs text-muted-foreground">
-            Mit {response.meta.model} in {(response.meta.elapsedMs / 1000).toFixed(1)} s erstellt.
-            Du entscheidest, nichts ändert sich ohne deine Bestätigung.
+            Created with {response.meta.model} in {(response.meta.elapsedMs / 1000).toFixed(1)} s.
+            You decide: nothing changes without your confirmation.
           </p>
         </div>
       )}

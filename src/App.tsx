@@ -44,7 +44,7 @@ function celebrate(unlocked: BadgeId[]) {
   for (const id of unlocked)
     toastManager.add({
       type: 'success',
-      title: `Abzeichen: ${badges[id].title}`,
+      title: `Badge: ${badges[id].title}`,
       description: badges[id].description,
     });
 }
@@ -76,7 +76,7 @@ export default function App() {
   const fixedCount = plan.items.filter(
     (item) => item.fixed && item.start !== null && item.start >= plan.now,
   ).length;
-  const dateLabel = new Intl.DateTimeFormat('de-DE', {
+  const dateLabel = new Intl.DateTimeFormat('en-US', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -125,10 +125,9 @@ export default function App() {
     notes: string[] = [],
     existing: ScheduleItem[] = plan.items,
   ) {
-    if (plan.items.length + items.length > 40)
-      return 'Der Prototyp unterstützt bis zu 40 Aufgaben.';
+    if (plan.items.length + items.length > 40) return 'The prototype supports up to 40 tasks.';
     if (items.some((item) => item.start !== null && item.start < plan.now))
-      return `Neue Aufgaben müssen nach der Demo-Uhrzeit ${formatTime(plan.now)} beginnen.`;
+      return `New tasks must start after the demo time ${formatTime(plan.now)}.`;
     const nextPlan = { ...plan, items: [...existing, ...items] };
     const issues = validatePlan(nextPlan);
     if (issues.length) return issues.join(' ');
@@ -140,7 +139,7 @@ export default function App() {
     }));
     toastManager.add({
       type: 'success',
-      title: items.length === 1 ? 'Aufgabe hinzugefügt' : `${items.length} Aufgaben hinzugefügt`,
+      title: items.length === 1 ? 'Task added' : `${items.length} tasks added`,
       description: [items.map((item) => item.title).join(', '), ...notes].join(' '),
     });
     return undefined;
@@ -161,7 +160,7 @@ export default function App() {
         body: JSON.stringify({ plan, checkIn, message: text, conversation: context }),
       });
       const body = await result.json();
-      if (!result.ok) throw new Error(body.error || 'Der Plan konnte nicht erstellt werden.');
+      if (!result.ok) throw new Error(body.error || "Couldn't create the plan.");
       if (controller.signal.aborted) return;
       const parsed = replanResponseSchema.parse(body);
       setResponse(parsed);
@@ -169,9 +168,7 @@ export default function App() {
       if (parsed.result.status !== 'proposal') setMessage('');
     } catch (problem) {
       if (!controller.signal.aborted)
-        setError(
-          problem instanceof Error ? problem.message : 'Der Plan konnte nicht erstellt werden.',
-        );
+        setError(problem instanceof Error ? problem.message : "Couldn't create the plan.");
     } finally {
       setBusy(false);
       requestController.current = null;
@@ -180,7 +177,7 @@ export default function App() {
   function replan(event?: FormEvent) {
     event?.preventDefault();
     if (message.trim().length < (conversation.length ? 1 : 3)) {
-      setError('Beschreib in ein paar Worten, was sich an deinem Tag geändert hat.');
+      setError('Describe in a few words what changed about your day.');
       textarea.current?.focus();
       return;
     }
@@ -194,7 +191,7 @@ export default function App() {
   }
   async function voiceReplan(change: string, signal: AbortSignal) {
     if (requestController.current || busy)
-      return { status: 'error', summary: 'Es läuft bereits eine Planung. Bitte kurz warten.' };
+      return { status: 'error', summary: 'A plan is already being made. Please wait a moment.' };
     const controller = new AbortController();
     const context = conversation;
     requestController.current = controller;
@@ -220,7 +217,7 @@ export default function App() {
             }),
           });
           const body = await result.json();
-          if (!result.ok) throw new Error(body.error || 'Der Plan konnte nicht erstellt werden.');
+          if (!result.ok) throw new Error(body.error || "Couldn't create the plan.");
           return body;
         },
         commit: (next) => {
@@ -231,11 +228,6 @@ export default function App() {
           setMessage('');
           const recorded = recordAcceptedPlan(progress);
           setProgress(recorded.progress);
-          toastManager.add({
-            type: 'success',
-            title: 'Plan angepasst',
-            description: 'Dein Tagesplan wurde im Gespräch angepasst.',
-          });
           celebrate(recorded.unlocked);
         },
         showResult: (next) => {
@@ -243,14 +235,30 @@ export default function App() {
           setConversation(continueConversation({ message: change, conversation: context }, next));
           setMessage('');
         },
-        showApplied: setVoiceResult,
+        showApplied: (applied, changes) => {
+          setVoiceResult(applied);
+          toastManager.add({
+            type: 'success',
+            title: 'Plan updated in conversation',
+            description: changes.length
+              ? changes
+                  .slice(0, 3)
+                  .map((change) => `${change.title}: ${change.before} → ${change.after}`)
+                  .join(' · ') +
+                (changes.length > 3
+                  ? ` · ${changes.length - 3} more changes in the conversation.`
+                  : '')
+              : applied.result.summary,
+            actionProps: { children: 'Undo', onClick: voiceUndo },
+          });
+        },
       });
     } catch (problem) {
       const summary = signal.aborted
-        ? 'Die Planung wurde abgebrochen.'
+        ? 'Planning was canceled.'
         : problem instanceof Error
           ? problem.message
-          : 'Die Planung ist fehlgeschlagen.';
+          : 'Planning failed.';
       if (!signal.aborted) setError(summary);
       return { status: 'error', summary };
     } finally {
@@ -260,22 +268,21 @@ export default function App() {
   }
   function voiceUndo() {
     if (requestController.current || busy)
-      return { status: 'error', summary: 'Es läuft gerade eine Planung.' };
+      return { status: 'error', summary: 'A plan is being made right now.' };
     const source = workspaceRef.current;
     const previous = source.history.at(-1);
-    if (!previous)
-      return { status: 'error', summary: 'Es gibt keine Änderung zum Rückgängigmachen.' };
+    if (!previous) return { status: 'error', summary: 'There is no change to undo.' };
     const next = { ...source, ...previous, history: source.history.slice(0, -1) };
     workspaceRef.current = next;
     setWorkspace(next);
     clearDraft();
     toastManager.add({
-      title: 'Rückgängig gemacht',
-      description: 'Die letzte Änderung ist zurückgenommen.',
+      title: 'Change undone',
+      description: 'Your last change was reverted.',
     });
     return {
       status: 'applied',
-      summary: 'Die letzte Änderung wurde rückgängig gemacht.',
+      summary: 'The last change was undone.',
       plan: describeDay(next),
     };
   }
@@ -298,17 +305,17 @@ export default function App() {
     setProgress(recorded.progress);
     toastManager.add({
       type: 'success',
-      title: 'Plan übernommen',
-      description: 'Dein Tag ist neu sortiert.',
-      actionProps: { children: 'Rückgängig', onClick: undo },
+      title: 'Plan applied',
+      description: 'Your day has been rearranged.',
+      actionProps: { children: 'Undo', onClick: undo },
     });
     celebrate(recorded.unlocked);
   }
   function discard() {
     if (proposal)
       toastManager.add({
-        title: 'Vorschlag verworfen',
-        description: 'Dein bisheriger Plan gilt weiter.',
+        title: 'Proposal discarded',
+        description: 'Your current plan stays in place.',
       });
     clearDraft();
   }
@@ -320,8 +327,8 @@ export default function App() {
     });
     clearDraft();
     toastManager.add({
-      title: 'Rückgängig gemacht',
-      description: 'Die letzte Änderung ist zurückgenommen.',
+      title: 'Change undone',
+      description: 'Your last change was reverted.',
     });
   }
   function reset() {
@@ -329,14 +336,14 @@ export default function App() {
     setWorkspace(freshWorkspace());
     setMessage('');
     clearDraft();
-    toastManager.add({ title: 'Beispieltag wiederhergestellt' });
+    toastManager.add({ title: 'Sample day restored' });
   }
 
   const dayTimeline = (
     <Timeline
       plan={plan}
       focusTaskId={checkIn.focusTaskId}
-      label={proposal ? 'Bisheriger Plan' : 'Dein Tagesplan'}
+      label={proposal ? 'Current plan' : 'Your day plan'}
     />
   );
 
@@ -346,7 +353,7 @@ export default function App() {
         href="#day-plan"
         className="sr-only z-50 rounded-lg bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
-        Zum Tagesplan
+        Skip to day plan
       </a>
       <AppHeader busy={busy} onReset={reset} onStartCheckIn={() => setFlowOpen(true)} />
       <div className="mx-auto grid max-w-7xl gap-6 px-4 pb-6 sm:px-6 lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'side_copilot''side_day'] xl:grid-rows-1 xl:grid-cols-[17rem_minmax(0,1fr)_23rem] xl:[grid-template-areas:'side_day_copilot']">
@@ -361,23 +368,25 @@ export default function App() {
           />
         </div>
         <div className="grid content-start gap-4 lg:[grid-area:copilot] xl:sticky xl:top-20 xl:self-start">
-          <VoicePanel
-            busy={busy}
-            getDay={() => describeDay(workspaceRef.current)}
-            replan={voiceReplan}
-            undo={voiceUndo}
-          />
           {voiceResult && (
             <section
               className="grid gap-3 rounded-xl border bg-card p-4 shadow-xs/5"
-              aria-label="Ergebnis des Sprachauftrags"
+              aria-label="Voice request result"
             >
-              <h3 className="font-semibold">Dein Tag ist angepasst</h3>
+              <h3 className="font-semibold">Your day has been updated</h3>
               <p className="text-sm text-muted-foreground">{voiceResult.result.summary}</p>
               <EnergyMeasures measures={voiceResult.measures} />
             </section>
           )}
           <CopilotPanel
+            voiceControl={
+              <VoicePanel
+                busy={busy}
+                getDay={() => describeDay(workspaceRef.current)}
+                replan={voiceReplan}
+                undo={voiceUndo}
+              />
+            }
             message={message}
             onMessageChange={(text) => {
               setMessage(text);
@@ -411,7 +420,7 @@ export default function App() {
           {!storageAvailable && (
             <Alert variant="warning">
               <AlertDescription>
-                Der Browser kann gerade nicht speichern. Änderungen bleiben nur in diesem Tab.
+                Your browser can't save right now. Changes stay in this tab only.
               </AlertDescription>
             </Alert>
           )}
@@ -419,8 +428,8 @@ export default function App() {
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">{dateLabel}</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Demo-Uhrzeit {formatTime(plan.now)}, {fixedCount}{' '}
-                {fixedCount === 1 ? 'fester Termin' : 'feste Termine'} vor dir
+                Demo time {formatTime(plan.now)}, {fixedCount}{' '}
+                {fixedCount === 1 ? 'fixed appointment' : 'fixed appointments'} ahead
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -431,7 +440,7 @@ export default function App() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Letzte Änderung rückgängig machen"
+                        aria-label="Undo last change"
                         onClick={undo}
                         disabled={busy}
                       />
@@ -439,7 +448,7 @@ export default function App() {
                   >
                     <Icon icon={Undo02Icon} size={18} />
                   </TooltipTrigger>
-                  <TooltipPopup>Rückgängig</TooltipPopup>
+                  <TooltipPopup>Undo</TooltipPopup>
                 </Tooltip>
               )}
               <ScreenshotImport onAdd={importTasks} disabled={busy} />
@@ -450,14 +459,14 @@ export default function App() {
             <Tabs key={response.meta.elapsedMs} defaultValue="proposal" className="gap-4">
               <TabsList>
                 <TabsTab value="proposal">
-                  Vorschlag
+                  Proposal
                   {changedItems.length > 0 && (
                     <span className="rounded-md bg-primary px-1.5 text-xs text-primary-foreground tabular">
                       {changedItems.length}
                     </span>
                   )}
                 </TabsTab>
-                <TabsTab value="current">Bisher</TabsTab>
+                <TabsTab value="current">Current</TabsTab>
               </TabsList>
               <TabsPanel value="proposal">
                 <Timeline
@@ -465,7 +474,7 @@ export default function App() {
                   original={plan}
                   result={response.result}
                   focusTaskId={checkIn.focusTaskId}
-                  label="Vorschlag"
+                  label="Proposal"
                 />
               </TabsPanel>
               <TabsPanel value="current">{dayTimeline}</TabsPanel>
