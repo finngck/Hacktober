@@ -75,6 +75,38 @@ test('requires a configured key and never leaks provider error bodies', async ()
   );
 });
 
+test('retries transient provider failures once and bounds persistent failures', async () => {
+  let calls = 0;
+  const recovered = await extractTasks(image, {
+    apiKey: 'test-key',
+    model: 'gemma-4-test',
+    fetcher: async () =>
+      ++calls === 1
+        ? new Response('provider-secret', { status: 500 })
+        : providerResponse(JSON.stringify({ tasks: [task], note: null })),
+  });
+  assert.equal(calls, 2);
+  assert.equal(recovered.meta.attempts, 2);
+  assert.equal(recovered.tasks[0].title, task.title);
+
+  calls = 0;
+  await assert.rejects(
+    extractTasks(image, {
+      apiKey: 'test-key',
+      model: 'gemma-4-test',
+      fetcher: async () => {
+        calls++;
+        return new Response('provider-secret', { status: 503 });
+      },
+    }),
+    (error: Error) =>
+      error instanceof PlannerError &&
+      error.status === 502 &&
+      !error.message.includes('provider-secret'),
+  );
+  assert.equal(calls, 2);
+});
+
 test('rejects unsupported or oversized images at the schema and endpoint', async () => {
   assert.equal(extractRequestSchema.safeParse({ ...image, mimeType: 'image/gif' }).success, false);
   assert.equal(

@@ -50,7 +50,8 @@ export async function extractTasks(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-goog-api-key': options.apiKey },
-          signal: AbortSignal.timeout(45000),
+          // Two attempts must finish before the 60-second Vercel function deadline.
+          signal: AbortSignal.timeout(25000),
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: instructions }] },
             contents: [
@@ -78,6 +79,14 @@ export async function extractTasks(
     }
     if (!response.ok) {
       // Provider error bodies can contain credential/request data; never expose them.
+      if ([500, 502, 503, 504].includes(response.status)) {
+        await response.body?.cancel();
+        if (attempt === 1) continue;
+        throw new PlannerError(
+          'Gemma ist vorübergehend nicht verfügbar. Versuche den Screenshot-Import gleich erneut.',
+          502,
+        );
+      }
       if (response.status === 429)
         throw new PlannerError(
           'Das Gemma-Limit ist gerade erreicht. Warte kurz und versuche es erneut.',
