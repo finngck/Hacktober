@@ -1,0 +1,22 @@
+# Local configuration and credentials
+.env
+.env.*
+*.env
+*.env.*
+!.env.example
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/
+.worktrees/
+
+# Generated files
+node_modules/
+dist/
+build/
+coverage/
+__pycache__/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
