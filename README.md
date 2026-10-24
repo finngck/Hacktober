@@ -2,20 +2,39 @@
 
 Gemeinsames Repository für die Umsetzung der **Chat Core Features** aus der [Notion-Teamseite](https://app.notion.com/p/q-summit/Hacktoberfest-403024b9b73b80c2be88d09ff91a9d08).
 
-## Aktueller Stand
+## Daylight im Überblick
 
-Der lokale Daylight-Prototyp setzt den Textablauf aus **Chat Core Features** um: Beispieltag und Check-in → Änderung eingeben → Gemma-4-Vorschlag → Vorher/Nachher prüfen → übernehmen oder verwerfen. Aufgaben können ergänzt, Änderungen rückgängig gemacht und der Beispieltag zurückgesetzt werden.
+**Your day changes. Your plan should too.** Daylight ist ein adaptiver Tagesplaner für Studierende und Young Professionals mit wechselnden Verpflichtungen. Er kombiniert Termine, Aufgaben, Präferenzen und das aktuelle Energielevel und plant den Tag nach einer unerwarteten Änderung neu: Du schreibst oder sagst, was sich geändert hat. Textvorschläge bestätigst du nach dem Vergleich; klare Sprachaufträge werden direkt umgesetzt und erklärt, mit Undo.
 
-Bei weniger als 7 Stunden Schlaf oder wenig Energie zeigt der Vorschlag bis zu drei Maßnahmen bzw. Maßgaben und bis zu zwei Restriktionen aus dem Maßnahmen-Pool in `shared/measures.ts`. Gemma meldet nur, was die Nachricht ausdrücklich nennt (z. B. Schläfrigkeit oder bisheriges Koffein); die Auswahl, Sperren und Ausschlüsse aus dem Check-in prüft der Code. Tagesbeginn und -ende gelten dabei als Aufwach- und Schlafenszeit.
+Live: **https://hacktober-daylight.vercel.app** (synthetischer Beispieltag, Demo-Uhrzeit 13:00 Uhr am 24.10.2026, Europe/Berlin).
 
-React/TypeScript und Vite bilden die Oberfläche, Express das lokale Backend. Die Icons kommen aus HugeIcons. Beispieldaten und Demo-Uhrzeit (13:00 Uhr am 24.10.2026, Europe/Berlin) sind absichtlich synthetisch und reproduzierbar. Der Browser speichert bestätigte Pläne, Check-in und bis zu fünf Undo-Schritte lokal. Es gibt keinen Login und keine Datenbank.
+### Technologien
 
-„Sprich mit Daylight“ verbindet ElevenLabs für Spracherkennung und Sprachausgabe mit Gemma 4 für Gespräch und Tool Calls. Ein klarer Sprachauftrag plant den Tag um und übernimmt einen gültigen Plan direkt; der Agent erklärt danach die tatsächlichen Änderungen. Rückfragen und Konflikte verändern den Plan nicht. Änderungen können per Stimme oder Schaltfläche rückgängig gemacht werden. Der bisherige Textablauf mit Vorschau und Bestätigung bleibt verfügbar. Das frühere, getrennte Widget wurde entfernt.
+- **Gemma 4** (`gemma-4-26b-a4b-it`, offenes Modell über die Google-API) übernimmt die Sprachverarbeitung: Es versteht die Änderung („Zug verspätet, schlecht geschlafen“), priorisiert Aufgaben, begründet Abwägungen, erkennt Signale für Maßnahmen und liest Aufgaben und Zeiten aus Screenshots. Die Uhrzeiten rechnet der regelbasierte Scheduler; der Server prüft jeden Vorschlag, bevor er angezeigt wird.
+- **React, TypeScript, Vite** für die Oberfläche, **Express** als Backend, **Zod** für die Schemas, **Vercel** fürs Hosting.
+- **ElevenLabs** übernimmt Spracherkennung, Sprachausgabe und Gesprächswechsel. Gemma führt das Gespräch und ruft die Planungswerkzeuge auf. Der private Agent ist über einen authentifizierten Custom-LLM-Endpunkt mit dem Planer verbunden.
+- **Lizenz:** MIT.
 
-Kalender-/Wearable-Anbindungen und Balance-Charts sind noch nicht implementiert. Ein fehlender API-Key oder eine fehlgeschlagene Modellantwort erzeugt eine sichtbare Fehlermeldung; es gibt keinen simulierten KI-Fallback. Das Versionsmenü bleibt vorerst ausgeblendet.
+### Was funktioniert
 
-Screenshot-Import liest Aufgaben aus einem Bild und zeigt sie zur Prüfung und Korrektur an; erst eine Bestätigung fügt sie dem Plan hinzu.
+- Tagesansicht mit festen Terminen, flexiblen Aufgaben, Pausen, Dauer, Priorität und Fristen.
+- Manueller Check-in (Schlaf, Energie, produktive Zeit) und Ausschlüsse (kein Kaffee, kein Joggen, kein Gym) als harte Regeln.
+- Änderung als Text eingeben → Gemma-4-Vorschlag → Vorher/Nachher mit Erklärung → übernehmen oder verwerfen, mit Undo.
+- Feste Termine bleiben für den Planer unverändert und lassen sich nur auf ausdrücklichen Wunsch verschieben („Team-Meeting 15 Minuten früher“).
+- Maßnahmen bei wenig Schlaf oder Energie aus einem Pool (Koffein, Nap, Bewegung) mit Sperren und Ausschlüssen. Gemma meldet nur Signale, die Auswahl trifft der Code.
+- Screenshot-Import: Aufgaben, Termine und Fristen aus einem Bild lesen, prüfen und korrigieren, erst dann hinzufügen. Mit einem synthetischen Stundenplan in der Vorschau getestet; die Erkennungsqualität bei echten Screenshots ist nicht breit geprüft.
+- Aufgaben von Hand hinzufügen.
+- „Sprich mit Daylight“: Ein klarer Sprachauftrag übernimmt den validierten Plan direkt. Der Agent erklärt danach die tatsächlichen Änderungen; Rückfragen und Konflikte verändern den Plan nicht. Undo funktioniert per Stimme oder Schaltfläche.
 
+### Noch nicht umgesetzt
+
+- Kalender-Anbindung (Google, Apple, Outlook), Anbindung von Notizen und To-do-Apps.
+- Wearables (WHOOP, Oura, Apple Health). Der Check-in ist manuell.
+- Life-Balance-Skalen, Routen und Besorgungen, Onboarding mit Zielen und Routinen, lernende Anpassung, Abendreflexion.
+- Login und Datenbank: Der Browser speichert Plan, Check-in und fünf Undo-Schritte nur lokal pro Gerät.
+- Der Plan gilt für einen Tag. Es gibt keinen simulierten KI-Fallback: Ohne Key oder bei Modellfehler erscheint eine sichtbare Fehlermeldung.
+
+Aufgaben, Check-in, Präferenzen, Nachrichten und Screenshots werden zur Verarbeitung an die Google-API gesendet; Bilder werden nicht gespeichert. Die App gibt keine medizinischen Ratschläge.
 
 ## Einstieg
 
@@ -88,7 +107,7 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 
 - `GET /api/health`: lokale Konfiguration (`configured`, `model`); bestätigt keine externe Erreichbarkeit.
 - `GET /api/versions`: öffentliche GitHub-Commits und erfolgreiche Deployment-Links, kurz zwischengespeichert.
-- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Vorübergehende Providerfehler und ungültige Antworten teilen sich ein Limit von insgesamt zwei Modellaufrufen.
+- `POST /api/extract`: `{ image (Base64), mimeType }` → `{ tasks, note, meta }`. Gemma liest Aufgaben, Termine und Fristen aus einem Screenshot (PNG, JPEG, WebP, bis etwa 2,5 MB). Die Oberfläche zeigt die Treffer zur Prüfung und Korrektur; erst die Bestätigung fügt sie dem Plan hinzu. Das Bild wird nicht gespeichert, aber zur Analyse an Google gesendet. Vorübergehende Providerfehler und ungültige Antworten teilen sich ein Limit von insgesamt zwei Modellaufrufen. Das konfigurierte Modell hat in der Vorschau einen synthetischen Stundenplan korrekt gelesen.
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `GET /api/voice/status`: meldet, ob die Sprachkonfiguration vorhanden ist, ohne Schlüssel auszugeben.
 - `POST /api/voice/session`: erstellt serverseitig eine kurzlebige signierte ElevenLabs-Gesprächsadresse.
