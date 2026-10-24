@@ -27,7 +27,7 @@ export function createApp(
     )
       return res
         .status(403)
-        .json({ error: 'Diese Anfrage kommt nicht aus einer freigegebenen App-Adresse.' });
+        .json({ error: "This request doesn't come from an allowed app address." });
     next();
   });
   app.use('/api/voice', createVoiceRouter(options));
@@ -36,21 +36,19 @@ export function createApp(
     const parsed = extractRequestSchema.safeParse(req.body);
     if (!parsed.success)
       return res.status(400).json({
-        error: 'Das Bild ist ungültig oder zu groß. Nutze PNG, JPEG oder WebP bis etwa 2,5 MB.',
+        error: 'The image is invalid or too large. Use PNG, JPEG or WebP up to about 2.5 MB.',
       });
     if (activeExtractions >= 2)
       return res
         .status(429)
-        .json({ error: 'Es werden gerade zwei Bilder gelesen. Versuche es gleich erneut.' });
+        .json({ error: 'Two images are already being read. Try again in a moment.' });
     activeExtractions++;
     try {
       return res.json(await extractTasks(parsed.data, options));
     } catch (error) {
       return res.status(error instanceof PlannerError ? error.status : 500).json({
         error:
-          error instanceof PlannerError
-            ? error.message
-            : 'Das Bild konnte nicht gelesen werden. Versuche es erneut.',
+          error instanceof PlannerError ? error.message : "The image couldn't be read. Try again.",
       });
     } finally {
       activeExtractions--;
@@ -66,13 +64,13 @@ export function createApp(
     if (!parsed.success)
       return res
         .status(400)
-        .json({ error: 'Die Eingaben sind ungültig. Prüfe Aufgaben und Check-in.' });
+        .json({ error: 'The input is invalid. Check your tasks and check-in.' });
     const issues = validatePlan(parsed.data.plan);
     if (issues.length) return res.status(400).json({ error: issues.join(' ') });
     if (activeRequests >= 2)
       return res
         .status(429)
-        .json({ error: 'Es werden gerade zwei Pläne berechnet. Versuche es gleich erneut.' });
+        .json({ error: 'Two plans are already being calculated. Try again in a moment.' });
     activeRequests++;
     try {
       return res.json(await generatePlan(parsed.data, options));
@@ -81,14 +79,14 @@ export function createApp(
         error:
           error instanceof PlannerError
             ? error.message
-            : 'Der Plan konnte nicht erstellt werden. Versuche es erneut.',
+            : "The plan couldn't be created. Try again.",
       });
     } finally {
       activeRequests--;
     }
   });
   app.use('/api', (_req, res) =>
-    res.status(404).json({ error: 'Diesen API-Endpunkt gibt es nicht.' }),
+    res.status(404).json({ error: "This API endpoint doesn't exist." }),
   );
   app.use(
     (
@@ -100,8 +98,8 @@ export function createApp(
       res.status(error.status === 413 ? 413 : 400).json({
         error:
           error.status === 413
-            ? 'Die Anfrage ist zu groß.'
-            : 'Die Anfrage enthält kein gültiges JSON.',
+            ? 'The request is too large.'
+            : "The request doesn't contain valid JSON.",
       });
     },
   );

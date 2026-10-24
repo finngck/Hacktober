@@ -82,7 +82,7 @@ test('voice preserves a large screenshot import and its undo snapshot through th
     let workspace = freshWorkspace();
     workspace.plan.items.push(imported);
     const beforeVoice = structuredClone(workspace);
-    const outcome = await executeVoiceReplan('Bitte den Tag neu planen.', {
+    const outcome = await executeVoiceReplan('Please replan my day.', {
       read: () => workspace,
       request: async (source, message) => {
         const response = await fetch(`${base}/api/replan`, {

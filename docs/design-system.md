@@ -6,7 +6,7 @@ Verbindlich für jede Oberfläche von Pivot (Planer und Landingpage). Neue Featu
 
 - **Stil:** coss-ui-Aufbau in der Pivot-Palette: beige App-Fläche, warmweiße Karten, feine Ränder, Oliv aus dem Logo-Verlauf für Aktionen, Fortschritt, Auswahl und Terminkarten, Grün-Schwarz für Text. Weitere Farbe trägt nur Bedeutung (Kategorien, Status).
 - **Logo:** Pivot-App-Icon (`public/favicon.svg`) mit Wortmarke „Pivot“ in Inter (`Logo` in `src/components/daylight/AppHeader.tsx`). Die Landingpage (`index.html`, `src/styles/landing.css`) nutzt dieselbe neutrale Palette und Inter.
-- **Tonalität:** Deutsch, „du“, Satzanfang groß, aktive Verben. Ein Button sagt, was passiert („Plan übernehmen“), und der Toast danach greift dasselbe Wort auf („Plan übernommen“). Fehler erklären, was passiert ist und was hilft, ohne Entschuldigung.
+- **Tonalität:** Oberfläche und KI-Antworten sind **Englisch**: „you“, Sentence case, aktive Verben. Ein Button sagt, was passiert („Apply plan“), und der Toast danach greift dasselbe Wort auf („Plan applied“). Fehler erklären, was passiert ist und was hilft, ohne Entschuldigung.
 
 ## Tokens
 

@@ -4,9 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Icon } from '../Icon';
 
 const typeLabels: Record<Measure['type'], string> = {
-  massnahme: 'Maßnahme',
-  massgabe: 'Maßgabe',
-  restriktion: 'Lieber nicht',
+  massnahme: 'Action',
+  massgabe: 'Guideline',
+  restriktion: 'Better not',
 };
 
 export function EnergyMeasures({ measures }: { measures: Measures }) {
@@ -16,7 +16,7 @@ export function EnergyMeasures({ measures }: { measures: Measures }) {
     <section className="grid gap-2" aria-labelledby="energy-measures-title">
       <h4 id="energy-measures-title" className="flex items-center gap-2 text-sm font-semibold">
         <Icon icon={BatteryLowIcon} size={16} />
-        Für mehr Energie nach wenig Schlaf
+        More energy after little sleep
       </h4>
       <ul className="grid gap-1.5">
         {all.map((measure) => (

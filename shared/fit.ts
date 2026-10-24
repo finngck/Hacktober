@@ -55,9 +55,7 @@ export function fitIntoDay(
     );
     if (start === undefined) {
       placed.push({ ...item, start: null, fixed: false });
-      notes.push(
-        `„${item.title}“ passte nicht in den Tag und bleibt offen, bis du sie einplanen lässt.`,
-      );
+      notes.push(`"${item.title}" didn't fit into the day and stays open until you schedule it.`);
       continue;
     }
     const block = span(item, start);
@@ -72,9 +70,9 @@ export function fitIntoDay(
       if (displacedIds.has(placed[index].id)) placed[index] = { ...placed[index], start: null };
     placed.push({ ...item, start, fixed: false });
     notes.push(
-      `„${item.title}“ passte nicht in den Tag und liegt jetzt um ${formatTime(start)}, verschiebbar.` +
+      `"${item.title}" didn't fit into the day and is now at ${formatTime(start)}, movable.` +
         (displaced.length
-          ? ` Dafür sind offen: ${displaced.map((other) => other.title).join(', ')}.`
+          ? ` Now open instead: ${displaced.map((other) => other.title).join(', ')}.`
           : ''),
     );
   }
