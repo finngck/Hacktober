@@ -642,3 +642,11 @@ test('check-ins saved before mood, stress, sleep quality and focus existed stay 
   });
   assert.equal(checkInSchema.safeParse({ ...legacy, mood: 6 }).success, false);
 });
+
+test('the proposal keeps the fine check-in energy level unless the planner changes the band', () => {
+  const source = request();
+  source.checkIn = { ...source.checkIn, energy: 'low', energyLevel: 1 };
+  assert.equal(scheduleFromIntent(source, intent()).result.energyLevel, 1);
+  source.checkIn = { ...source.checkIn, energy: 'high', energyLevel: 5 };
+  assert.equal(scheduleFromIntent(source, intent()).result.energyLevel, 2);
+});
