@@ -220,7 +220,6 @@ h1 span {
   gap: 18px;
 }
 .highlight {
-  position: relative;
   border-radius: 22px;
   padding: 30px 26px;
 }
@@ -252,16 +251,6 @@ h1 span {
   margin-top: 12px;
   color: #747b74;
   font-size: 12px;
-}
-.badge {
-  position: absolute;
-  top: 22px;
-  right: 22px;
-  font-size: 11px;
-  font-weight: 700;
-  background: var(--white);
-  border-radius: 20px;
-  padding: 4px 10px;
 }
 .extras-title {
   margin: 48px 0 18px;
