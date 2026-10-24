@@ -166,7 +166,7 @@ export default function App() {
   function saveTask(item: ScheduleItem) {
     const problem = updateTask(item);
     if (!problem)
-      toastManager.add({ type: 'success', title: 'Change saved', description: item.title });
+      toastManager.add({ type: 'success', title: 'Changes saved', description: item.title });
     return problem;
   }
   function moveTask(id: string, start: number) {
@@ -175,7 +175,7 @@ export default function App() {
     const problem = updateTask({ ...item, start });
     toastManager.add(
       problem
-        ? { type: 'error', title: 'Could not move task', description: problem }
+        ? { type: 'error', title: 'Not moved', description: problem }
         : {
             type: 'success',
             title: 'Task moved',

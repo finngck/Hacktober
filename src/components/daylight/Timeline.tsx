@@ -123,7 +123,7 @@ function TimeBlock({
           variant="ghost"
           size="icon-sm"
           className="absolute top-1.5 right-1.5 z-10 cursor-grab touch-none text-current active:cursor-grabbing"
-          aria-label={`Move “${item.title}”. Arrow keys move by 15 minutes.`}
+          aria-label={`Move “${item.title}”. Arrow keys move it by 15 minutes.`}
           onPointerDown={(event) => {
             event.currentTarget.setPointerCapture(event.pointerId);
             setDrag({ from: event.clientY, offset: 0 });

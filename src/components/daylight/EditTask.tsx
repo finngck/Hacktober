@@ -81,7 +81,7 @@ export function EditTask({
               <DialogTitle>Edit task</DialogTitle>
               <DialogDescription>
                 {started
-                  ? 'This block has started. You can change its title and priority; its start and duration stay the same.'
+                  ? 'This block has already started. Time and duration stay; you can change the title and priority.'
                   : 'Without a start time, the task stays open today until Pivot schedules it.'}
               </DialogDescription>
             </DialogHeader>
@@ -126,7 +126,7 @@ export function EditTask({
                     step={5}
                     value={form.duration}
                     onValueChange={(duration) => update({ duration })}
-                    display={`${form.duration} min`}
+                    display={`${form.duration}\u00a0min`}
                     startLabel="5 min"
                     endLabel="4 h"
                   />
@@ -153,7 +153,7 @@ export function EditTask({
                     checked={form.fixed}
                     onCheckedChange={(checked) => update({ fixed: checked === true })}
                   />
-                  Fixed appointment, Pivot keeps its time
+                  Fixed appointment, Pivot won't move it
                 </Label>
               )}
               {error && (
@@ -166,7 +166,7 @@ export function EditTask({
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit">Save change</Button>
+              <Button type="submit">Save changes</Button>
             </DialogFooter>
           </form>
         )}
