@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FireIcon, SparklesIcon, Sun03Icon } from '@hugeicons/core-free-icons';
+import { FireIcon, Sun03Icon } from '@hugeicons/core-free-icons';
 import type { CheckIn, Plan } from '../../../shared/contracts';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { badges, type BadgeId } from '@/lib/progress';
 import { Icon } from '../Icon';
+import { badgeIcons } from './badgeIcons';
 import { firstControl } from './checkInOptions';
 import {
   EnergyControl,
@@ -107,7 +108,7 @@ export function CheckInFlow({
                       key={id}
                       className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2 text-left"
                     >
-                      <Icon icon={SparklesIcon} size={20} className="text-muted-foreground" />
+                      <Icon icon={badgeIcons[id]} size={20} className="text-muted-foreground" />
                       <span className="grid">
                         <span className="font-medium">New: {badges[id].title}</span>
                         <span className="text-sm text-muted-foreground">

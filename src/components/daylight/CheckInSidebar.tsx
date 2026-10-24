@@ -8,8 +8,6 @@ import {
   Settings02Icon,
   Target02Icon,
   AiBrain01Icon,
-  Award01Icon,
-  LockKeyIcon,
 } from '@hugeicons/core-free-icons';
 import type { CheckIn, Plan } from '../../../shared/contracts';
 import { Button } from '@/components/ui/button';
@@ -26,6 +24,7 @@ import {
 } from '@/lib/progress';
 import { cn } from '@/lib/utils';
 import { Icon } from '../Icon';
+import { badgeIcons } from './badgeIcons';
 import {
   EnergyControl,
   FocusControl,
@@ -230,7 +229,7 @@ export function CheckInSidebar({
                     )}
                     aria-label={`${badges[id].title}${unlocked ? '' : ' (still locked)'}: ${badges[id].description}`}
                   >
-                    <Icon icon={unlocked ? Award01Icon : LockKeyIcon} size={unlocked ? 18 : 14} />
+                    <Icon icon={badgeIcons[id]} size={20} />
                   </TooltipTrigger>
                   <TooltipPopup>
                     <strong>{badges[id].title}</strong>
