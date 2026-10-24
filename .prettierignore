@@ -1,0 +1,3 @@
+# Vendored coss ui components stay byte-identical to the registry so they can be updated.
+src/components/ui/
+src/lib/utils.ts

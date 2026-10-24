@@ -13,14 +13,14 @@ Die Landing Page besteht aus `index.html`, `src/landing.ts` und `src/landing.css
 ### Technologien
 
 - **Gemma 4** (`gemma-4-26b-a4b-it`, offenes Modell über die Google-API) übernimmt die Sprachverarbeitung: Es versteht die Änderung („Zug verspätet, schlecht geschlafen“), priorisiert Aufgaben, begründet Abwägungen, erkennt Signale für Maßnahmen und liest Aufgaben und Zeiten aus Screenshots. Die Uhrzeiten rechnet der regelbasierte Scheduler; der Server prüft jeden Vorschlag, bevor er angezeigt wird.
-- **React, TypeScript, Vite** für die Oberfläche, **Express** als Backend, **Zod** für die Schemas, **Vercel** fürs Hosting.
+- **React, TypeScript, Vite, Tailwind CSS 4** und Komponenten aus [coss ui](https://coss.com/ui) (Base UI, MIT) für die Oberfläche, **Express** als Backend, **Zod** für die Schemas, **Vercel** fürs Hosting. Farben, Schrift und Regeln für neue UI stehen im [Design-System](docs/design-system.md).
 - **ElevenLabs:** Im Planer ist derzeit **keine** ElevenLabs-Funktion aktiv. Das frühere Widget wurde entfernt, weil es nicht mit dem Plan verbunden war. Geplant ist ein gesprochener Überblick über die Änderungen nach „Plan übernehmen“; diese Zeile wird mit der Umsetzung aktualisiert.
 - **Lizenz:** MIT.
 
 ### Was funktioniert
 
 - Tagesansicht mit festen Terminen, flexiblen Aufgaben, Pausen, Dauer, Priorität und Fristen.
-- Manueller Check-in (Schlaf, Energie, produktive Zeit) und Ausschlüsse (kein Kaffee, kein Joggen, kein Gym) als harte Regeln.
+- Daily Check-in als Morgen-Flow und in der Sidebar per Popover: Schlafdauer und -qualität, Energie, Stimmung, Stress, Fokus des Tages, produktive Zeit und Ausschlüsse (kein Kaffee, kein Joggen, kein Gym) als harte Regeln. Die Fokusaufgabe plant der Scheduler zuerst ein; Stimmung, Stress und Schlafqualität gehen als Kontext an Gemma. Check-in-Serie und Abzeichen zählen nur lokal (`daylight.progress.v1`).
 - Änderung als Text eingeben → Gemma-4-Vorschlag → Vorher/Nachher mit Erklärung → übernehmen oder verwerfen, mit Undo.
 - Feste Termine bleiben für den Planer unverändert und lassen sich nur auf ausdrücklichen Wunsch verschieben („Team-Meeting 15 Minuten früher“).
 - Maßnahmen bei wenig Schlaf oder Energie aus einem Pool (Koffein, Nap, Bewegung) mit Sperren und Ausschlüssen. Gemma meldet nur Signale, die Auswahl trifft der Code.
@@ -70,7 +70,7 @@ npm run build
 npm start
 ```
 
-`npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln und den Gemma-Adapter. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
+`npm test` prüft ohne externen Modellaufruf Zeitplanung, Planregeln, den Gemma-Adapter und die Design-System-Regeln. `npm run build` prüft die TypeScript-Typen und baut die Oberfläche. `npm run format:check` prüft die Formatierung. `npm start` benötigt den vorherigen Build und startet denselben lokalen Node-Server mit den gebauten Dateien.
 
 `npm run test:live` prüft fünf synthetische Fälle mit dem lokal eingerichteten Gemma-Key: ausdrücklich verschobener fester Termin, Zugverspätung mit wenig Energie, zusätzliche Marketing-Klausur, Bearbeitung vorhandener Marketing-Lernzeit und neue Aufgabe zusammen mit geänderter Verfügbarkeit. Jeder Fall erlaubt maximal einen Reparaturversuch; der Befehl verbraucht API-Kontingent.
 
@@ -94,9 +94,9 @@ Die vorbereitete Versionsschnittstelle liest nur den öffentlichen Repository-Ve
 - `POST /api/replan`: `{ plan, checkIn, message }` → `{ result, proposedPlan, meta }`. Gemeinsame Zod-Schemas und Typen: [`shared/contracts.ts`](shared/contracts.ts).
 - `server/gemma.ts`: Google-REST-Adapter mit `gemma-4-26b-a4b-it` als Standard; über `GEMMA_MODEL` auf ein anderes freigegebenes Gemma-4-Modell umstellbar. [Offizielle Modell-Dokumentation](https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api).
 - `server/scheduler.ts`: Zeitplanung anhand der von Gemma erkannten Verfügbarkeit, Energie, Aufgabenreihenfolge und zurückzustellenden Arbeit.
-- `src/components/Timeline.tsx`: Tagesansicht und Vergleich. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
+- `src/components/daylight/`: Tagesansicht, Vergleich, Check-in-Flow und -Sidebar. `src/components/ui/`: unveränderte coss-ui-Komponenten. `shared/demo.ts`: synthetischer Beispieltag und Texte zum Ausprobieren.
 
-Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task`, `update_task`, `move_task`, `prioritize_tasks`, `defer_tasks`, `update_day_context`, `replan_day` und `ask_clarification`. Der Server prüft die vollständige Aufrufserie und führt sie auf einer Kopie aus. Aufgabenänderungen brauchen ein wörtliches Zitat aus der Nachricht; unbekannte Tools, Argumente, IDs sowie Änderungen an begonnenen Blöcken werden abgelehnt. Feste zukünftige Termine lassen sich ausschließlich über `move_task` auf ausdrücklichen Nutzerwunsch verschieben. Neue Aufgaben verwenden feste Bausteine (z. B. Klausurvorbereitung: 90 Minuten, hohe Priorität), wenn keine Dauer genannt wurde. Eine weitere Klausur erzeugt eine eigene Lernaufgabe; explizite Korrekturen bearbeiten die passende bestehende Aufgabe.
+Gemma arbeitet ausschließlich über native Function Calls (`ANY`): `create_task`, `update_task`, `move_task`, `prioritize_tasks`, `defer_tasks`, `update_day_context`, `replan_day` und `ask_clarification`. Der Server prüft die vollständige Aufrufserie und führt sie auf einer Kopie aus. Aufgabenänderungen brauchen ein wörtliches Zitat aus der Nachricht; unbekannte Tools, Argumente, IDs sowie Änderungen an begonnenen Blöcken werden abgelehnt. Feste zukünftige Termine lassen sich ausschließlich über `move_task` auf ausdrücklichen Nutzerwunsch verschieben. Neue Aufgaben verwenden feste Bausteine (z. B. Klausurvorbereitung: 90 Minuten, hohe Priorität), wenn keine Dauer genannt wurde. Eine weitere Klausur erzeugt eine eigene Lernaufgabe; explizite Korrekturen bearbeiten die passende bestehende Aufgabe. Die im Check-in gewählte Fokusaufgabe setzt der Scheduler unter der optionalen Arbeit zuerst ein und stellt sie bei wenig Energie nicht zurück.
 
 Der regelbasierte Scheduler reserviert zuerst heutige Fristen und Erholung, dann neu angeforderte oder bearbeitete Aufgaben, danach optionale Arbeit. Bereits passende Startzeiten bleiben möglichst erhalten; bei Platzproblemen folgt ein verdichteter Versuch. Eine angeforderte Aufgabe wird eingeplant oder erzeugt einen sichtbaren Konflikt. Zusammenfassung und Änderungsgründe entstehen aus dem tatsächlich berechneten Vorschlag. Alle bestehenden Aufgaben bleiben erhalten, auch wenn sie heute offen sind. Der Server prüft zusätzlich Dauern, feste und begonnene Termine, Verfügbarkeit, Tagesgrenzen, Überschneidungen, heutige Fristen und Ausschlüsse. Ungültige Tool-Aufrufe erhalten maximal einen Reparaturversuch. Konflikte und Rückfragen lassen sich nicht übernehmen.
 

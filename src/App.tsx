@@ -1,52 +1,63 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import {
-  Sun03Icon,
-  Calendar03Icon,
-  ArrowReloadHorizontalIcon,
-  ArrowRight01Icon,
-  SparklesIcon,
-  Moon02Icon,
-  Tick02Icon,
-  Alert02Icon,
-  Undo02Icon,
-  LockKeyIcon,
-  Clock01Icon,
-  CheckmarkCircle02Icon,
-  Cancel01Icon,
-} from '@hugeicons/core-free-icons';
+import { Undo02Icon } from '@hugeicons/core-free-icons';
 import {
   replanResponseSchema,
   formatTime,
   validatePlan,
   hasItemChanged,
-  energyLabels,
   type CheckIn,
   type ReplanResponse,
   type ScheduleItem,
 } from '../shared/contracts';
-import { demoPrompts } from '../shared/demo';
 import { freshWorkspace, loadWorkspace, saveWorkspace } from './state';
+import {
+  badges,
+  checkedInToday,
+  loadProgress,
+  recordAcceptedPlan,
+  recordCheckIn,
+  saveProgress,
+  streak,
+  type BadgeId,
+} from '@/lib/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsPanel, TabsTab } from '@/components/ui/tabs';
+import { toastManager } from '@/components/ui/toast';
+import { Tooltip, TooltipPopup, TooltipTrigger } from '@/components/ui/tooltip';
 import { Icon } from './components/Icon';
-import { Timeline } from './components/Timeline';
-import { AddTask } from './components/AddTask';
-import { ScreenshotImport } from './components/ScreenshotImport';
-import { CheckInPanel } from './components/CheckInPanel';
-import { EnergyMeasures } from './components/EnergyMeasures';
+import { AddTask } from './components/daylight/AddTask';
+import { AppHeader } from './components/daylight/AppHeader';
+import { CheckInFlow } from './components/daylight/CheckInFlow';
+import { CheckInSidebar } from './components/daylight/CheckInSidebar';
+import { checkInMessage } from './components/daylight/checkInOptions';
+import { CopilotPanel } from './components/daylight/CopilotPanel';
+import { ScreenshotImport } from './components/daylight/ScreenshotImport';
+import { Timeline } from './components/daylight/Timeline';
+
+function celebrate(unlocked: BadgeId[]) {
+  for (const id of unlocked)
+    toastManager.add({
+      type: 'success',
+      title: `Abzeichen: ${badges[id].title}`,
+      description: badges[id].description,
+    });
+}
 
 export default function App() {
   const [workspace, setWorkspace] = useState(loadWorkspace);
+  const [progress, setProgress] = useState(loadProgress);
+  const [flowOpen, setFlowOpen] = useState(() => !checkedInToday(loadProgress()));
   const [message, setMessage] = useState('');
   const [response, setResponse] = useState<ReplanResponse | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [health, setHealth] = useState<{ configured: boolean; model: string } | null>(null);
-  const proposalHeading = useRef<HTMLHeadingElement>(null);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const requestController = useRef<AbortController | null>(null);
   const { plan, checkIn } = workspace;
-  const proposal = response?.proposedPlan;
+  const proposal = response?.proposedPlan ?? null;
   const changedItems =
     proposal?.items.filter((item) =>
       hasItemChanged(
@@ -67,6 +78,7 @@ export default function App() {
   useEffect(() => {
     setStorageAvailable(saveWorkspace(workspace));
   }, [workspace]);
+  useEffect(() => saveProgress(progress), [progress]);
   useEffect(() => {
     const controller = new AbortController();
     fetch('/api/health', { signal: controller.signal })
@@ -78,27 +90,26 @@ export default function App() {
       requestController.current?.abort();
     };
   }, []);
-  useEffect(() => {
-    if (response) proposalHeading.current?.focus();
-  }, [response]);
 
   function clearDraft() {
     setResponse(null);
     setError('');
-    setNotice('');
   }
   function changeCheckIn(patch: Partial<CheckIn>) {
     clearDraft();
     setWorkspace((previous) => ({ ...previous, checkIn: { ...previous.checkIn, ...patch } }));
   }
-  function addTask(item: ScheduleItem) {
-    return addTasks([item]);
+  function completeCheckIn(next: CheckIn) {
+    changeCheckIn(next);
+    const recorded = recordCheckIn(progress);
+    setProgress(recorded.progress);
+    return { streak: streak(recorded.progress), unlocked: recorded.unlocked };
   }
   function addTasks(items: ScheduleItem[]) {
     if (plan.items.length + items.length > 40)
       return 'Der Prototyp unterstützt bis zu 40 Aufgaben.';
     if (items.some((item) => item.start !== null && item.start < plan.now))
-      return 'Neue Aufgaben müssen nach der Demo-Uhrzeit 13:00 beginnen.';
+      return `Neue Aufgaben müssen nach der Demo-Uhrzeit ${formatTime(plan.now)} beginnen.`;
     const nextPlan = { ...plan, items: [...plan.items, ...items] };
     const issues = validatePlan(nextPlan);
     if (issues.length) return issues.join(' ');
@@ -108,14 +119,15 @@ export default function App() {
       plan: nextPlan,
       history: [...previous.history, { plan: previous.plan, checkIn: previous.checkIn }].slice(-5),
     }));
-    setNotice(
-      items.length === 1 ? 'Aufgabe hinzugefügt.' : `${items.length} Aufgaben hinzugefügt.`,
-    );
+    toastManager.add({
+      type: 'success',
+      title: items.length === 1 ? 'Aufgabe hinzugefügt' : `${items.length} Aufgaben hinzugefügt`,
+      description: items.map((item) => item.title).join(', '),
+    });
     return undefined;
   }
-  async function replan(event: FormEvent) {
-    event.preventDefault();
-    if (busy || message.trim().length < 3) return;
+  async function runReplan(text: string) {
+    if (busy || text.trim().length < 3) return;
     clearDraft();
     setBusy(true);
     const controller = new AbortController();
@@ -125,7 +137,7 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({ plan, checkIn, message }),
+        body: JSON.stringify({ plan, checkIn, message: text }),
       });
       const body = await result.json();
       if (!result.ok) throw new Error(body.error || 'Der Plan konnte nicht erstellt werden.');
@@ -139,6 +151,20 @@ export default function App() {
       setBusy(false);
       requestController.current = null;
     }
+  }
+  function replan(event?: FormEvent) {
+    event?.preventDefault();
+    if (message.trim().length < 3) {
+      setError('Beschreib in ein paar Worten, was sich an deinem Tag geändert hat.');
+      textarea.current?.focus();
+      return;
+    }
+    void runReplan(message);
+  }
+  function planFromCheckIn() {
+    const text = checkInMessage(checkIn, plan);
+    setMessage(text);
+    void runReplan(text);
   }
   function acceptPlan() {
     if (!proposal || !response) return;
@@ -154,363 +180,172 @@ export default function App() {
     }));
     setResponse(null);
     setMessage('');
-    setNotice('Dein neuer Plan ist übernommen.');
+    const recorded = recordAcceptedPlan(progress);
+    setProgress(recorded.progress);
+    toastManager.add({
+      type: 'success',
+      title: 'Plan übernommen',
+      description: 'Dein Tag ist neu sortiert.',
+      actionProps: { children: 'Rückgängig', onClick: undo },
+    });
+    celebrate(recorded.unlocked);
+  }
+  function discard() {
+    if (proposal)
+      toastManager.add({
+        title: 'Vorschlag verworfen',
+        description: 'Dein bisheriger Plan gilt weiter.',
+      });
+    setResponse(null);
   }
   function undo() {
-    const previous = workspace.history.at(-1);
-    if (!previous) return;
+    setWorkspace((current) => {
+      const previous = current.history.at(-1);
+      if (!previous) return current;
+      return { ...current, ...previous, history: current.history.slice(0, -1) };
+    });
     clearDraft();
-    setWorkspace((current) => ({ ...current, ...previous, history: current.history.slice(0, -1) }));
-    setNotice('Die letzte Änderung wurde rückgängig gemacht.');
+    toastManager.add({
+      title: 'Rückgängig gemacht',
+      description: 'Die letzte Änderung ist zurückgenommen.',
+    });
   }
   function reset() {
+    requestController.current?.abort();
     setWorkspace(freshWorkspace());
     setMessage('');
     clearDraft();
-    setNotice('Der Beispieltag ist wiederhergestellt.');
+    toastManager.add({ title: 'Beispieltag wiederhergestellt' });
   }
 
+  const dayTimeline = (
+    <Timeline
+      plan={plan}
+      focusTaskId={checkIn.focusTaskId}
+      label={proposal ? 'Bisheriger Plan' : 'Dein Tagesplan'}
+    />
+  );
+
   return (
-    <div className="app-shell">
-      <a className="skip-link" href="#day-plan">
+    <div className="min-h-dvh">
+      <a
+        href="#day-plan"
+        className="sr-only z-50 rounded-lg bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+      >
         Zum Tagesplan
       </a>
-      <header className="app-header">
-        <a className="brand" href="#day-plan" aria-label="Pivot, zum Tagesplan">
-          <img className="brand-symbol" src="/favicon.svg" alt="" />
-          Pivot
-        </a>
-        <div className="header-context">
-          <span className="context-divider" />
-          Dein Tagescopilot
-        </div>
-        <div className="header-actions">
-          <span className="demo-label">
-            <span />
-            Beispieltag
-          </span>
-          <button
-            className="button quiet reset-button"
-            aria-label="Demo zurücksetzen"
-            onClick={reset}
+      <AppHeader busy={busy} onReset={reset} onStartCheckIn={() => setFlowOpen(true)} />
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:[grid-template-areas:'side_copilot''side_day'] xl:grid-rows-1 xl:grid-cols-[17rem_minmax(0,1fr)_23rem] xl:[grid-template-areas:'side_day_copilot']">
+        <div className="lg:[grid-area:side]">
+          <CheckInSidebar
+            checkIn={checkIn}
+            plan={plan}
+            progress={progress}
             disabled={busy}
-          >
-            <Icon icon={ArrowReloadHorizontalIcon} size={17} />
-            <span>Demo zurücksetzen</span>
-          </button>
-          <span className="avatar" aria-label="Lokales Demo-Profil">
-            D
-          </span>
+            onChange={changeCheckIn}
+            onStartFlow={() => setFlowOpen(true)}
+          />
         </div>
-      </header>
-      <div className="app-body">
-        <aside className="sidebar" aria-label="Navigation">
-          <div className="sidebar-top">
-            <span className="workspace-label">Dein Raum</span>
-            <a className="nav-item active" href="#day-plan">
-              <Icon icon={Calendar03Icon} />
-              Mein Tag
-              <span className="nav-indicator" />
-            </a>
-            <a className="nav-item" href="#check-in">
-              <Icon icon={Sun03Icon} />
-              Mein Check-in
-            </a>
-          </div>
-          <div className="sidebar-bottom">
-            <div className="small-sun">
-              <Icon icon={Sun03Icon} size={33} />
-            </div>
-            <p>
-              Ein voller Tag braucht
-              <br />
-              auch etwas Luft.
-            </p>
-            <span>Lokal auf deinem Gerät</span>
-          </div>
-        </aside>
-        <main className="main-workspace">
-          <div className="page-heading">
-            <div>
-              <p className="date-label">
-                <Icon icon={Calendar03Icon} size={17} />
-                {dateLabel}
-              </p>
-              <h1>Dein Tag bleibt beweglich.</h1>
-              <p className="page-description">
-                Pläne ändern sich. Finde heraus, was heute noch gut passt.
-              </p>
-            </div>
-            <span className="weather-mark" aria-hidden="true">
-              <Icon icon={Sun03Icon} size={66} />
-            </span>
-          </div>
+        <div className="lg:[grid-area:copilot] xl:sticky xl:top-20 xl:self-start">
+          <CopilotPanel
+            message={message}
+            onMessageChange={(text) => {
+              setMessage(text);
+              clearDraft();
+            }}
+            onSubmit={replan}
+            onCancel={() => requestController.current?.abort()}
+            busy={busy}
+            error={error}
+            health={health}
+            response={response}
+            changedItems={changedItems}
+            onAccept={acceptPlan}
+            onDiscard={discard}
+            textareaRef={textarea}
+          />
+        </div>
+        <main
+          id="day-plan"
+          tabIndex={-1}
+          className="grid scroll-mt-20 content-start gap-5 rounded-2xl border bg-card p-4 shadow-xs/5 outline-none sm:p-6 lg:[grid-area:day]"
+        >
           {!storageAvailable && (
-            <p className="message-banner warning" role="status">
-              Der Browser kann gerade nicht speichern. Änderungen bleiben nur in diesem Tab
-              erhalten.
-            </p>
+            <Alert variant="warning">
+              <AlertDescription>
+                Der Browser kann gerade nicht speichern. Änderungen bleiben nur in diesem Tab.
+              </AlertDescription>
+            </Alert>
           )}
-          {notice && (
-            <div className="message-banner success" role="status">
-              <Icon icon={CheckmarkCircle02Icon} size={19} />
-              <span>{notice}</span>
-              {workspace.history.length > 0 && (
-                <button onClick={undo} disabled={busy}>
-                  <Icon icon={Undo02Icon} size={16} />
-                  Rückgängig
-                </button>
-              )}
-            </div>
-          )}
-          <div className="workspace-grid">
-            <section className="plan-panel" id="day-plan" aria-labelledby="plan-title">
-              <div className="panel-heading">
-                <div>
-                  <h2 id="plan-title">Heute im Überblick</h2>
-                  <p>
-                    <span className="current-dot" />
-                    Demo-Uhrzeit {formatTime(plan.now)}
-                    <span className="text-separator">·</span>
-                    {fixedCount} feste Termine
-                  </p>
-                </div>
-                <div className="panel-actions">
-                  <ScreenshotImport onAdd={addTasks} disabled={busy} />
-                  <AddTask onAdd={addTask} disabled={busy} />
-                </div>
-              </div>
-              <div className="plan-legend">
-                <span>
-                  <span className="legend-line fixed" />
-                  Feste Termine
-                </span>
-                <span>
-                  <span className="legend-line flexible" />
-                  Verschiebbare Aufgaben
-                </span>
-                {workspace.history.length > 0 && (
-                  <button className="undo-link" onClick={undo} disabled={busy}>
-                    <Icon icon={Undo02Icon} size={15} />
-                    Rückgängig
-                  </button>
-                )}
-              </div>
-              {proposal && (
-                <div className="comparison-intro">
-                  <Icon icon={SparklesIcon} size={19} />
-                  <div>
-                    <strong>Ein Vorschlag für deinen restlichen Tag</strong>
-                    <span>
-                      {changedItems.length} {changedItems.length === 1 ? 'Änderung' : 'Änderungen'}{' '}
-                      · Dein bisheriger Plan gilt bis zur Bestätigung.
-                    </span>
-                  </div>
-                </div>
-              )}
-              <div className={`timelines ${proposal ? 'comparing' : ''}`}>
-                <Timeline plan={plan} label={proposal ? 'Bisher' : 'Dein Tagesplan'} />
-                {proposal && (
-                  <Timeline
-                    plan={proposal}
-                    original={plan}
-                    result={response.result}
-                    label="Vorschlag"
-                  />
-                )}
-              </div>
-              {proposal && (
-                <div className="review-actions">
-                  <p>
-                    <Icon icon={CheckmarkCircle02Icon} size={17} />
-                    Termine, Fristen und Zeiten geprüft.
-                  </p>
-                  <div>
-                    <button
-                      className="button secondary"
-                      onClick={() => {
-                        setResponse(null);
-                        setNotice('Vorschlag verworfen. Dein bisheriger Plan gilt weiter.');
-                      }}
-                    >
-                      Verwerfen
-                    </button>
-                    <button className="button primary" onClick={acceptPlan}>
-                      <Icon icon={Tick02Icon} size={18} />
-                      Plan übernehmen
-                    </button>
-                  </div>
-                </div>
-              )}
-            </section>
-            <aside className="copilot-column" aria-label="Check-in und Planänderung">
-              <CheckInPanel checkIn={checkIn} disabled={busy} onChange={changeCheckIn} />
-              <section className="copilot-panel" aria-labelledby="copilot-title">
-                <div className="copilot-heading">
-                  <span className="copilot-icon">
-                    <Icon icon={SparklesIcon} size={23} />
-                  </span>
-                  <div>
-                    <h2 id="copilot-title">Was hat sich geändert?</h2>
-                    <span>Wir finden einen neuen Rhythmus.</span>
-                  </div>
-                </div>
-                <form onSubmit={replan}>
-                  <label htmlFor="change-message" className="sr-only">
-                    Änderung für deinen Tagesplan
-                  </label>
-                  <textarea
-                    ref={textarea}
-                    id="change-message"
-                    rows={4}
-                    maxLength={2000}
-                    disabled={busy}
-                    value={message}
-                    onChange={(event) => {
-                      setMessage(event.target.value);
-                      clearDraft();
-                    }}
-                    placeholder="Mein Zug ist verspätet und ich habe schlecht geschlafen …"
-                  />
-                  <div className="composer-footer">
-                    <span>
-                      <span className={`connection-dot ${health?.configured ? 'ready' : ''}`} />
-                      {health
-                        ? health.configured
-                          ? 'Gemma 4'
-                          : 'API-Key fehlt'
-                        : 'Verbindung wird geprüft'}
-                    </span>
-                    <button
-                      type="submit"
-                      className="button primary"
-                      disabled={busy || message.trim().length < 3}
-                    >
-                      {busy ? (
-                        <>
-                          <span className="spinner" />
-                          Plane um …
-                        </>
-                      ) : (
-                        <>
-                          Tag neu planen
-                          <Icon icon={ArrowRight01Icon} size={17} />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
-                {error && (
-                  <div className="inline-error" role="alert">
-                    <Icon icon={Alert02Icon} size={19} />
-                    <p>{error}</p>
-                  </div>
-                )}
-                <div aria-live="polite" className="request-status">
-                  {busy && (
-                    <p>
-                      Deine Termine, Aufgaben und Energie werden gemeinsam betrachtet. Dein Plan
-                      bleibt bis zur Bestätigung erhalten.
-                    </p>
-                  )}
-                </div>
-                {!response && !busy && (
-                  <div className="prompt-examples">
-                    <p>Zum Ausprobieren</p>
-                    {demoPrompts.map((prompt) => (
-                      <button
-                        key={prompt.label}
-                        onClick={() => {
-                          setMessage(prompt.message);
-                          setError('');
-                          textarea.current?.focus();
-                        }}
-                      >
-                        <Icon icon={ArrowRight01Icon} size={15} />
-                        {prompt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {response && (
-                  <div className={`proposal-summary ${response.result.status}`}>
-                    <h3 ref={proposalHeading} tabIndex={-1}>
-                      <Icon
-                        icon={response.result.status === 'proposal' ? SparklesIcon : Alert02Icon}
-                        size={19}
-                      />
-                      {response.result.status === 'proposal'
-                        ? 'Das würde ich ändern'
-                        : response.result.status === 'conflict'
-                          ? 'Das passt noch nicht zusammen'
-                          : 'Eine kurze Rückfrage'}
-                    </h3>
-                    <p>{response.result.summary}</p>
-                    {response.result.question && (
-                      <p className="clarifying-question">{response.result.question}</p>
-                    )}
-                    <EnergyMeasures measures={response.measures} />
-                    {proposal && (
-                      <>
-                        <div className="understood">
-                          <span>
-                            <Icon icon={Clock01Icon} size={15} />
-                            Ab {formatTime(response.result.availabilityFrom)}
-                          </span>
-                          <span>
-                            <Icon icon={Moon02Icon} size={15} />
-                            {response.result.sleepHours} Std.
-                          </span>
-                          <span>Energie: {energyLabels[response.result.energy]}</span>
-                        </div>
-                        <ul className="reason-list">
-                          {changedItems.map((item) => (
-                            <li key={item.id}>
-                              <span className={`reason-dot category-${item.category}`} />
-                              <div>
-                                <strong>{item.title}</strong>
-                                <span>
-                                  {
-                                    response.result.placements.find(
-                                      (placement) => placement.id === item.id,
-                                    )?.reason
-                                  }
-                                </span>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                        <button className="button primary accept-button" onClick={acceptPlan}>
-                          <Icon icon={Tick02Icon} size={18} />
-                          Plan übernehmen
-                        </button>
-                        <button className="discard-link" onClick={() => setResponse(null)}>
-                          <Icon icon={Cancel01Icon} size={15} />
-                          Vorschlag verwerfen
-                        </button>
-                      </>
-                    )}
-                    <p className="model-footnote">
-                      Mit {response.meta.model} erstellt ·{' '}
-                      {(response.meta.elapsedMs / 1000).toFixed(1)} s
-                    </p>
-                  </div>
-                )}
-              </section>
-              <p className="control-note">
-                <Icon icon={LockKeyIcon} size={16} />
-                <span>
-                  Du entscheidest. Änderungen werden erst übernommen, wenn du sie bestätigst.
-                </span>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">{dateLabel}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Demo-Uhrzeit {formatTime(plan.now)}, {fixedCount}{' '}
+                {fixedCount === 1 ? 'fester Termin' : 'feste Termine'} vor dir
               </p>
-            </aside>
+            </div>
+            <div className="flex items-center gap-2">
+              {workspace.history.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Letzte Änderung rückgängig machen"
+                        onClick={undo}
+                        disabled={busy}
+                      />
+                    }
+                  >
+                    <Icon icon={Undo02Icon} size={18} />
+                  </TooltipTrigger>
+                  <TooltipPopup>Rückgängig</TooltipPopup>
+                </Tooltip>
+              )}
+              <ScreenshotImport onAdd={addTasks} disabled={busy} />
+              <AddTask onAdd={(item) => addTasks([item])} disabled={busy} />
+            </div>
           </div>
-          <footer className="workspace-footer">
-            <span>Pivot · Lokaler Prototyp</span>
-            <span>Synthetische Beispieldaten · Heute statt alles auf einmal</span>
-          </footer>
+          {proposal && response ? (
+            <Tabs key={response.meta.elapsedMs} defaultValue="proposal" className="gap-4">
+              <TabsList>
+                <TabsTab value="proposal">
+                  Vorschlag
+                  {changedItems.length > 0 && (
+                    <span className="rounded-md bg-primary px-1.5 text-xs text-primary-foreground tabular">
+                      {changedItems.length}
+                    </span>
+                  )}
+                </TabsTab>
+                <TabsTab value="current">Bisher</TabsTab>
+              </TabsList>
+              <TabsPanel value="proposal">
+                <Timeline
+                  plan={proposal}
+                  original={plan}
+                  result={response.result}
+                  focusTaskId={checkIn.focusTaskId}
+                  label="Vorschlag"
+                />
+              </TabsPanel>
+              <TabsPanel value="current">{dayTimeline}</TabsPanel>
+            </Tabs>
+          ) : (
+            dayTimeline
+          )}
         </main>
       </div>
+      <CheckInFlow
+        open={flowOpen}
+        onOpenChange={setFlowOpen}
+        checkIn={checkIn}
+        plan={plan}
+        onComplete={completeCheckIn}
+        onPlanDay={planFromCheckIn}
+        planningDisabled={busy}
+      />
     </div>
   );
 }

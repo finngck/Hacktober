@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  checkInSchema,
   materializeProposal,
   hasItemChanged,
   replanResponseSchema,
@@ -619,4 +620,25 @@ test('context tools merge compatible fields atomically and reject contradictory 
       ]),
     /Widersprüchliche/,
   );
+});
+
+test('the check-in focus task is planned and not deferred, even at low energy', () => {
+  const source = request();
+  source.checkIn.focusTaskId = 'project';
+  const scheduled = scheduleFromIntent(source, { ...intent(), deferIds: [] });
+  assert.ok(scheduled.proposedPlan);
+  assert.deepEqual(validatePlan(scheduled.proposedPlan), []);
+  assert.notEqual(scheduled.proposedPlan.items.find((item) => item.id === 'project')?.start, null);
+});
+
+test('check-ins saved before mood, stress, sleep quality and focus existed stay valid', () => {
+  const legacy = { sleepHours: 7, energy: 'high', productiveTime: 'any', exclusions: [] };
+  assert.deepEqual(checkInSchema.parse(legacy), {
+    ...legacy,
+    sleepQuality: 'okay',
+    mood: 3,
+    stress: 2,
+    focusTaskId: null,
+  });
+  assert.equal(checkInSchema.safeParse({ ...legacy, mood: 6 }).success, false);
 });
