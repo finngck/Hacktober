@@ -12,6 +12,7 @@ import { cva } from 'class-variance-authority';
 import {
   categoryLabels,
   formatTime,
+  hasItemChanged,
   type Category,
   type ModelResult,
   type Plan,
@@ -115,6 +116,15 @@ function TimeBlock({
   );
 }
 
+function changeLabel(before: ScheduleItem | undefined, item: ScheduleItem) {
+  if (!before) return 'Neu hinzugefügt';
+  if (before.title !== item.title) return `Vorher „${before.title}“`;
+  if (before.duration !== item.duration) return `Vorher ${before.duration}\u00a0Min.`;
+  if (before.start === null) return 'Neu eingeplant';
+  if (before.start !== item.start) return `Vorher ${formatTime(before.start)}`;
+  return 'Aufgabe bearbeitet';
+}
+
 export function Timeline({
   plan,
   original,
@@ -140,7 +150,7 @@ export function Timeline({
       <ol className="grid">
         {scheduled.map((item, index) => {
           const before = original?.items.find((source) => source.id === item.id);
-          const changed = before !== undefined && before.start !== item.start;
+          const changed = Boolean(original) && hasItemChanged(before, item);
           const end = item.start! + item.duration;
           const past = end <= plan.now;
           const previousEnd = index
@@ -180,7 +190,7 @@ export function Timeline({
                     focus={item.id === focusTaskId}
                     note={
                       changed
-                        ? `${before.start === null ? 'Neu eingeplant' : `Vorher ${formatTime(before.start)}`}. ${reasonFor(item.id) ?? ''}`
+                        ? `${changeLabel(before, item)}. ${reasonFor(item.id) ?? ''}`
                         : undefined
                     }
                   />

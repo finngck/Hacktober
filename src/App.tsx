@@ -4,6 +4,7 @@ import {
   replanResponseSchema,
   formatTime,
   validatePlan,
+  hasItemChanged,
   type CheckIn,
   type ReplanResponse,
   type ScheduleItem,
@@ -31,6 +32,7 @@ import { CheckInFlow } from './components/daylight/CheckInFlow';
 import { CheckInSidebar } from './components/daylight/CheckInSidebar';
 import { checkInMessage } from './components/daylight/checkInOptions';
 import { CopilotPanel } from './components/daylight/CopilotPanel';
+import { ScreenshotImport } from './components/daylight/ScreenshotImport';
 import { Timeline } from './components/daylight/Timeline';
 
 function celebrate(unlocked: BadgeId[]) {
@@ -57,8 +59,11 @@ export default function App() {
   const { plan, checkIn } = workspace;
   const proposal = response?.proposedPlan ?? null;
   const changedItems =
-    proposal?.items.filter(
-      (item) => plan.items.find((before) => before.id === item.id)?.start !== item.start,
+    proposal?.items.filter((item) =>
+      hasItemChanged(
+        plan.items.find((before) => before.id === item.id),
+        item,
+      ),
     ) ?? [];
   const fixedCount = plan.items.filter(
     (item) => item.fixed && item.start !== null && item.start >= plan.now,
@@ -100,11 +105,12 @@ export default function App() {
     setProgress(recorded.progress);
     return { streak: streak(recorded.progress), unlocked: recorded.unlocked };
   }
-  function addTask(item: ScheduleItem) {
-    if (plan.items.length >= 40) return 'Der Prototyp unterstützt bis zu 40 Aufgaben.';
-    if (item.start !== null && item.start < plan.now)
+  function addTasks(items: ScheduleItem[]) {
+    if (plan.items.length + items.length > 40)
+      return 'Der Prototyp unterstützt bis zu 40 Aufgaben.';
+    if (items.some((item) => item.start !== null && item.start < plan.now))
       return `Neue Aufgaben müssen nach der Demo-Uhrzeit ${formatTime(plan.now)} beginnen.`;
-    const nextPlan = { ...plan, items: [...plan.items, item] };
+    const nextPlan = { ...plan, items: [...plan.items, ...items] };
     const issues = validatePlan(nextPlan);
     if (issues.length) return issues.join(' ');
     clearDraft();
@@ -113,7 +119,11 @@ export default function App() {
       plan: nextPlan,
       history: [...previous.history, { plan: previous.plan, checkIn: previous.checkIn }].slice(-5),
     }));
-    toastManager.add({ type: 'success', title: 'Aufgabe hinzugefügt', description: item.title });
+    toastManager.add({
+      type: 'success',
+      title: items.length === 1 ? 'Aufgabe hinzugefügt' : `${items.length} Aufgaben hinzugefügt`,
+      description: items.map((item) => item.title).join(', '),
+    });
     return undefined;
   }
   async function runReplan(text: string) {
@@ -294,7 +304,8 @@ export default function App() {
                   <TooltipPopup>Rückgängig</TooltipPopup>
                 </Tooltip>
               )}
-              <AddTask onAdd={addTask} disabled={busy} />
+              <ScreenshotImport onAdd={addTasks} disabled={busy} />
+              <AddTask onAdd={(item) => addTasks([item])} disabled={busy} />
             </div>
           </div>
           {proposal && response ? (

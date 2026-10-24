@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { Icon } from '../Icon';
 import { formatHours } from './checkInOptions';
+import { EnergyMeasures } from './EnergyMeasures';
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform);
 
@@ -189,6 +190,7 @@ export function CopilotPanel({
             <p className="text-sm">{result.summary}</p>
             {result.question && <p className="font-medium">{result.question}</p>}
           </div>
+          <EnergyMeasures measures={response.measures} />
 
           {response.proposedPlan ? (
             <>
